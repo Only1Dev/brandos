@@ -6,6 +6,7 @@ Read-only logging of all consequential actions; no update or delete allowed.
 
 from __future__ import annotations
 
+import json
 import uuid
 from typing import Any, Dict, List, Optional
 
@@ -32,17 +33,33 @@ class AuditResponse(BaseModel):
     created_at: str
 
 
+def _parse_details(raw: Any) -> Optional[Dict[str, Any]]:
+    if not raw:
+        return None
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                return parsed
+            return {"value": parsed}
+        except Exception:
+            return {"raw": raw}
+    return {"raw": str(raw)}
+
+
 @router.get("", response_model=List[AuditResponse])
 async def list_audit_events(
     entity_type: Optional[str] = None,
     action: Optional[str] = None,
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(AuditEvent).order_by(AuditEvent.created_at.desc()).limit(limit)
     if entity_type:
-        query = query.where(AuditEvent.entity_type == entity_type)
+        query = query.where(AuditEvent.resource_type == entity_type)
     if action:
         query = query.where(AuditEvent.action == action)
 
@@ -53,10 +70,10 @@ async def list_audit_events(
         AuditResponse(
             id=str(e.id),
             action=e.action,
-            entity_type=e.entity_type,
-            entity_id=str(e.entity_id) if e.entity_id else None,
-            user_id=str(e.user_id) if e.user_id else None,
-            details=e.details,
+            entity_type=e.resource_type,
+            entity_id=str(e.resource_id) if e.resource_id else None,
+            user_id=str(e.actor_id) if e.actor_id else None,
+            details=_parse_details(e.details),
             created_at=e.created_at.isoformat() if e.created_at else "",
         )
         for e in events

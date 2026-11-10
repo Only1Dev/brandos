@@ -92,11 +92,55 @@ export default function AuditTrailPage() {
                   <td className="py-3.5 px-4 font-mono text-[10px] text-slate-400">{log.entity_id ? log.entity_id.slice(0, 8) + "..." : "—"}</td>
                   <td className="py-3.5 px-4 text-slate-700 text-[11px]">
                     {log.details ? (
-                      <span className="font-mono bg-slate-50 p-1 rounded border border-slate-200 text-slate-800">
-                        {JSON.stringify(log.details)}
-                      </span>
+                      typeof log.details === "object" ? (
+                        <div className="flex flex-wrap gap-1.5 items-center">
+                          {log.details.score !== undefined && (
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
+                                log.details.score >= 85
+                                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                  : "bg-red-100 text-red-800 border border-red-300"
+                              }`}
+                            >
+                              Score: {log.details.score}/100
+                            </span>
+                          )}
+                          {log.details.decision && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-700 border border-slate-200 font-semibold">
+                              {log.details.decision}
+                            </span>
+                          )}
+                          {log.details.admin_override && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                              Admin Override
+                            </span>
+                          )}
+                          {log.details.findings !== undefined && (
+                            <span className="text-[10px] text-slate-500 font-medium">
+                              ({log.details.findings} findings)
+                            </span>
+                          )}
+                          {log.details.replacement && (
+                            <span className="text-slate-700 truncate max-w-xs font-mono text-[10px] bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                              → {log.details.replacement}
+                            </span>
+                          )}
+                          {log.details.comment && (
+                            <span className="text-slate-600 italic">
+                              "{log.details.comment}"
+                            </span>
+                          )}
+                          {log.details.rule_code && (
+                            <span className="font-mono text-[10px] text-indigo-700">
+                              Rule: {log.details.rule_code}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="font-mono text-slate-600">{String(log.details)}</span>
+                      )
                     ) : (
-                      "Logged"
+                      <span className="text-slate-400 italic">Provenance verified</span>
                     )}
                   </td>
                 </tr>

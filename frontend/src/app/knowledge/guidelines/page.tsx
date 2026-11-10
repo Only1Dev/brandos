@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, BookOpen, Upload, Shield, Check, FileText, Sparkles, Brain, ArrowDownToLine, CheckCircle2, Lock } from "lucide-react";
+import { Plus, BookOpen, Upload, Shield, Check, FileText, Sparkles, Brain, ArrowDownToLine, CheckCircle2, Lock, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useBrand } from "@/context/BrandContext";
 import { AdversarialStressLab } from "@/components/governance/AdversarialStressLab";
@@ -12,6 +12,7 @@ export default function GuidelinesPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null);
 
   // Ingestion State
   const [ingesting, setIngesting] = useState(false);
@@ -89,7 +90,7 @@ export default function GuidelinesPage() {
         priority: 1.0,
         examples_positive: positiveExample,
         examples_negative: negativeExample,
-      });
+      }, brandConfig.slug);
       setShowAddModal(false);
       setName("");
       setRuleStatement("");
@@ -98,6 +99,19 @@ export default function GuidelinesPage() {
       await loadRules();
     } catch (e: any) {
       alert("Error creating rule: " + e.message);
+    }
+  };
+
+  const handleDeleteRule = async (id: string, code: string) => {
+    if (!confirm(`Deactivate rule "${code}" from active Brand Brain enforcement?`)) return;
+    try {
+      setDeletingRuleId(id);
+      await api.deleteRule(id);
+      await loadRules();
+    } catch (e: any) {
+      alert("Error deleting rule: " + e.message);
+    } finally {
+      setDeletingRuleId(null);
     }
   };
 
@@ -238,6 +252,7 @@ export default function GuidelinesPage() {
               <th className="py-3 px-4">Severity</th>
               <th className="py-3 px-4">Engine Assigned</th>
               <th className="py-3 px-4">Status</th>
+              {canEditBrandBrain && <th className="py-3 px-4 text-right">Action</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -278,6 +293,18 @@ export default function GuidelinesPage() {
                     Enforcing
                   </span>
                 </td>
+                {canEditBrandBrain && (
+                  <td className="py-3.5 px-4 text-right">
+                    <button
+                      onClick={() => handleDeleteRule(r.id, r.name)}
+                      disabled={deletingRuleId === r.id}
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                      title="Deactivate and delete rule"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

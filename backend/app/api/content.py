@@ -57,13 +57,23 @@ class ContentVersionResponse(BaseModel):
 
 @router.get("", response_model=List[ContentResponse])
 async def list_content(
+    brand: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(Content).order_by(Content.created_at.desc())
-    if user and user.organization_id:
-        query = query.where(Content.organization_id == user.organization_id)
-        if user.role == "creator":
+    target_org_id = None
+    if brand:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand))
+        target_org = org_res.scalar_one_or_none()
+        if target_org:
+            target_org_id = target_org.id
+    elif user and user.organization_id and user.role != "superadmin":
+        target_org_id = user.organization_id
+
+    if target_org_id:
+        query = query.where(Content.organization_id == target_org_id)
+        if user and user.role == "creator":
             query = query.where(Content.created_by == user.id)
 
     result = await db.execute(query)
@@ -289,3 +299,35 @@ async def upload_content_file(
         "file_url": f"/uploads/{filename}",
         "extracted_text_preview": extracted_text[:300] if extracted_text else "",
     }
+
+
+@router.delete("/{id}")
+async def delete_content(
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    user: Optional[User] = Depends(get_optional_user),
+):
+    if user and user.role not in ("admin", "superadmin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator authority required to delete organizational content.",
+        )
+    content_uuid = uuid.UUID(id)
+    res = await db.execute(select(Content).where(Content.id == content_uuid))
+    c = res.scalar_one_or_none()
+    if not c:
+        raise HTTPException(status_code=404, detail="Content not found")
+
+    if user:
+        await AuditService.log_action(
+            db=db,
+            user_id=user.id,
+            action="content_deleted",
+            entity_type="content",
+            entity_id=c.id,
+            details={"title": c.title, "channel": c.channel},
+        )
+
+    await db.delete(c)
+    await db.commit()
+    return {"status": "success", "message": f"Content '{c.title}' and associated reviews deleted successfully"}

@@ -9,7 +9,7 @@ import uuid
 from datetime import date
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +33,17 @@ class FactCreate(BaseModel):
     valid_until: Optional[date] = None
 
 
+class FactUpdate(BaseModel):
+    statement: Optional[str] = None
+    category: Optional[str] = None
+    source: Optional[str] = None
+    numerical_value: Optional[float] = None
+    numerical_unit: Optional[str] = None
+    valid_from: Optional[date] = None
+    valid_until: Optional[date] = None
+    is_active: Optional[bool] = None
+
+
 class FactResponse(BaseModel):
     id: str
     statement: str
@@ -50,14 +61,16 @@ class FactResponse(BaseModel):
 async def list_facts(
     category: Optional[str] = None,
     brand: Optional[str] = None,
+    request: Request = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(Fact).where(Fact.is_active == True)
     
     target_org_id = None
-    if brand:
-        org_res = await db.execute(select(Organization).where(Organization.slug == brand))
+    brand_slug = brand or (request.headers.get("x-brand-slug") if request else None)
+    if brand_slug:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand_slug))
         target_org = org_res.scalar_one_or_none()
         if target_org:
             target_org_id = target_org.id
@@ -92,17 +105,20 @@ async def list_facts(
 async def create_fact(
     body: FactCreate,
     brand: Optional[str] = None,
+    request: Request = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
-    if user and user.role not in ("admin", "superadmin"):
+    role = (user.role if user else None) or (request.headers.get("x-user-role") if request else None) or "admin"
+    if role not in ("admin", "superadmin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrator authority required to register approved facts into Brand Brain.",
         )
     target_org_id = None
-    if brand:
-        org_res = await db.execute(select(Organization).where(Organization.slug == brand))
+    brand_slug = brand or (request.headers.get("x-brand-slug") if request else None)
+    if brand_slug:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand_slug))
         target_org = org_res.scalar_one_or_none()
         if target_org:
             target_org_id = target_org.id
@@ -145,13 +161,68 @@ async def create_fact(
     )
 
 
-@router.delete("/{id}")
-async def delete_fact(
+@router.put("/{id}", response_model=FactResponse)
+async def update_fact(
     id: str,
+    body: FactUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
-    if user and user.role not in ("admin", "superadmin"):
+    role = (user.role if user else None) or request.headers.get("x-user-role", "admin")
+    if role not in ("admin", "superadmin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator authority required to edit approved facts.",
+        )
+    result = await db.execute(select(Fact).where(Fact.id == uuid.UUID(id)))
+    fact = result.scalar_one_or_none()
+    if not fact:
+        raise HTTPException(status_code=404, detail="Fact not found")
+
+    if body.statement is not None:
+        fact.statement = body.statement
+    if body.category is not None:
+        fact.category = body.category
+    if body.source is not None:
+        fact.source = body.source
+    if body.numerical_value is not None:
+        fact.numerical_value = body.numerical_value
+    if body.numerical_unit is not None:
+        fact.numerical_unit = body.numerical_unit
+    if body.valid_from is not None:
+        fact.valid_from = body.valid_from
+    if body.valid_until is not None:
+        fact.valid_until = body.valid_until
+    if body.is_active is not None:
+        fact.is_active = body.is_active
+
+    await db.commit()
+    await db.refresh(fact)
+
+    return FactResponse(
+        id=str(fact.id),
+        statement=fact.statement,
+        category=fact.category,
+        source=fact.source,
+        numerical_value=fact.numerical_value,
+        numerical_unit=fact.numerical_unit,
+        valid_from=fact.valid_from.isoformat() if fact.valid_from else None,
+        valid_until=fact.valid_until.isoformat() if fact.valid_until else None,
+        is_active=fact.is_active,
+        is_expired=fact.is_expired,
+    )
+
+
+@router.delete("/{id}")
+async def delete_fact(
+    id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: Optional[User] = Depends(get_optional_user),
+):
+    role = (user.role if user else None) or request.headers.get("x-user-role", "admin")
+    if role not in ("admin", "superadmin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrator authority required to deactivate approved facts.",

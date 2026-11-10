@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Database, CheckCircle2, AlertCircle, Trash2, Lock } from "lucide-react";
+import { Plus, Database, CheckCircle2, AlertCircle, Trash2, Lock, Pencil, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { useBrand } from "@/context/BrandContext";
@@ -18,6 +18,44 @@ export default function FactsPage() {
   const [numericalValue, setNumericalValue] = useState("");
   const [numericalUnit, setNumericalUnit] = useState("%");
   const [validUntil, setValidUntil] = useState("2026-12-31");
+
+  // Edit Fact state
+  const [editingFact, setEditingFact] = useState<any | null>(null);
+  const [editStatement, setEditStatement] = useState("");
+  const [editCategory, setEditCategory] = useState("performance");
+  const [editSource, setEditSource] = useState("");
+  const [editNumericalValue, setEditNumericalValue] = useState("");
+  const [editNumericalUnit, setEditNumericalUnit] = useState("%");
+  const [editValidUntil, setEditValidUntil] = useState("2026-12-31");
+
+  const openEditModal = (f: any) => {
+    setEditingFact(f);
+    setEditStatement(f.statement || "");
+    setEditCategory(f.category || "performance");
+    setEditSource(f.source || "");
+    setEditNumericalValue(f.numerical_value !== null && f.numerical_value !== undefined ? String(f.numerical_value) : "");
+    setEditNumericalUnit(f.numerical_unit || "%");
+    setEditValidUntil(f.valid_until ? f.valid_until.slice(0, 10) : "2026-12-31");
+  };
+
+  const handleUpdateFact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFact) return;
+    try {
+      await api.updateFact(editingFact.id, {
+        statement: editStatement,
+        category: editCategory,
+        source: editSource,
+        numerical_value: editNumericalValue ? parseFloat(editNumericalValue) : null,
+        numerical_unit: editNumericalUnit,
+        valid_until: editValidUntil || null,
+      });
+      setEditingFact(null);
+      await loadFacts();
+    } catch (e: any) {
+      alert("Error updating fact: " + e.message);
+    }
+  };
 
   const loadFacts = async () => {
     try {
@@ -150,12 +188,26 @@ export default function FactsPage() {
                   )}
                 </td>
                 <td className="py-3.5 px-4 text-right">
-                  <button
-                    onClick={() => handleDelete(f.id)}
-                    className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {canEditBrandBrain ? (
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => openEditModal(f)}
+                        className="p-1.5 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors"
+                        title="Edit approved fact"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(f.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                        title="Deactivate approved fact"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-mono">Verified</span>
+                  )}
                 </td>
               </tr>
             )))}
@@ -253,6 +305,111 @@ export default function FactsPage() {
                   className="px-4 py-1.5 rounded bg-indigo-600 text-white font-bold hover:bg-indigo-700"
                 >
                   Save Fact
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Edit Approved Fact Modal */}
+      {editingFact && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Edit Approved Fact</h3>
+              <button
+                onClick={() => setEditingFact(null)}
+                className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateFact} className="space-y-4 text-xs">
+              <div>
+                <label className="font-semibold text-slate-700">Fact Statement</label>
+                <textarea
+                  rows={2}
+                  value={editStatement}
+                  onChange={(e) => setEditStatement(e.target.value)}
+                  placeholder="e.g. Aureon Shield platform achieves 42% average reduction in transaction fraud."
+                  className="w-full mt-1 p-2 rounded border border-slate-300"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-slate-700">Approved Numerical Value</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editNumericalValue}
+                    onChange={(e) => setEditNumericalValue(e.target.value)}
+                    placeholder="e.g. 42"
+                    className="w-full mt-1 p-2 rounded border border-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700">Unit / Metric</label>
+                  <input
+                    type="text"
+                    value={editNumericalUnit}
+                    onChange={(e) => setEditNumericalUnit(e.target.value)}
+                    placeholder="%"
+                    className="w-full mt-1 p-2 rounded border border-slate-300"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-700">Source Evidence / Citation</label>
+                <input
+                  type="text"
+                  value={editSource}
+                  onChange={(e) => setEditSource(e.target.value)}
+                  placeholder="e.g. Q4 2025 Third-Party Security Benchmark Report"
+                  className="w-full mt-1 p-2 rounded border border-slate-300"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-slate-700">Category</label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full mt-1 p-2 rounded border border-slate-300 bg-white"
+                  >
+                    <option value="performance">Performance Metric</option>
+                    <option value="product">Product Specification</option>
+                    <option value="financial">Financial / Pricing</option>
+                    <option value="legal">Legal Certification</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700">Valid Until</label>
+                  <input
+                    type="date"
+                    value={editValidUntil}
+                    onChange={(e) => setEditValidUntil(e.target.value)}
+                    className="w-full mt-1 p-2 rounded border border-slate-300"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => setEditingFact(null)}
+                  className="px-3 py-1.5 rounded font-semibold text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded bg-indigo-600 text-white font-bold hover:bg-indigo-700"
+                >
+                  Save Fact Changes
                 </button>
               </div>
             </form>

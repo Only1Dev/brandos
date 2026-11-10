@@ -10,13 +10,14 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.audit import AuditEvent
+from app.models.organization import Organization
 from app.models.user import User
 from app.middleware.auth import get_optional_user
 
@@ -54,10 +55,27 @@ async def list_audit_events(
     entity_type: Optional[str] = None,
     action: Optional[str] = None,
     limit: int = Query(100, ge=1, le=500),
+    brand: Optional[str] = None,
+    request: Request = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(AuditEvent).order_by(AuditEvent.created_at.desc()).limit(limit)
+
+    target_org_id = None
+    brand_slug = brand or (request.headers.get("x-brand-slug") if request else None)
+    if brand_slug:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand_slug))
+        target_org = org_res.scalar_one_or_none()
+        if target_org:
+            target_org_id = target_org.id
+    elif user and user.organization_id and user.role != "superadmin":
+        target_org_id = user.organization_id
+
+    if target_org_id:
+        query = query.where(
+            (AuditEvent.organization_id == target_org_id) | (AuditEvent.organization_id.is_(None))
+        )
     if entity_type:
         query = query.where(AuditEvent.resource_type == entity_type)
     if action:

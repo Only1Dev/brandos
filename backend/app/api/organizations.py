@@ -10,7 +10,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -80,42 +80,42 @@ async def superadmin_overview(
 
     for o in orgs:
         # Count guidelines & rules
-        g_res = await db.execute(select(Guideline).where(Guideline.organization_id == o.id))
-        guidelines = g_res.scalars().all()
-        g_ids = [g.id for g in guidelines]
-        
-        rules_count = 0
-        if g_ids:
-            r_res = await db.execute(select(GuidelineRule).where(GuidelineRule.guideline_id.in_(g_ids), GuidelineRule.is_active == True))
-            rules_count = len(r_res.scalars().all())
+        guidelines_count = (await db.scalar(
+            select(func.count(Guideline.id)).where(Guideline.organization_id == o.id)
+        )) or 0
+        rules_count = (await db.scalar(
+            select(func.count(GuidelineRule.id))
+            .join(Guideline, GuidelineRule.guideline_id == Guideline.id)
+            .where(Guideline.organization_id == o.id, GuidelineRule.is_active == True)
+        )) or 0
 
         # Facts count
-        f_res = await db.execute(select(Fact).where(Fact.organization_id == o.id, Fact.is_active == True))
-        facts_count = len(f_res.scalars().all())
+        facts_count = (await db.scalar(
+            select(func.count(Fact.id)).where(Fact.organization_id == o.id, Fact.is_active == True)
+        )) or 0
 
         # Terms count
-        t_res = await db.execute(select(TerminologyRule).where(TerminologyRule.organization_id == o.id))
-        terms_count = len(t_res.scalars().all())
+        terms_count = (await db.scalar(
+            select(func.count(TerminologyRule.id)).where(TerminologyRule.organization_id == o.id)
+        )) or 0
 
         # Assets count
-        a_res = await db.execute(select(Asset).where(Asset.organization_id == o.id))
-        assets_count = len(a_res.scalars().all())
+        assets_count = (await db.scalar(
+            select(func.count(Asset.id)).where(Asset.organization_id == o.id)
+        )) or 0
 
         # Reviews for this org
-        c_res = await db.execute(select(Content).where(Content.organization_id == o.id))
-        contents = c_res.scalars().all()
-        c_ids = [c.id for c in contents]
-
-        reviews = []
-        if c_ids:
-            rv_res = await db.execute(select(Review).where(Review.content_id.in_(c_ids)))
-            reviews = rv_res.scalars().all()
-
-        reviews_count = len(reviews)
-        completed_reviews = [r for r in reviews if r.governance_score is not None]
-        avg_score = round(sum(r.governance_score for r in completed_reviews) / len(completed_reviews), 1) if completed_reviews else 88.0
-        blocked_count = sum(1 for r in reviews if r.decision == "BLOCKED")
-        pass_count = sum(1 for r in reviews if r.decision == "PASS")
+        reviews_res = await db.execute(
+            select(Review.governance_score, Review.decision)
+            .join(Content, Review.content_id == Content.id)
+            .where(Content.organization_id == o.id)
+        )
+        reviews_data = reviews_res.all()
+        reviews_count = len(reviews_data)
+        completed_scores = [r[0] for r in reviews_data if r[0] is not None]
+        avg_score = round(sum(completed_scores) / len(completed_scores), 1) if completed_scores else 88.0
+        blocked_count = sum(1 for r in reviews_data if r[1] == "BLOCKED")
+        pass_count = sum(1 for r in reviews_data if r[1] == "PASS")
 
         primary_color = "#10B981" if o.slug == "solaria" else "#4F46E5"
         pdf_file = "Solaria_Wellness_Official_Brand_Guidelines_2026.pdf" if o.slug == "solaria" else "Aureon_Official_Brand_Guidelines_2026.pdf"
@@ -128,7 +128,7 @@ async def superadmin_overview(
             "primary_color": primary_color,
             "pdf_file": pdf_file,
             "stats": {
-                "guidelines_count": len(guidelines),
+                "guidelines_count": guidelines_count,
                 "rules_count": rules_count,
                 "facts_count": facts_count,
                 "terms_count": terms_count,

@@ -136,7 +136,6 @@ class BrandAgent:
 
             # Extract json array
             content_str = response.strip()
-            # Clean possible markdown fence
             if content_str.startswith("```json"):
                 content_str = content_str[7:]
             if content_str.startswith("```"):
@@ -144,9 +143,21 @@ class BrandAgent:
             if content_str.endswith("```"):
                 content_str = content_str[:-3]
 
-            raw_findings = json.loads(content_str.strip())
-            if not isinstance(raw_findings, list):
-                raw_findings = []
+            raw_findings = []
+            if content_str.strip():
+                try:
+                    parsed = json.loads(content_str.strip())
+                    if isinstance(parsed, list):
+                        raw_findings = parsed
+                except Exception:
+                    m = re.search(r"\[\s*\{.*\}\s*\]", content_str, re.DOTALL)
+                    if m:
+                        try:
+                            parsed = json.loads(m.group(0))
+                            if isinstance(parsed, list):
+                                raw_findings = parsed
+                        except Exception:
+                            pass
 
             # Format to BrandOS finding schema
             formatted_findings = []

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # Groq models
-GROQ_MODEL_LARGE = "openai/gpt-oss-120b"
+GROQ_MODEL_LARGE = "openai/gpt-oss-20b"
 GROQ_MODEL_SMALL = "openai/gpt-oss-20b"
 
 # HuggingFace embedding model
@@ -182,6 +182,20 @@ class ModelRouter:
             except RateLimitError as e:
                 logger.warning(f"Groq rate limit on key {key_idx}: {e}")
                 last_error = e
+                # Fallback directly to 20B if 120B hits daily rate limit
+                if model == GROQ_MODEL_LARGE:
+                    try:
+                        logger.info("Failing over from 120B to Groq 20B...")
+                        client = self._get_groq_client(key_idx)
+                        response = await client.chat.completions.create(
+                            model=GROQ_MODEL_SMALL,
+                            messages=messages,
+                            temperature=temperature,
+                            max_tokens=max_tokens,
+                        )
+                        return response.choices[0].message.content or ""
+                    except Exception as fb_err:
+                        logger.warning(f"Failover to 20B also failed: {fb_err}")
                 await self._rotate_key(key_idx, 60.0)
             except APIError as e:
                 logger.error(f"Groq API error on key {key_idx}: {e}")

@@ -48,28 +48,43 @@ export function BrandSelectorModal() {
   const [errorMsg, setErrorMsg] = useState("");
 
   // Live dynamic stats for brands (auto-updates rules and facts counts from Brand Brain)
-  const [brandStats, setBrandStats] = useState<Record<string, { rules_count: number; facts_count: number }>>({
-    aureon: { rules_count: 17, facts_count: 1 },
-    solaria: { rules_count: 3, facts_count: 2 },
-  });
+  const [brandStats, setBrandStats] = useState<Record<string, { rules_count: number; facts_count: number }>>({});
 
   useEffect(() => {
-    if (isBrandModalOpen) {
-      api.getSuperAdminOverview()
-        .then((res) => {
-          if (res?.organizations) {
-            const statsMap: Record<string, { rules_count: number; facts_count: number }> = {};
-            for (const org of res.organizations) {
-              statsMap[org.slug] = {
-                rules_count: org.stats?.rules_count ?? 0,
-                facts_count: org.stats?.facts_count ?? 0,
-              };
-            }
-            setBrandStats((prev) => ({ ...prev, ...statsMap }));
+    const fetchCounts = async () => {
+      try {
+        const res = await api.getSuperAdminOverview();
+        if (res?.organizations) {
+          const statsMap: Record<string, { rules_count: number; facts_count: number }> = {};
+          for (const org of res.organizations) {
+            statsMap[org.slug] = {
+              rules_count: org.stats?.rules_count ?? 0,
+              facts_count: org.stats?.facts_count ?? 0,
+            };
           }
-        })
-        .catch((e) => console.error("Error loading live brand stats:", e));
-    }
+          setBrandStats(statsMap);
+          return;
+        }
+      } catch (e) {
+        // Direct query fallback
+        try {
+          const [aureonRules, aureonFacts, solariaRules, solariaFacts] = await Promise.all([
+            api.getRules(undefined, "aureon"),
+            api.getFacts(undefined, "aureon"),
+            api.getRules(undefined, "solaria"),
+            api.getFacts(undefined, "solaria"),
+          ]);
+          setBrandStats({
+            aureon: { rules_count: aureonRules.length, facts_count: aureonFacts.length },
+            solaria: { rules_count: solariaRules.length, facts_count: solariaFacts.length },
+          });
+        } catch (err) {
+          console.error("Error loading live brand stats:", err);
+        }
+      }
+    };
+
+    fetchCounts();
   }, [isBrandModalOpen]);
 
   if (!isBrandModalOpen) return null;
@@ -210,7 +225,7 @@ export function BrandSelectorModal() {
                   </p>
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
                     <span className="font-semibold text-slate-500">
-                      {brandStats["aureon"]?.rules_count ?? 17} Rules • {brandStats["aureon"]?.facts_count ?? 1} Verified Fact{(brandStats["aureon"]?.facts_count ?? 1) === 1 ? "" : "s"}
+                      {brandStats["aureon"]?.rules_count !== undefined ? `${brandStats["aureon"].rules_count} Rules` : "Rules syncing..."} • {brandStats["aureon"]?.facts_count !== undefined ? `${brandStats["aureon"].facts_count} Verified Fact${brandStats["aureon"].facts_count === 1 ? "" : "s"}` : "Facts syncing..."}
                     </span>
                     <a
                       href="/Aureon_Official_Brand_Guidelines_2026.pdf"
@@ -254,7 +269,7 @@ export function BrandSelectorModal() {
                   </p>
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
                     <span className="font-semibold text-slate-500">
-                      {brandStats["solaria"]?.rules_count ?? 3} Rules • {brandStats["solaria"]?.facts_count ?? 2} Verified Fact{(brandStats["solaria"]?.facts_count ?? 2) === 1 ? "" : "s"}
+                      {brandStats["solaria"]?.rules_count !== undefined ? `${brandStats["solaria"].rules_count} Rules` : "Rules syncing..."} • {brandStats["solaria"]?.facts_count !== undefined ? `${brandStats["solaria"].facts_count} Verified Fact${brandStats["solaria"].facts_count === 1 ? "" : "s"}` : "Facts syncing..."}
                     </span>
                     <a
                       href="/Solaria_Wellness_Official_Brand_Guidelines_2026.pdf"

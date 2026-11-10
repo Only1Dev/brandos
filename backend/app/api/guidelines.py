@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.database import get_db
 from app.models.guideline import Guideline, GuidelineRule
+from app.models.organization import Organization
 from app.models.user import User
 from app.middleware.auth import get_current_user, get_optional_user
 from app.ingestion.pdf_parser import extract_text_from_pdf
@@ -95,6 +96,7 @@ async def list_rules(
 @router.post("/rules", response_model=RuleResponse)
 async def create_rule(
     body: RuleCreate,
+    brand: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
@@ -104,7 +106,15 @@ async def create_rule(
             detail="Only Administrators can create or register new Brand Brain rules.",
         )
     # Find or create a default guideline container for the active organization
-    target_org_id = user.organization_id if user and user.organization_id else None
+    target_org_id = None
+    if brand:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand))
+        target_org = org_res.scalar_one_or_none()
+        if target_org:
+            target_org_id = target_org.id
+    if not target_org_id and user and user.organization_id:
+        target_org_id = user.organization_id
+
     if target_org_id:
         g_res = await db.execute(
             select(Guideline)
@@ -159,6 +169,39 @@ async def create_rule(
         examples_negative=rule.examples_negative,
         is_active=rule.is_active,
     )
+
+
+@router.delete("/rules/{id}")
+async def delete_rule(
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    user: Optional[User] = Depends(get_optional_user),
+):
+    if user and user.role not in ("admin", "superadmin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Administrators can deactivate or delete Brand Brain rules.",
+        )
+    rule_uuid = uuid.UUID(id)
+    res = await db.execute(select(GuidelineRule).where(GuidelineRule.id == rule_uuid))
+    rule = res.scalar_one_or_none()
+    if not rule:
+        raise HTTPException(status_code=404, detail="Guideline rule not found")
+
+    rule.is_active = False
+    await db.commit()
+
+    if user:
+        await AuditService.log_action(
+            db=db,
+            user_id=user.id,
+            action="rule_deactivated",
+            entity_type="guideline_rule",
+            entity_id=rule.id,
+            details={"rule_code": rule.rule_code, "title": rule.title},
+        )
+
+    return {"status": "success", "message": f"Rule {rule.rule_code} deactivated successfully"}
 
 
 @router.post("/upload")
@@ -415,7 +458,17 @@ async def run_stress_test(
         for r in rules_res.scalars().all()
     ]
     facts = [
-        {"id": str(f.id), "fact_id": f"FACT-{str(f.id)[:6].upper()}", "name": f.category, "value": f.statement, "status": "active"}
+        {
+            "id": str(f.id),
+            "fact_id": f"FACT-{str(f.id)[:6].upper()}",
+            "name": f.category,
+            "category": f.category,
+            "statement": f.statement,
+            "value": f"{f.numerical_value} {f.numerical_unit or ''}".strip() if f.numerical_value is not None else f.statement,
+            "numerical_value": f.numerical_value,
+            "numerical_unit": f.numerical_unit,
+            "status": "active",
+        }
         for f in facts_res.scalars().all()
     ]
     terms = [

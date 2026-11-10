@@ -24,19 +24,19 @@ APPROVED FACTS IN THE KNOWLEDGE BASE ({brand_name}):
 {facts_context}
 
 CRITICAL RULES (TruthMark Verification Layer):
-1. Hallucination Protection: If a factual claim (e.g., metric, statistic, feature, partnership, performance percentage like "80% success rate", "reduces fraud by 73%") is not supported by the approved facts, mark it as "UNSUPPORTED CLAIM", NOT "FALSE". State clearly: "No approved organizational evidence in {brand_name}'s knowledge base supports this claim."
-2. Numerical Mismatch: If content claims "73%" but approved fact says "42%", this is a CRITICAL/HIGH severity factual mismatch.
-3. Superlative Claims: If content claims "the best in the market", "#1 platform", or "industry first" without matching approved facts, mark as unsupported superlative claim.
-4. Expiration: Note if any matched fact is expired or near expiration.
-5. Preserving Intent: Suggest a safe, truthful replacement that preserves creator intent without misleading metrics.
+1. DYNAMIC GROUND TRUTH: The facts listed above represent the COMPLETE, active source of truth. Every time a new fact is added to the Brand Brain, it must be enforced immediately.
+2. VERIFIED ALIGNMENT: If the content mentions a metric or claim that matches an approved fact (e.g., content claims 10% right swipe rate and an approved fact states 10% right swipe rate), it is FULLY COMPLIANT and should NOT be flagged as a violation.
+3. FACTUAL CONFLICT & NUMERICAL MISMATCH: If content mentions a metric or claim relating to a subject covered in the approved facts, but with an unauthorized or conflicting value (e.g., content claims "20% right swipe rate" while approved fact is "10%", or claims "80% fraud reduction" while approved fact is "42%"), you MUST flag this as a HIGH/CRITICAL violation citing the exact fact_ref.
+4. HALLUCINATION & UNSUPPORTED CLAIMS: If a factual claim (percentage, benchmark, clinical test, financial metric) has no approved basis in the knowledge base, flag it as "Unsupported Factual Claim".
+5. SUPERLATIVES: Unbacked superlative claims ("#1 in the country", "fastest ever") without evidence must be flagged.
 
 Return ONLY a valid JSON array of findings with this exact schema:
 [
   {{
     "finding_type": "fact",
     "severity": "critical" | "high" | "medium" | "low",
-    "title": "Short title (e.g. Unsupported Numerical Claim)",
-    "description": "What was claimed vs what is approved",
+    "title": "Short title (e.g. Unsupported Numerical Claim / Factual Metric Conflict)",
+    "description": "What was claimed vs what is approved in the Brand Brain",
     "detected_text": "Exact quote from content",
     "explanation": "Why this is an issue (cite approved value vs claimed value)",
     "fact_ref": "FACT-XXX if matched, or 'NONE'",
@@ -74,17 +74,76 @@ class FactAgent:
         # 1. Deterministic Numerical / Percentage Pre-scan
         findings: List[Dict[str, Any]] = []
 
-        # Format facts context
+        # Format facts context with full statement and metric grounding
         facts_text_list = []
         for f in facts:
             status = f.get("status", "active")
             valid_until = str(f.get("valid_until", "N/A"))
-            fact_ref = f.get("fact_id", f"FACT-{str(f.get('id', ''))[:6]}")
-            name = f.get("name", "")
+            fact_ref = f.get("fact_id", f"FACT-{str(f.get('id', ''))[:6].upper()}")
+            category = f.get("category") or f.get("name", "general")
+            statement = f.get("statement") or f.get("value", "")
             val = str(f.get("value", ""))
             facts_text_list.append(
-                f"- [{fact_ref}] {name}: Approved Value = '{val}' (Status: {status}, Valid until: {valid_until})"
+                f"- [{fact_ref}] Fact: \"{statement}\" | Approved Metric/Value: '{val}' (Category: {category}, Status: {status}, Valid until: {valid_until})"
             )
+
+        # Deterministic check for numerical claims matching active facts
+        text_lower = text.lower()
+        for f in facts:
+            stmt = (f.get("statement") or "").lower()
+            num_val = f.get("numerical_value")
+            unit = (f.get("numerical_unit") or "").strip().lower()
+            if num_val is None or not stmt:
+                continue
+
+            # Extract subject keywords from statement (e.g. "right swipe", "reduction in transaction fraud")
+            words = [w for w in re.findall(r"\b[a-z]{3,}\b", stmt) if w not in {"the", "and", "has", "for", "with", "from", "that", "this", "our", "are", "was", "been", "platform", "delivers", "achieves", "contains"}]
+            if not words:
+                continue
+
+            # Check if key phrases or words match in text
+            matched_words = [w for w in words if w in text_lower]
+            if len(matched_words) >= 2 or (len(words) <= 2 and len(matched_words) >= 1):
+                # Search for numbers in text
+                num_matches = re.findall(r"\b(\d+(?:\.\d+)?)\s*(%|[a-zA-Z]+)?\b", text)
+                for found_num_str, found_unit in num_matches:
+                    try:
+                        found_num = float(found_num_str)
+                    except ValueError:
+                        continue
+
+                    # If unit is % or matches, and the number conflicts with approved value
+                    unit_matches = not unit or (found_unit and found_unit.lower() == unit) or unit == "%"
+                    if unit_matches and abs(found_num - float(num_val)) > 0.01:
+                        fact_ref = f.get("fact_id", f"FACT-{str(f.get('id', ''))[:6].upper()}")
+                        approved_str = f"{num_val}{unit}" if unit else str(num_val)
+                        claimed_str = f"{found_num_str}{found_unit}" if found_unit else found_num_str
+                        findings.append({
+                            "finding_type": "fact",
+                            "severity": "critical" if abs(found_num - float(num_val)) > 10 else "high",
+                            "title": f"Factual Metric Conflict ({fact_ref})",
+                            "description": f"Content claims {claimed_str}, but approved Brand Brain fact states: '{f.get('statement')}' (Approved value: {approved_str}).",
+                            "detected_text": f"{found_num_str}{found_unit}".strip(),
+                            "explanation": f"Approved organizational fact [{fact_ref}] establishes '{f.get('statement')}'. The claimed figure of {claimed_str} is unverified and contradicts active ground truth.",
+                            "confidence": 1.0,
+                            "fact_id": f.get("id"),
+                            "evidence": [{
+                                "evidence_type": "fact",
+                                "source_ref": fact_ref,
+                                "description": f"Approved value is '{approved_str}', whereas content claims '{claimed_str}'.",
+                                "data": {
+                                    "approved_value": approved_str,
+                                    "claimed_value": claimed_str,
+                                    "source_ref": fact_ref,
+                                    "statement": f.get("statement"),
+                                }
+                            }],
+                            "suggestion": {
+                                "original_text": claimed_str,
+                                "suggested_text": approved_str,
+                                "reasoning": f"Aligns with active verified fact: '{f.get('statement')}'"
+                            }
+                        })
 
         facts_context = "\n".join(facts_text_list) if facts_text_list else "No approved facts currently registered."
 
@@ -121,12 +180,31 @@ class FactAgent:
             if content_str.endswith("```"):
                 content_str = content_str[:-3]
 
-            raw_findings = json.loads(content_str.strip())
+            raw_findings = []
+            if content_str.strip():
+                try:
+                    parsed = json.loads(content_str.strip())
+                    if isinstance(parsed, list):
+                        raw_findings = parsed
+                except Exception:
+                    m = re.search(r"\[\s*\{.*\}\s*\]", content_str, re.DOTALL)
+                    if m:
+                        try:
+                            parsed = json.loads(m.group(0))
+                            if isinstance(parsed, list):
+                                raw_findings = parsed
+                        except Exception:
+                            pass
             if isinstance(raw_findings, list):
                 for item in raw_findings:
                     fact_ref = item.get("fact_ref", "FACT-APPROVED")
                     approved_val = item.get("approved_value", "")
                     claimed_val = item.get("claimed_value", "")
+
+                    # Check if already covered by deterministic check
+                    det_detected = {f["detected_text"] for f in findings if "detected_text" in f}
+                    if item.get("detected_text") in det_detected:
+                        continue
 
                     # Find corresponding fact object if any
                     matched_fact_id = None

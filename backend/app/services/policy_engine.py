@@ -242,12 +242,16 @@ def check_deterministic_guidelines(text: str, rules: list) -> List[dict]:
 
         # 1. Capitalization / All-Caps check (e.g. Rule 777)
         is_caps_rule = any(w in rule_lower for w in ["caps", "capital", "uppercase", "all-caps", "all caps"])
-        is_prohibition = any(w in rule_lower for w in ["never", "do not", "don't", "prohibit", "avoid", "forbidden", "disallow", "no caps"])
+        is_prohibition = any(w in rule_lower for w in ["never", "do not", "don't", "prohibit", "avoid", "forbidden", "disallow", "no caps", "no uppercase"])
 
         if is_caps_rule and is_prohibition:
-            EXEMPT_ACRONYMS = {"AI", "IT", "ID", "PDF", "API", "APAC", "WCAG", "UI", "UX", "AA", "AAA", "ROI", "B2B", "SaaS", "FDA", "FSSAI"}
-            pattern = re.compile(r"\b([A-Z][A-Z']*(?:\s+[A-Z][A-Z']*)+|[A-Z]{3,})\b")
+            EXEMPT_ACRONYMS = {"AI", "UI", "UX", "PDF", "API", "WCAG"}
+            pattern = re.compile(r"\b([A-Z][A-Z']*(?:\s+[A-Z][A-Z']*)+|[A-Z]{2,})\b")
             matches = [m.group(0) for m in pattern.finditer(text) if any(w.strip("'") not in EXEMPT_ACRONYMS for w in m.group(0).split())]
+            
+            # If text is all uppercase, guarantee it is caught
+            if text.strip().isupper() and len(text.strip()) >= 2 and not matches:
+                matches = [text.strip()]
 
             for match in matches:
                 violations.append({

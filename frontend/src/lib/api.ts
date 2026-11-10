@@ -69,8 +69,13 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 export const api = {
   // Reviews
-  getReviews: (status?: string) =>
-    request<any[]>(`/api/reviews${status ? `?status=${status}` : ""}`),
+  getReviews: (status?: string, brand?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (brand) params.set("brand", brand);
+    const qs = params.toString();
+    return request<any[]>(`/api/reviews${qs ? `?${qs}` : ""}`);
+  },
   getReviewDetails: (id: string) =>
     request<any>(`/api/reviews/${id}`),
   createReview: (contentId: string) =>
@@ -104,6 +109,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ remediated_text }),
     }),
+  deleteReview: (reviewId: string) =>
+    request<any>(`/api/reviews/${reviewId}`, { method: "DELETE" }),
 
   // Findings
   acceptSuggestion: (findingId: string) =>
@@ -117,10 +124,14 @@ export const api = {
     request<any>(`/api/findings/${findingId}/evidence`),
 
   // Content
-  getContentList: () =>
-    request<any[]>("/api/content"),
+  getContentList: (brand?: string) => {
+    const qs = brand ? `?brand=${brand}` : "";
+    return request<any[]>(`/api/content${qs}`);
+  },
   getContentDetails: (id: string) =>
     request<any>(`/api/content/${id}`),
+  deleteContent: (id: string) =>
+    request<any>(`/api/content/${id}`, { method: "DELETE" }),
   createContentText: (data: { title: string; raw_text: string; channel?: string; content_type?: string; organization_slug?: string }) =>
     request<any>("/api/content/text", {
       method: "POST",
@@ -140,11 +151,15 @@ export const api = {
     const qs = params.toString();
     return request<any[]>(`/api/guidelines/rules${qs ? `?${qs}` : ""}`);
   },
-  createRule: (data: any) =>
-    request<any>("/api/guidelines/rules", {
+  createRule: (data: any, brand?: string) => {
+    const qs = brand ? `?brand=${brand}` : "";
+    return request<any>(`/api/guidelines/rules${qs}`, {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    });
+  },
+  deleteRule: (id: string) =>
+    request<any>(`/api/guidelines/rules/${id}`, { method: "DELETE" }),
   uploadGuideline: (formData: FormData) =>
     request<any>("/api/guidelines/upload", {
       method: "POST",
@@ -175,6 +190,11 @@ export const api = {
       body: JSON.stringify(data),
     });
   },
+  updateFact: (id: string, data: any) =>
+    request<any>(`/api/facts/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
   deleteFact: (id: string) =>
     request<any>(`/api/facts/${id}`, { method: "DELETE" }),
 
@@ -217,11 +237,13 @@ export const api = {
     request<any[]>("/api/organizations"),
 
   // Audit
-  getAuditLogs: (entityType?: string, action?: string) => {
+  getAuditLogs: (entityType?: string, action?: string, brand?: string) => {
     const params = new URLSearchParams();
     if (entityType) params.append("entity_type", entityType);
     if (action) params.append("action", action);
-    return request<any[]>(`/api/audit?${params.toString()}`);
+    if (brand) params.append("brand", brand);
+    const qs = params.toString();
+    return request<any[]>(`/api/audit${qs ? `?${qs}` : ""}`);
   },
 
   // Helpers

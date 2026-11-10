@@ -38,20 +38,38 @@ _NUMBER_PATTERN = re.compile(
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    import pdfplumber
-
     text_parts: List[str] = []
-    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        for page in pdf.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text_parts.append(page_text)
-            # Also try extracting tables
-            tables = page.extract_tables()
-            for table in tables:
-                for row in table:
-                    cells = [str(c) if c else "" for c in row]
-                    text_parts.append(" | ".join(cells))
+    # Try pdfplumber first
+    try:
+        import pdfplumber
+        with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_parts.append(page_text)
+                try:
+                    tables = page.extract_tables()
+                    for table in tables:
+                        for row in table:
+                            cells = [str(c) if c else "" for c in row]
+                            text_parts.append(" | ".join(cells))
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # If pdfplumber didn't find text or threw, fallback to pypdf
+    if not text_parts:
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+            for page in reader.pages:
+                t = page.extract_text()
+                if t:
+                    text_parts.append(t)
+        except Exception:
+            pass
+
     return "\n\n".join(text_parts)
 
 

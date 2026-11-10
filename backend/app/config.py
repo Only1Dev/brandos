@@ -54,6 +54,17 @@ class Settings(BaseSettings):
     @property
     def async_database_url(self) -> str:
         url = self.database_url
+        # Supabase direct host `db.<ref>.supabase.co` only publishes IPv6 DNS records.
+        # Cloud providers like Render free tier only have IPv4 outbound connectivity.
+        # Automatically map the direct domain to the IPv4-compatible Supabase connection pooler.
+        if "cypytlhjwwxszsxbjefh.supabase.co" in url:
+            url = url.replace(
+                "db.cypytlhjwwxszsxbjefh.supabase.co",
+                "aws-0-ap-southeast-1.pooler.supabase.com"
+            )
+            # When connecting through pooler, user must be postgres.<project-ref>
+            if "://postgres:" in url:
+                url = url.replace("://postgres:", "://postgres.cypytlhjwwxszsxbjefh:", 1)
         if url.startswith("postgresql://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url

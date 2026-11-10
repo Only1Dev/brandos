@@ -14,9 +14,10 @@ function getBaseUrl(): string {
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return "http://localhost:8000";
     }
-    return "";
+    // Deployed production environment (e.g. Vercel) fallback to Render backend
+    return "https://brandos-xwh1.onrender.com";
   }
-  return "http://localhost:8000";
+  return "https://brandos-xwh1.onrender.com";
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -41,19 +42,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       headers,
     });
   } catch (err: any) {
-    // If relative rewrite fails or server is offline, fallback to direct localhost:8000
-    if (typeof window !== "undefined" && !url.startsWith("http")) {
-      try {
-        const directUrl = `http://localhost:8000${endpoint}`;
-        response = await fetch(directUrl, {
-          ...options,
-          headers,
-        });
-      } catch (fallbackErr: any) {
-        throw new Error("Backend server unreachable. Please verify BrandOS backend is running on port 8000.");
-      }
+    const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    if (isLocal) {
+      throw new Error("Backend server unreachable. Please verify BrandOS backend is running locally on port 8000.");
     } else {
-      throw new Error("Backend server unreachable. Please verify BrandOS backend is running on port 8000.");
+      throw new Error(`Unable to connect to BrandOS API service (${baseUrl}). Please check backend status.`);
     }
   }
 

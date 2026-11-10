@@ -192,51 +192,91 @@ export function AdversarialStressLab() {
       </div>
 
       {/* Result Card */}
-      {result && (
-        <div className="p-5 rounded-xl bg-slate-950/90 border border-red-500/40 space-y-4 animate-in fade-in duration-300">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center">
-                <XCircle className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-red-400 uppercase tracking-wider">
-                  Attack Successfully Intercepted by Firewall
-                </span>
-                <div className="text-[11px] text-slate-400">
-                  {result.defense_summary}
+      {result && (() => {
+        const isPassed =
+          result.status === "cleared" ||
+          (result.decision === "PASS" && (result.governance_score ?? 0) >= 85 && (!result.findings || result.findings.length === 0));
+
+        return (
+          <div
+            className={`p-5 rounded-xl border space-y-4 animate-in fade-in duration-300 ${
+              isPassed
+                ? "bg-slate-950/90 border-emerald-500/50"
+                : "bg-slate-950/90 border-red-500/40"
+            }`}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`h-7 w-7 rounded-lg flex items-center justify-center ${
+                    isPassed
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : "bg-red-500/20 text-red-400"
+                  }`}
+                >
+                  {isPassed ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                 </div>
-              </div>
-            </div>
-
-            <div className="text-right">
-              <span className="text-[10px] font-mono text-slate-400 block">Firewall Decision</span>
-              <span className="px-2.5 py-0.5 rounded text-xs font-bold font-mono bg-red-900/60 text-red-200 border border-red-700">
-                {result.decision} • Score: {result.governance_score}/100
-              </span>
-            </div>
-          </div>
-
-          {/* Violations Flagged */}
-          <div className="space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Triggered Defensive Interceptions ({result.findings?.length || 0})
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {result.findings?.map((f: any, idx: number) => (
-                <div key={idx} className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-                  <div className="flex items-center justify-between text-[10px] font-bold mb-1">
-                    <span className="text-indigo-400 uppercase">{f.finding_type || "Domain"}</span>
-                    <span className="text-red-400 uppercase">{f.severity || "Critical"}</span>
+                <div>
+                  <span
+                    className={`text-xs font-bold uppercase tracking-wider ${
+                      isPassed ? "text-emerald-400" : "text-red-400"
+                    }`}
+                  >
+                    {isPassed
+                      ? "Payload Verified Compliant — Zero Brand Drift"
+                      : "Adversarial Drift Intercepted by Firewall"}
+                  </span>
+                  <div className="text-[11px] text-slate-400">
+                    {result.defense_summary}
                   </div>
-                  <div className="font-semibold text-slate-200">{f.title}</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">{f.description}</div>
                 </div>
-              ))}
+              </div>
+
+              <div className="text-right">
+                <span className="text-[10px] font-mono text-slate-400 block">Firewall Verdict</span>
+                <span
+                  className={`px-2.5 py-0.5 rounded text-xs font-bold font-mono border ${
+                    isPassed
+                      ? "bg-emerald-900/60 text-emerald-200 border-emerald-700"
+                      : "bg-red-900/60 text-red-200 border-red-700"
+                  }`}
+                >
+                  {result.decision} • Score: {result.governance_score}/100
+                </span>
+              </div>
+            </div>
+
+            {/* Violations Flagged */}
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                {isPassed ? "Compliance Attestation" : `Triggered Defensive Interceptions (${result.findings?.length || 0})`}
+              </div>
+
+              {isPassed ? (
+                <div className="p-3 rounded-lg bg-emerald-950/30 border border-emerald-800/40 text-xs text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span>
+                    No brand drift, unbacked factual claims, or prohibited terms detected in this payload. Content is fully aligned with active Brand Brain standards.
+                  </span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {result.findings?.map((f: any, idx: number) => (
+                    <div key={idx} className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+                      <div className="flex items-center justify-between text-[10px] font-bold mb-1">
+                        <span className="text-indigo-400 uppercase">{f.finding_type || "Domain"}</span>
+                        <span className="text-red-400 uppercase">{f.severity || "Critical"}</span>
+                      </div>
+                      <div className="font-semibold text-slate-200">{f.title}</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">{f.description}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

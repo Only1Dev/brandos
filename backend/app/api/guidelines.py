@@ -412,14 +412,26 @@ async def run_stress_test(
         brand_domain=brand_domain,
     )
 
+    decision = results.get("status", "BLOCKED")
+    score = results.get("governance_score", 0)
+    findings = results.get("findings", [])
+    is_attack_intercepted = decision in ("BLOCKED", "REVIEW_REQUIRED") or score < 85 or len(findings) > 0
+
+    if is_attack_intercepted:
+        summary = f"Adversarial drift detected: The BrandOS Autonomous Firewall successfully intercepted this {body.attack_type.replace('_', ' ')} payload ({len(findings)} violation{'s' if len(findings) != 1 else ''} flagged)."
+        status_val = "intercepted"
+    else:
+        summary = f"Payload verified compliant: Content satisfied all Brand Brain guidelines, approved facts, and active tone rules (Governance Score: {score}/100 PASS)."
+        status_val = "cleared"
+
     return {
-        "status": "intercepted",
+        "status": status_val,
         "attack_type": body.attack_type,
         "brand_name": brand_name,
         "input_copy": test_copy,
-        "decision": results.get("status", "BLOCKED"),
-        "governance_score": results.get("governance_score", 0),
-        "total_violations": len(results.get("findings", [])),
-        "findings": results.get("findings", []),
-        "defense_summary": f"The BrandOS Autonomous Firewall successfully intercepted this {body.attack_type.replace('_', ' ')} vector before publication clearance could be issued.",
+        "decision": decision,
+        "governance_score": score,
+        "total_violations": len(findings),
+        "findings": findings,
+        "defense_summary": summary,
     }

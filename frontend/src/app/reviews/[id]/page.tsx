@@ -457,7 +457,7 @@ export default function ReviewDetailPage() {
             {content?.file_url && (content.content_type === "image" || content.file_url.match(/\.(png|jpe?g|webp|gif)$/i)) && (
               <div className="mb-4 rounded-lg overflow-hidden border border-slate-200 bg-slate-900/5 flex items-center justify-center p-2">
                 <img
-                  src={`http://localhost:8000${content.file_url}`}
+                  src={api.getFileUrl(content.file_url)}
                   alt={content.title || "Uploaded creative"}
                   className="max-h-72 w-auto rounded object-contain shadow-sm"
                 />
@@ -472,7 +472,7 @@ export default function ReviewDetailPage() {
                   <span className="font-mono text-indigo-700 truncate max-w-[180px]">{content.file_url.split("/").pop()}</span>
                 </div>
                 <a
-                  href={`http://localhost:8000${content.file_url}`}
+                  href={api.getFileUrl(content.file_url)}
                   target="_blank"
                   rel="noreferrer"
                   className="px-2.5 py-1 bg-white border border-indigo-300 rounded font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors shadow-xs"

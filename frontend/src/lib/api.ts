@@ -205,4 +205,14 @@ export const api = {
     if (action) params.append("action", action);
     return request<any[]>(`/api/audit?${params.toString()}`);
   },
+
+  // Helpers
+  getBaseUrl,
+  getFileUrl: (path: string | null | undefined): string => {
+    if (!path) return "";
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    const base = getBaseUrl();
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return `${base}${cleanPath}`;
+  },
 };

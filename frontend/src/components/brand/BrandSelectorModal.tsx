@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useBrand, BRANDS, BrandSlug, UserRole } from "@/context/BrandContext";
+import { useBrand, BRANDS, BrandSlug, UserRole, BRAND_USERS, UserProfile } from "@/context/BrandContext";
 import {
   Shield,
   Leaf,
@@ -28,6 +28,7 @@ export function BrandSelectorModal() {
     currentRole,
     switchBrand,
     switchRole,
+    switchUser,
     isBrandModalOpen,
     setIsBrandModalOpen,
     setIsRegisterModalOpen,
@@ -38,8 +39,8 @@ export function BrandSelectorModal() {
 
   // Brand mode state
   const [selectedBrand, setSelectedBrand] = useState<BrandSlug>(activeBrand);
-  const [selectedRole, setSelectedRole] = useState<UserRole>(currentRole === "superadmin" ? "admin" : currentRole);
-  const [brandPassword, setBrandPassword] = useState(`aureon-${currentRole === "superadmin" ? "admin" : currentRole}`);
+  const [selectedUser, setSelectedUser] = useState<UserProfile>(BRAND_USERS[activeBrand][0]);
+  const [brandPassword, setBrandPassword] = useState(`${activeBrand}-${BRAND_USERS[activeBrand][0].role}`);
 
   // SuperAdmin mode state
   const [superAdminPassword, setSuperAdminPassword] = useState("superadmin-master");
@@ -50,26 +51,24 @@ export function BrandSelectorModal() {
   const handleBrandSelect = (slug: BrandSlug) => {
     setSelectedBrand(slug);
     setErrorMsg("");
-    setBrandPassword(`${slug}-${selectedRole}`);
+    const defaultUser = BRAND_USERS[slug][0];
+    setSelectedUser(defaultUser);
+    setBrandPassword(`${slug}-${defaultUser.role}`);
   };
 
-  const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role);
+  const handleUserProfileSelect = (user: UserProfile) => {
+    setSelectedUser(user);
     setErrorMsg("");
-    setBrandPassword(`${selectedBrand}-${role}`);
+    setBrandPassword(`${selectedBrand}-${user.role}`);
   };
 
   const handleBrandLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const expectedPw = `${selectedBrand}-${selectedRole}`;
-    if (brandPassword === expectedPw || brandPassword.length > 0) {
-      localStorage.setItem("brandos_has_chosen_brand", "true");
-      switchBrand(selectedBrand, selectedRole);
-      setIsBrandModalOpen(false);
-      router.push("/dashboard");
-    } else {
-      setErrorMsg(`Invalid password. Default access key is '${expectedPw}'.`);
-    }
+    localStorage.setItem("brandos_has_chosen_brand", "true");
+    switchBrand(selectedBrand, selectedUser.role);
+    switchUser(selectedUser);
+    setIsBrandModalOpen(false);
+    router.push("/dashboard");
   };
 
   const handleSuperAdminLoginSubmit = (e: React.FormEvent) => {
@@ -269,64 +268,46 @@ export function BrandSelectorModal() {
                 <Sparkles className="h-4 w-4 text-amber-500" />
               </div>
 
-              {/* Role Selection & Login Form */}
+              {/* Profile Selection & Login Form */}
               <form onSubmit={handleBrandLoginSubmit} className="bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5 text-indigo-600" />
-                    Select Role in {selectedBrand === "aureon" ? "Aureon" : "Solaria"}:
+                    Select Active Profile in {selectedBrand === "aureon" ? "Aureon" : "Solaria"} (4 Profiles Available):
                   </div>
-                  <div className="text-[11px] text-slate-500">Role-Based Access Control (RBAC) enforced</div>
+                  <div className="text-[11px] text-slate-500">Enterprise Role-Based Access Enforced</div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleRoleSelect("admin")}
-                    className={`px-3 py-2.5 rounded-lg text-left transition-all border ${
-                      selectedRole === "admin"
-                        ? "bg-white border-indigo-600 shadow-sm ring-1 ring-indigo-600/30 text-indigo-900"
-                        : "bg-white/60 border-slate-200 text-slate-700 hover:bg-white"
-                    }`}
-                  >
-                    <div className="text-xs font-bold flex items-center justify-between">
-                      <span>Administrator</span>
-                      {selectedRole === "admin" && <span className="h-2 w-2 rounded-full bg-indigo-600" />}
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Edit Guidelines & Brand Brain</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRoleSelect("reviewer")}
-                    className={`px-3 py-2.5 rounded-lg text-left transition-all border ${
-                      selectedRole === "reviewer"
-                        ? "bg-white border-indigo-600 shadow-sm ring-1 ring-indigo-600/30 text-indigo-900"
-                        : "bg-white/60 border-slate-200 text-slate-700 hover:bg-white"
-                    }`}
-                  >
-                    <div className="text-xs font-bold flex items-center justify-between">
-                      <span>Reviewer / Mgr</span>
-                      {selectedRole === "reviewer" && <span className="h-2 w-2 rounded-full bg-indigo-600" />}
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Approve, Reject & Override</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRoleSelect("creator")}
-                    className={`px-3 py-2.5 rounded-lg text-left transition-all border ${
-                      selectedRole === "creator"
-                        ? "bg-white border-indigo-600 shadow-sm ring-1 ring-indigo-600/30 text-indigo-900"
-                        : "bg-white/60 border-slate-200 text-slate-700 hover:bg-white"
-                    }`}
-                  >
-                    <div className="text-xs font-bold flex items-center justify-between">
-                      <span>Content Creator</span>
-                      {selectedRole === "creator" && <span className="h-2 w-2 rounded-full bg-indigo-600" />}
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Submit Drafts & View Audits</div>
-                  </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {BRAND_USERS[selectedBrand].map((u) => {
+                    const isSelected = selectedUser.email === u.email;
+                    return (
+                      <button
+                        key={u.email}
+                        type="button"
+                        onClick={() => handleUserProfileSelect(u)}
+                        className={`px-3 py-2.5 rounded-lg text-left transition-all border ${
+                          isSelected
+                            ? "bg-white border-indigo-600 shadow-sm ring-1 ring-indigo-600/30 text-indigo-900"
+                            : "bg-white/60 border-slate-200 text-slate-700 hover:bg-white"
+                        }`}
+                      >
+                        <div className="text-xs font-bold flex items-center justify-between">
+                          <span className="truncate pr-1">{u.name}</span>
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            u.role === "admin"
+                              ? "bg-indigo-100 text-indigo-800"
+                              : u.role === "reviewer"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-sky-100 text-sky-800"
+                          }`}>
+                            {u.role === "admin" ? "Admin" : u.role === "reviewer" ? "Manager" : "Creator"}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-0.5 truncate">{u.title}</div>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <div>
@@ -337,8 +318,12 @@ export function BrandSelectorModal() {
                     </label>
                     <button
                       type="button"
-                      onClick={() => setBrandPassword(`${selectedBrand}-${selectedRole}`)}
+                      onClick={() => setBrandPassword(`${selectedBrand}-${selectedUser.role}`)}
                       className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                    >
+                      <Zap className="h-3 w-3" />
+                      Auto-Fill Default Key ({selectedBrand}-{selectedUser.role})
+                    </button>
                     >
                       <Zap className="h-3 w-3" />
                       Auto-Fill Default Key ({selectedBrand}-{selectedRole})

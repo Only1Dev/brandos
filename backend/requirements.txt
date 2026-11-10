@@ -14,16 +14,12 @@ pydantic-settings==2.7.1
 
 # Supabase
 supabase==2.11.0
-gotrue==2.11.0
 python-jose[cryptography]==3.3.0
 
 # AI / LLM
 groq==0.15.0
 google-generativeai==0.8.4
 huggingface-hub==0.27.1
-
-# RAG
-chromadb==0.5.23
 
 # Document Processing
 pdfplumber==0.11.4
@@ -32,7 +28,7 @@ Pillow==11.1.0
 pytesseract==0.3.13
 
 # Utilities
-httpx==0.28.1
+httpx>=0.26.0,<0.28.0
 tenacity==9.0.0
 python-dateutil==2.9.0
 aiofiles==24.1.0

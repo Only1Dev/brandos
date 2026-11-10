@@ -53,6 +53,8 @@ async def list_facts(
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(Fact).where(Fact.is_active == True)
+    if user and user.organization_id and user.role != "superadmin":
+        query = query.where(Fact.organization_id == user.organization_id)
     if category:
         query = query.where(Fact.category == category)
     result = await db.execute(query)

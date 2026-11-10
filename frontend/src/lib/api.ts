@@ -198,6 +198,12 @@ export const api = {
   getExpiringClaims: (days?: number) =>
     request<any[]>(`/api/analytics/expiring-claims${days ? `?days=${days}` : ""}`),
 
+  // Organizations & Superadmin
+  getSuperAdminOverview: () =>
+    request<any>("/api/organizations/superadmin/overview"),
+  getOrganizations: () =>
+    request<any[]>("/api/organizations"),
+
   // Audit
   getAuditLogs: (entityType?: string, action?: string) => {
     const params = new URLSearchParams();

@@ -47,6 +47,8 @@ async def list_terminology(
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(TerminologyRule).where(TerminologyRule.is_active == True)
+    if user and user.organization_id and user.role != "superadmin":
+        query = query.where(TerminologyRule.organization_id == user.organization_id)
     if status_filter:
         query = query.where(TerminologyRule.status == status_filter)
     result = await db.execute(query)

@@ -118,4 +118,14 @@ async def get_optional_user(
         if user:
             return user
 
+    if brand_slug:
+        from app.models.organization import Organization
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand_slug))
+        org = org_res.scalar_one_or_none()
+        if org:
+            u_res = await db.execute(select(User).where(User.organization_id == org.id))
+            u = u_res.scalars().first()
+            if u:
+                return u
+
     return None

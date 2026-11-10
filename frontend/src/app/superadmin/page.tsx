@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBrand, BrandSlug } from "@/context/BrandContext";
+import { api } from "@/lib/api";
 import {
   Globe,
   Shield,
@@ -64,9 +65,7 @@ export default function SuperAdminPage() {
   const fetchOverview = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/organizations/superadmin/overview");
-      if (!res.ok) throw new Error("Failed to load superadmin overview");
-      const json = await res.json();
+      const json = await api.getSuperAdminOverview();
       setData(json);
     } catch (e: any) {
       console.error(e);
@@ -88,10 +87,7 @@ export default function SuperAdminPage() {
   const handleReingest = async (slug: BrandSlug) => {
     try {
       setIngesting(slug);
-      const res = await fetch(`/api/guidelines/load-demo-pdf?brand=${slug}`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to ingest PDF");
+      await api.loadDemoGuidelinePdf(slug);
       setMessage(`Successfully re-ingested ${slug} guidelines into Brand Brain!`);
       await fetchOverview();
     } catch (e: any) {

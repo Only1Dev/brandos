@@ -42,6 +42,8 @@ async def list_assets(
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(Asset).where(Asset.is_active == True)
+    if user and user.organization_id and user.role != "superadmin":
+        query = query.where(Asset.organization_id == user.organization_id)
     if asset_type:
         query = query.where(Asset.asset_type == asset_type)
     result = await db.execute(query)

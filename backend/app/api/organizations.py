@@ -86,11 +86,11 @@ async def superadmin_overview(
         
         rules_count = 0
         if g_ids:
-            r_res = await db.execute(select(GuidelineRule).where(GuidelineRule.guideline_id.in_(g_ids)))
+            r_res = await db.execute(select(GuidelineRule).where(GuidelineRule.guideline_id.in_(g_ids), GuidelineRule.is_active == True))
             rules_count = len(r_res.scalars().all())
 
         # Facts count
-        f_res = await db.execute(select(Fact).where(Fact.organization_id == o.id))
+        f_res = await db.execute(select(Fact).where(Fact.organization_id == o.id, Fact.is_active == True))
         facts_count = len(f_res.scalars().all())
 
         # Terms count

@@ -53,6 +53,8 @@ async def list_claims(
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(Claim)
+    if user and user.organization_id and user.role != "superadmin":
+        query = query.where(Claim.organization_id == user.organization_id)
     if status:
         query = query.where(Claim.status == status)
     result = await db.execute(query)

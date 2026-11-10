@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useBrand, BRANDS, BrandSlug, UserRole, BRAND_USERS, UserProfile } from "@/context/BrandContext";
+import { api } from "@/lib/api";
 import {
   Shield,
   Leaf,
@@ -45,6 +46,31 @@ export function BrandSelectorModal() {
   // SuperAdmin mode state
   const [superAdminPassword, setSuperAdminPassword] = useState("superadmin-master");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Live dynamic stats for brands (auto-updates rules and facts counts from Brand Brain)
+  const [brandStats, setBrandStats] = useState<Record<string, { rules_count: number; facts_count: number }>>({
+    aureon: { rules_count: 17, facts_count: 1 },
+    solaria: { rules_count: 3, facts_count: 2 },
+  });
+
+  useEffect(() => {
+    if (isBrandModalOpen) {
+      api.getSuperAdminOverview()
+        .then((res) => {
+          if (res?.organizations) {
+            const statsMap: Record<string, { rules_count: number; facts_count: number }> = {};
+            for (const org of res.organizations) {
+              statsMap[org.slug] = {
+                rules_count: org.stats?.rules_count ?? 0,
+                facts_count: org.stats?.facts_count ?? 0,
+              };
+            }
+            setBrandStats((prev) => ({ ...prev, ...statsMap }));
+          }
+        })
+        .catch((e) => console.error("Error loading live brand stats:", e));
+    }
+  }, [isBrandModalOpen]);
 
   if (!isBrandModalOpen) return null;
 
@@ -183,7 +209,9 @@ export function BrandSelectorModal() {
                     Enterprise banking security, autonomous fraud mitigation, and Aureon Shield defense intelligence.
                   </p>
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
-                    <span className="font-semibold text-slate-500">17 Rules • 1 Verified Fact</span>
+                    <span className="font-semibold text-slate-500">
+                      {brandStats["aureon"]?.rules_count ?? 17} Rules • {brandStats["aureon"]?.facts_count ?? 1} Verified Fact{(brandStats["aureon"]?.facts_count ?? 1) === 1 ? "" : "s"}
+                    </span>
                     <a
                       href="/Aureon_Official_Brand_Guidelines_2026.pdf"
                       target="_blank"
@@ -225,7 +253,9 @@ export function BrandSelectorModal() {
                     Clinical-grade preventative wellness, adaptogenic hydration, and plant-based cellular nutrition (PureHydrate).
                   </p>
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
-                    <span className="font-semibold text-slate-500">3 Rules • 2 Verified Facts</span>
+                    <span className="font-semibold text-slate-500">
+                      {brandStats["solaria"]?.rules_count ?? 3} Rules • {brandStats["solaria"]?.facts_count ?? 2} Verified Fact{(brandStats["solaria"]?.facts_count ?? 2) === 1 ? "" : "s"}
+                    </span>
                     <a
                       href="/Solaria_Wellness_Official_Brand_Guidelines_2026.pdf"
                       target="_blank"

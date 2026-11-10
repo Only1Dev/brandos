@@ -57,6 +57,10 @@ async def list_rules(
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(GuidelineRule).where(GuidelineRule.is_active == True)
+    if user and user.organization_id and user.role != "superadmin":
+        query = query.join(Guideline, GuidelineRule.guideline_id == Guideline.id).where(
+            Guideline.organization_id == user.organization_id
+        )
     if category:
         query = query.where(GuidelineRule.category == category)
     result = await db.execute(query)
@@ -88,14 +92,23 @@ async def create_rule(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only Administrators can create or register new Brand Brain rules.",
         )
-    # Find or create a default guideline container if needed
-    g_res = await db.execute(select(Guideline).limit(1))
+    # Find or create a default guideline container for the active organization
+    target_org_id = user.organization_id if user and user.organization_id else None
+    if target_org_id:
+        g_res = await db.execute(
+            select(Guideline)
+            .where(Guideline.organization_id == target_org_id)
+            .order_by(Guideline.created_at.desc())
+            .limit(1)
+        )
+    else:
+        g_res = await db.execute(select(Guideline).limit(1))
     guideline = g_res.scalar_one_or_none()
     if not guideline:
         guideline = Guideline(
-            organization_id=user.organization_id if user and user.organization_id else uuid.uuid4(),
-            name="General Brand Guidelines",
-            version="1.0",
+            organization_id=target_org_id or uuid.uuid4(),
+            title="General Brand Guidelines",
+            version=1,
         )
         db.add(guideline)
         await db.flush()

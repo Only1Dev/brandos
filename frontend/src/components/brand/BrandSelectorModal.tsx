@@ -322,11 +322,7 @@ export function BrandSelectorModal() {
                       className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
                     >
                       <Zap className="h-3 w-3" />
-                      Auto-Fill Default Key ({selectedBrand}-{selectedUser.role})
-                    </button>
-                    >
-                      <Zap className="h-3 w-3" />
-                      Auto-Fill Default Key ({selectedBrand}-{selectedRole})
+                      Auto-Fill Default Key ({selectedBrand}-${selectedUser.role})
                     </button>
                   </div>
 

@@ -5,6 +5,7 @@ PRD FR-18 (Evidence Trace), FR-19 (AI Suggestions Accept/Reject), FR-20 (Human R
 
 from __future__ import annotations
 
+import re
 import uuid
 from typing import Optional
 

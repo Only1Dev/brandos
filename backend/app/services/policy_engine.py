@@ -243,11 +243,71 @@ def resolve_policy_precedence(violations: List[PolicyViolation]) -> List[PolicyV
 
 
 
+def check_substance_quality(text: str) -> List[dict]:
+    """
+    Zero-tolerance publication firewall against placeholder copy, keyboard mash,
+    and meaningless text (e.g. 'abcd', 'asdf', 'test123').
+    """
+    violations = []
+    cleaned = text.strip()
+    if not cleaned:
+        return violations
+
+    cleaned_lower = cleaned.lower()
+    words = re.findall(r"\b[a-zA-Z0-9']+\b", cleaned)
+
+    PLACEHOLDER_WORDS = {
+        "abcd", "abc", "asdf", "test", "testing", "aaa", "xyz", "qwerty", "1234",
+        "sample", "placeholder", "lorem", "ipsum", "lorem ipsum", "temp", "draft",
+        "test content", "sample text", "foobar", "foo bar", "asdfgh", "zxcv", "qwer"
+    }
+
+    is_placeholder = False
+    reason = ""
+
+    if cleaned_lower in PLACEHOLDER_WORDS:
+        is_placeholder = True
+        reason = f"Submitted copy '{cleaned}' is a recognized placeholder or test draft."
+    elif len(words) == 1 and len(cleaned) <= 10 and cleaned_lower not in {"aureon", "solaria", "shield", "purehydrate"}:
+        token = words[0].lower()
+        if not any(v in token for v in "aeiou") or token in {"abcd", "bcde", "cdef", "wxyz", "qwer", "asdf", "zxcv"}:
+            is_placeholder = True
+            reason = f"Submitted copy '{cleaned}' is an arbitrary single token without linguistic substance."
+    elif len(cleaned) < 15 and len(words) <= 2 and not any(b in cleaned_lower for b in ["aureon", "solaria", "shield", "purehydrate", "security", "defense", "fraud"]):
+        is_placeholder = True
+        reason = f"Submitted copy '{cleaned}' has insufficient length and substantive vocabulary for enterprise publication."
+
+    if is_placeholder:
+        violations.append({
+            "finding_type": "brand",
+            "severity": "critical",
+            "title": "Content Quality Standard: Meaningless Placeholder Copy",
+            "description": f"Content '{cleaned}' was blocked by BrandOS pre-publication firewall. {reason} Publishing raw drafts, keyboard mash, or placeholder copy is strictly prohibited.",
+            "detected_text": cleaned,
+            "explanation": "Enterprise content governance requires all submitted text to meet substantive communication standards prior to approval.",
+            "rule_ref": "BRAND-SUBSTANCE-001",
+            "confidence": 1.0,
+            "evidence": [{
+                "evidence_type": "policy",
+                "source_ref": "BRAND-SUBSTANCE-001",
+                "description": "Zero-tolerance firewall active: Placeholder drafts, keyboard mash, and meaningless text are blocked from publication.",
+                "data": {"content": cleaned}
+            }],
+            "suggestion": {
+                "original_text": cleaned,
+                "suggested_text": "",
+                "reasoning": "Replace placeholder draft with complete, brand-aligned publication copy."
+            }
+        })
+
+    return violations
+
+
 def check_deterministic_guidelines(text: str, rules: list) -> List[dict]:
     """
     Scans submitted text deterministically against registered GuidelineRules.
     Guarantees that custom rules (e.g. ALL-CAPS prohibition like Rule 777,
-    banned quotes, or formatting restrictions) are enforced 100% reliably.
+    banned quotes, and mandatory keyword/token inclusion rules) are enforced 100% reliably.
     """
     violations: List[dict] = []
     if not text or not rules:
@@ -295,34 +355,94 @@ def check_deterministic_guidelines(text: str, rules: list) -> List[dict]:
                     }
                 })
 
-        # 2. Banned quoted phrases (e.g., Never use "word")
-        quoted_phrases = re.findall(r"['\"]([^'\"]{3,})['\"]", rule_text)
-        for phrase in quoted_phrases:
-            if phrase.lower() in text.lower():
-                pattern = re.compile(re.escape(phrase), re.IGNORECASE)
-                m = pattern.search(text)
-                detected = m.group(0) if m else phrase
-                violations.append({
-                    "finding_type": "brand",
-                    "severity": severity,
-                    "title": f"Guideline Rule Violation: Prohibited Phrase (Rule {rule_id})",
-                    "description": f"Detected prohibited phrase '{detected}', directly violating Rule {rule_id}: '{rule_text}'.",
-                    "detected_text": detected,
-                    "explanation": f"Rule {rule_id} mandates: '{rule_text}'.",
-                    "rule_ref": str(rule_id),
-                    "confidence": 1.0,
-                    "evidence": [{
-                        "evidence_type": "rule",
-                        "source_ref": str(rule_id),
-                        "description": f"Active Rule {rule_id}: {rule_text}",
-                        "data": {"rule": str(rule_id), "detected": detected}
-                    }],
-                    "suggestion": {
-                        "original_text": detected,
-                        "suggested_text": "",
-                        "reasoning": f"Remove prohibited phrase '{detected}' as mandated by Rule {rule_id}."
-                    }
-                })
+        # 2. Mandatory Keyword / Token Inclusion Rules
+        # e.g. "every text should have key word kanishka" or 'the text should contain "A" in capital'
+        inclusion_phrases = [
+            "should have", "must have", "should contain", "must contain", "should include",
+            "must include", "shall contain", "shall include", "always contain", "always include",
+            "always have", "always use", "must use", "should use", "every text should have",
+            "every text must have", "all text must have", "all text should have", "required keyword"
+        ]
+        is_inclusion_rule = any(p in rule_lower for p in inclusion_phrases)
+
+        if is_inclusion_rule and not is_prohibition:
+            target_token = None
+            # Check for quoted target first
+            quoted = re.findall(r"['\"]([^'\"]+)['\"]", rule_text)
+            if quoted:
+                target_token = quoted[0]
+            else:
+                # Check for "key word <word>" or "keyword <word>"
+                kw_match = re.search(r"(?:key\s*word|phrase|term)\s+['\"]?([a-zA-Z0-9_\-]+)['\"]?", rule_text, re.IGNORECASE)
+                if kw_match:
+                    target_token = kw_match.group(1)
+                else:
+                    # Check for "contain <word>", "include <word>", "have <word>"
+                    inc_match = re.search(r"(?:contain|include|have|use)\s+(?:the\s+)?['\"]?([a-zA-Z0-9_\-]+)['\"]?", rule_text, re.IGNORECASE)
+                    if inc_match and inc_match.group(1).lower() not in {"key", "word", "keyword", "phrase", "term", "the", "a", "an", "all", "every", "text", "content", "copy"}:
+                        target_token = inc_match.group(1)
+
+            if target_token:
+                # Check case sensitivity
+                case_sensitive = any(w in rule_lower for w in ["in capital", "in uppercase", "capital", "uppercase", "case-sensitive", "case sensitive"])
+                has_target = False
+                if case_sensitive:
+                    has_target = target_token in text
+                else:
+                    has_target = target_token.lower() in text.lower()
+
+                if not has_target:
+                    violations.append({
+                        "finding_type": "brand",
+                        "severity": severity if severity in ("critical", "high", "error") else "error",
+                        "title": f"Guideline Rule Violation: Missing Required Keyword '{target_token}' (Rule {rule_id})",
+                        "description": f"Content is missing the mandatory keyword/token '{target_token}', directly violating active Brand Brain rule {rule_id}: '{rule_text}'.",
+                        "detected_text": text[:60] + ("..." if len(text) > 60 else ""),
+                        "explanation": f"Rule {rule_id} mandates: '{rule_text}'. All published copy must include '{target_token}' before approval.",
+                        "rule_ref": str(rule_id),
+                        "confidence": 1.0,
+                        "evidence": [{
+                            "evidence_type": "rule",
+                            "source_ref": str(rule_id),
+                            "description": f"Active Rule {rule_id}: {rule_text}",
+                            "data": {"rule": str(rule_id), "missing_target": target_token}
+                        }],
+                        "suggestion": {
+                            "original_text": text[:60] + ("..." if len(text) > 60 else ""),
+                            "suggested_text": f"{text} {target_token}",
+                            "reasoning": f"Add the required keyword '{target_token}' as mandated by Rule {rule_id}."
+                        }
+                    })
+
+        # 3. Banned quoted phrases (e.g., Never use "word")
+        if is_prohibition:
+            quoted_phrases = re.findall(r"['\"]([^'\"]{3,})['\"]", rule_text)
+            for phrase in quoted_phrases:
+                if phrase.lower() in text.lower():
+                    pattern = re.compile(re.escape(phrase), re.IGNORECASE)
+                    m = pattern.search(text)
+                    detected = m.group(0) if m else phrase
+                    violations.append({
+                        "finding_type": "brand",
+                        "severity": severity,
+                        "title": f"Guideline Rule Violation: Prohibited Phrase (Rule {rule_id})",
+                        "description": f"Detected prohibited phrase '{detected}', directly violating Rule {rule_id}: '{rule_text}'.",
+                        "detected_text": detected,
+                        "explanation": f"Rule {rule_id} mandates: '{rule_text}'.",
+                        "rule_ref": str(rule_id),
+                        "confidence": 1.0,
+                        "evidence": [{
+                            "evidence_type": "rule",
+                            "source_ref": str(rule_id),
+                            "description": f"Active Rule {rule_id}: {rule_text}",
+                            "data": {"rule": str(rule_id), "detected": detected}
+                        }],
+                        "suggestion": {
+                            "original_text": detected,
+                            "suggested_text": "",
+                            "reasoning": f"Remove prohibited phrase '{detected}' as mandated by Rule {rule_id}."
+                        }
+                    })
 
     return violations
 
@@ -335,3 +455,6 @@ class PolicyEngine:
 
     def check_deterministic_guidelines(self, text: str, rules: list) -> List[dict]:
         return check_deterministic_guidelines(text, rules)
+
+    def check_substance_quality(self, text: str) -> List[dict]:
+        return check_substance_quality(text)

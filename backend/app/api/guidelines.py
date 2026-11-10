@@ -285,7 +285,7 @@ async def load_demo_guideline_pdf(
     user: Optional[User] = Depends(get_optional_user),
 ):
     """
-    1-Click Hackathon Demo: Ingests official Brand Guidelines PDF for Aureon or Solaria
+    Enterprise Brand Brain Ingestion: Ingests official Brand Guidelines PDF for Aureon or Solaria
     into BrandOS Core AI Brand Brain (PyMuPDF -> LLM Structuring -> Vector RAG).
     """
     brand_key = brand.lower().strip()

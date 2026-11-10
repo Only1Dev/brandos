@@ -44,12 +44,15 @@ Evaluate the following content thoroughly for:
      - confidence: 0.95
 2. Registered Guidelines & Custom Rules (MANDATORY ENFORCEMENT):
    You MUST evaluate against EVERY single rule listed under "Guidelines and rules to verify against" above.
+   - If a rule mandates including a specific keyword or phrase (e.g. "kanishka", 'A' in capital, "must contain XYZ"), check whether it is present. If missing, return a violation citing that rule_id in rule_ref (e.g. 'RULE-1', 'rule 01').
    - If a rule prohibits writing in caps (e.g. Rule 777: "Never ever write anything in caps"), check for ALL CAPS text, uppercase shouting, or capitalized words, and return a violation citing that rule_id (e.g. '777').
    - If a rule specifies banned terms, tone constraints, or requirements, cite the exact rule_id in rule_ref.
-3. Tone and Voice violations (e.g., aggressive, overly defensive, informal/slang where forbidden, hype-driven)
-4. Absolute guarantees or prohibited promises (e.g. "guarantees 100% protection", "zero risk", "revolutionary")
-5. Unsupported superlatives (e.g. "India's #1", "the best in the market", "industry leader" without citation)
-6. Channel appropriateness (e.g., inappropriate length, tone mismatch for channel)
+3. Content Substance & Anti-Gibberish Standards (CRITICAL):
+   If the content consists of meaningless placeholder text, keyboard mash, or random characters (e.g. 'abcd', 'asdf', 'test123'), you MUST flag a CRITICAL violation citing rule_ref 'BRAND-SUBSTANCE-001' with title "Content Quality Standard: Meaningless Placeholder Copy".
+4. Tone and Voice violations (e.g., aggressive, overly defensive, informal/slang where forbidden, hype-driven)
+5. Absolute guarantees or prohibited promises (e.g. "guarantees 100% protection", "zero risk", "revolutionary")
+6. Unsupported superlatives (e.g. "India's #1", "the best in the market", "industry leader" without citation)
+7. Channel appropriateness (e.g., inappropriate length, tone mismatch for channel)
 
 For every violation detected:
 - Cite the relevant rule_id (if matched from guidelines or 'BRAND-IDENTITY-001')

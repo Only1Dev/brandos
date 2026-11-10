@@ -331,7 +331,7 @@ export function BrandSelectorModal() {
                       type="text"
                       value={brandPassword}
                       onChange={(e) => setBrandPassword(e.target.value)}
-                      placeholder={`Enter password (${selectedBrand}-${selectedRole})`}
+                      placeholder={`Enter password (${selectedBrand}-${selectedUser.role})`}
                       className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <button

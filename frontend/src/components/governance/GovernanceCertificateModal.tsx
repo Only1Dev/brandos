@@ -251,9 +251,3 @@ export function GovernanceCertificateModal({
     </div>
   );
 }
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

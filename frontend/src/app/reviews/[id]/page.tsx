@@ -21,6 +21,8 @@ import {
   Award,
   Clock,
   ShieldCheck,
+  Pencil,
+  Save,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate, getSeverityBadge, getStatusBadge } from "@/lib/utils";
@@ -56,6 +58,25 @@ export default function ReviewDetailPage() {
   const [reviewerNote, setReviewerNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [noteSaved, setNoteSaved] = useState(false);
+
+  // Admin / Reviewer Direct Content Edit state
+  const [isEditingContent, setIsEditingContent] = useState(false);
+  const [editedContentText, setEditedContentText] = useState("");
+  const [savingContent, setSavingContent] = useState(false);
+
+  const handleSaveEditedContent = async () => {
+    if (!editedContentText.trim()) return;
+    try {
+      setSavingContent(true);
+      await api.applyRemediation(id, editedContentText.trim());
+      setIsEditingContent(false);
+      await loadReview();
+    } catch (e: any) {
+      alert("Failed to update copy: " + e.message);
+    } finally {
+      setSavingContent(false);
+    }
+  };
 
   const loadReview = async () => {
     try {
@@ -478,10 +499,25 @@ export default function ReviewDetailPage() {
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sticky top-24">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Submitted Content</span>
-              <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                {content?.content_type}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Submitted Content</span>
+                <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                  {content?.content_type}
+                </span>
+              </div>
+              {(currentRole === "admin" || currentRole === "superadmin" || currentRole === "reviewer") && !isEditingContent && (
+                <button
+                  onClick={() => {
+                    setEditedContentText(content?.raw_text || "");
+                    setIsEditingContent(true);
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded transition-colors"
+                  title="Directly edit submitted copy and trigger autonomous re-evaluation"
+                >
+                  <Pencil className="h-3 w-3" />
+                  <span>Edit Copy</span>
+                </button>
+              )}
             </div>
 
             {/* Visual Creative / Image Preview */}
@@ -513,9 +549,44 @@ export default function ReviewDetailPage() {
               </div>
             )}
 
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200/80 font-mono text-xs leading-relaxed text-slate-800 whitespace-pre-wrap">
-              {content?.raw_text || "No text copy extracted."}
-            </div>
+            {isEditingContent ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-700">Live Editor (Direct Copy Revision):</span>
+                  <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    Administrator Mode
+                  </span>
+                </div>
+                <textarea
+                  value={editedContentText}
+                  onChange={(e) => setEditedContentText(e.target.value)}
+                  rows={8}
+                  className="w-full p-3 bg-white rounded-lg border-2 border-indigo-300 focus:border-indigo-500 font-mono text-xs leading-relaxed text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-100 shadow-inner"
+                  placeholder="Edit commercial copy..."
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => setIsEditingContent(false)}
+                    disabled={savingContent}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveEditedContent}
+                    disabled={savingContent}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all"
+                  >
+                    {savingContent ? <RotateCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                    <span>{savingContent ? "Re-Auditing..." : "Save & Re-Audit"}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200/80 font-mono text-xs leading-relaxed text-slate-800 whitespace-pre-wrap">
+                {content?.raw_text || "No text copy extracted."}
+              </div>
+            )}
 
             <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <span>Word Count: {content?.raw_text ? content.raw_text.split(/\s+/).length : 0} words</span>

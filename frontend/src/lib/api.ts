@@ -133,8 +133,13 @@ export const api = {
     }),
 
   // Guidelines & Rules
-  getRules: (category?: string) =>
-    request<any[]>(`/api/guidelines/rules${category ? `?category=${category}` : ""}`),
+  getRules: (category?: string, brand?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (brand) params.set("brand", brand);
+    const qs = params.toString();
+    return request<any[]>(`/api/guidelines/rules${qs ? `?${qs}` : ""}`);
+  },
   createRule: (data: any) =>
     request<any>("/api/guidelines/rules", {
       method: "POST",
@@ -156,13 +161,20 @@ export const api = {
     }),
 
   // Facts
-  getFacts: (category?: string) =>
-    request<any[]>(`/api/facts${category ? `?category=${category}` : ""}`),
-  createFact: (data: any) =>
-    request<any>("/api/facts", {
+  getFacts: (category?: string, brand?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (brand) params.set("brand", brand);
+    const qs = params.toString();
+    return request<any[]>(`/api/facts${qs ? `?${qs}` : ""}`);
+  },
+  createFact: (data: any, brand?: string) => {
+    const qs = brand ? `?brand=${brand}` : "";
+    return request<any>(`/api/facts${qs}`, {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    });
+  },
   deleteFact: (id: string) =>
     request<any>(`/api/facts/${id}`, { method: "DELETE" }),
 

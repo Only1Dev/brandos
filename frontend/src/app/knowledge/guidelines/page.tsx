@@ -28,7 +28,7 @@ export default function GuidelinesPage() {
   const loadRules = async () => {
     try {
       setLoading(true);
-      const data = await api.getRules();
+      const data = await api.getRules(undefined, brandConfig.slug);
       setRules(data);
     } catch (e) {
       console.error(e);
@@ -39,7 +39,7 @@ export default function GuidelinesPage() {
 
   useEffect(() => {
     loadRules();
-  }, []);
+  }, [brandConfig.slug]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

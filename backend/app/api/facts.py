@@ -49,12 +49,23 @@ class FactResponse(BaseModel):
 @router.get("", response_model=List[FactResponse])
 async def list_facts(
     category: Optional[str] = None,
+    brand: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(Fact).where(Fact.is_active == True)
-    if user and user.organization_id and user.role != "superadmin":
-        query = query.where(Fact.organization_id == user.organization_id)
+    
+    target_org_id = None
+    if brand:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand))
+        target_org = org_res.scalar_one_or_none()
+        if target_org:
+            target_org_id = target_org.id
+    elif user and user.organization_id and user.role != "superadmin":
+        target_org_id = user.organization_id
+
+    if target_org_id:
+        query = query.where(Fact.organization_id == target_org_id)
     if category:
         query = query.where(Fact.category == category)
     result = await db.execute(query)
@@ -80,6 +91,7 @@ async def list_facts(
 @router.post("", response_model=FactResponse)
 async def create_fact(
     body: FactCreate,
+    brand: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
@@ -88,16 +100,25 @@ async def create_fact(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrator authority required to register approved facts into Brand Brain.",
         )
-    # Ensure default organization exists
-    org_res = await db.execute(select(Organization).limit(1))
-    org = org_res.scalar_one_or_none()
-    if not org:
-        org = Organization(name="Default Workspace", slug="default-workspace")
-        db.add(org)
-        await db.flush()
+    target_org_id = None
+    if brand:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand))
+        target_org = org_res.scalar_one_or_none()
+        if target_org:
+            target_org_id = target_org.id
+    if not target_org_id and user and user.organization_id:
+        target_org_id = user.organization_id
+    if not target_org_id:
+        org_res = await db.execute(select(Organization).limit(1))
+        org = org_res.scalar_one_or_none()
+        if not org:
+            org = Organization(name="Default Workspace", slug="default-workspace")
+            db.add(org)
+            await db.flush()
+        target_org_id = org.id
 
     fact = Fact(
-        organization_id=user.organization_id if user and user.organization_id else org.id,
+        organization_id=target_org_id,
         category=body.category,
         statement=body.statement,
         source=body.source,

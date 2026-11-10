@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Plus, Tag, Trash2, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { api } from "@/lib/api";
+import { useBrand } from "@/context/BrandContext";
 
 export default function TerminologyPage() {
+  const { activeBrand } = useBrand();
   const [terms, setTerms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -28,7 +30,7 @@ export default function TerminologyPage() {
 
   useEffect(() => {
     loadTerms();
-  }, []);
+  }, [activeBrand]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

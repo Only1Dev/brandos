@@ -53,13 +53,24 @@ class RuleResponse(BaseModel):
 @router.get("/rules", response_model=List[RuleResponse])
 async def list_rules(
     category: Optional[str] = None,
+    brand: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(GuidelineRule).where(GuidelineRule.is_active == True)
-    if user and user.organization_id and user.role != "superadmin":
+    
+    target_org_id = None
+    if brand:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand))
+        target_org = org_res.scalar_one_or_none()
+        if target_org:
+            target_org_id = target_org.id
+    elif user and user.organization_id and user.role != "superadmin":
+        target_org_id = user.organization_id
+
+    if target_org_id:
         query = query.join(Guideline, GuidelineRule.guideline_id == Guideline.id).where(
-            Guideline.organization_id == user.organization_id
+            Guideline.organization_id == target_org_id
         )
     if category:
         query = query.where(GuidelineRule.category == category)

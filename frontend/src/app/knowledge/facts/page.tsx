@@ -7,7 +7,7 @@ import { formatDate } from "@/lib/utils";
 import { useBrand } from "@/context/BrandContext";
 
 export default function FactsPage() {
-  const { canEditBrandBrain, currentRole } = useBrand();
+  const { canEditBrandBrain, currentRole, activeBrand, brandConfig } = useBrand();
   const [facts, setFacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -22,7 +22,7 @@ export default function FactsPage() {
   const loadFacts = async () => {
     try {
       setLoading(true);
-      const data = await api.getFacts();
+      const data = await api.getFacts(undefined, activeBrand);
       setFacts(data);
     } catch (e) {
       console.error(e);
@@ -33,7 +33,7 @@ export default function FactsPage() {
 
   useEffect(() => {
     loadFacts();
-  }, []);
+  }, [activeBrand]);
 
   const handleCreateFact = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +45,7 @@ export default function FactsPage() {
         numerical_value: numericalValue ? parseFloat(numericalValue) : null,
         numerical_unit: numericalUnit,
         valid_until: validUntil || null,
-      });
+      }, activeBrand);
       setShowAddModal(false);
       setStatement("");
       setSource("");
@@ -114,7 +114,16 @@ export default function FactsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {facts.map((f) => (
+            {facts.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-12 text-center text-sm text-slate-500">
+                  <Database className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <div className="font-semibold text-slate-700">No verified facts registered for {brandConfig?.name || "this workspace"}</div>
+                  <div className="text-xs text-slate-400 mt-1">Ground-truth facts Ground the Fact Agent against hallucination.</div>
+                </td>
+              </tr>
+            ) : (
+              facts.map((f) => (
               <tr key={f.id} className="hover:bg-slate-50 transition-colors">
                 <td className="py-3.5 px-4 font-semibold text-slate-900 max-w-sm">{f.statement}</td>
                 <td className="py-3.5 px-4">
@@ -149,7 +158,7 @@ export default function FactsPage() {
                   </button>
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>

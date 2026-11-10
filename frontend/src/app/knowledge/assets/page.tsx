@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Plus, Palette, Image as ImageIcon, CheckCircle2, Shield } from "lucide-react";
 import { api } from "@/lib/api";
+import { useBrand } from "@/context/BrandContext";
 
 export default function AssetsPage() {
+  const { activeBrand } = useBrand();
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +22,7 @@ export default function AssetsPage() {
       }
     }
     load();
-  }, []);
+  }, [activeBrand]);
 
   return (
     <div className="space-y-6">

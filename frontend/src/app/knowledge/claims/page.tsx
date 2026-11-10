@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { Plus, FileCheck2, Clock, AlertTriangle, ArrowRight } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
+import { useBrand } from "@/context/BrandContext";
 
 export default function ClaimsPage() {
+  const { activeBrand } = useBrand();
   const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -28,7 +30,7 @@ export default function ClaimsPage() {
 
   useEffect(() => {
     loadClaims();
-  }, []);
+  }, [activeBrand]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

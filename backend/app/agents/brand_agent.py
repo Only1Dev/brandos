@@ -32,17 +32,24 @@ Content type: {content_type}
 Evaluate the following content thoroughly for:
 1. Brand Identity & Domain Alignment (CRITICAL):
    Does this content pertain to the active brand ({brand_name}) and its business domain ({brand_domain})?
-   - If the content pertains to an external entity, unrelated product (e.g., kitchen appliances like 'Sujata mixer grinder', external software proposals or PRDs like 'BrandOS', study tips, fitness/recipes), or has zero relevance to {brand_name}'s mission:
+   - IMPORTANT: If the content mentions {brand_name} or relates to enterprise fraud prevention, banking security, risk intelligence, cyber defense, or financial technology, it IS ALIGNED WITH THE BRAND DOMAIN.
+   - DO NOT flag "Brand Identity & Domain Misalignment" for copy discussing {brand_name} offerings!
+   - Factual discrepancies (e.g. 73% vs 42%), superlatives ("India's #1"), or absolute guarantees ("100% protection") are tone/claim/fact violations, NEVER domain misalignment.
+   - If and ONLY if the content pertains to an external entity, unrelated product (e.g., kitchen appliances like 'Sujata mixer grinder', external software proposals or PRDs like 'BrandOS', study tips, fitness/recipes), or has zero relevance to {brand_name}'s mission:
      You MUST flag a CRITICAL violation:
      - severity: "critical"
      - title: "Brand Identity & Domain Misalignment"
-     - description: "Content pertains to an external entity or unrelated domain rather than {brand_name}'s enterprise fraud prevention and cybersecurity solutions."
+     - description: "Content pertains to an external entity or unrelated domain rather than {brand_name}'s enterprise solutions."
      - rule_ref: "BRAND-IDENTITY-001"
      - confidence: 0.95
-2. Tone and Voice violations (e.g., aggressive, overly defensive, informal/slang where forbidden, hype-driven)
-3. Absolute guarantees or prohibited promises (e.g. "guarantees 100% protection", "zero risk", "revolutionary")
-4. Unsupported superlatives (e.g. "India's #1", "the best in the market", "industry leader" without citation)
-5. Channel appropriateness (e.g., inappropriate length, tone mismatch for channel)
+2. Registered Guidelines & Custom Rules (MANDATORY ENFORCEMENT):
+   You MUST evaluate against EVERY single rule listed under "Guidelines and rules to verify against" above.
+   - If a rule prohibits writing in caps (e.g. Rule 777: "Never ever write anything in caps"), check for ALL CAPS text, uppercase shouting, or capitalized words, and return a violation citing that rule_id (e.g. '777').
+   - If a rule specifies banned terms, tone constraints, or requirements, cite the exact rule_id in rule_ref.
+3. Tone and Voice violations (e.g., aggressive, overly defensive, informal/slang where forbidden, hype-driven)
+4. Absolute guarantees or prohibited promises (e.g. "guarantees 100% protection", "zero risk", "revolutionary")
+5. Unsupported superlatives (e.g. "India's #1", "the best in the market", "industry leader" without citation)
+6. Channel appropriateness (e.g., inappropriate length, tone mismatch for channel)
 
 For every violation detected:
 - Cite the relevant rule_id (if matched from guidelines or 'BRAND-IDENTITY-001')

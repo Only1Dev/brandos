@@ -46,6 +46,16 @@ export default function NewReviewPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Test fixtures for Aureon
+  const loadAureonCompliant = () => {
+    setInputMode("text");
+    setTitle("Aureon Shield Enterprise Announcement");
+    setChannel("instagram");
+    setContentType("social_post");
+    setRawText(
+      "Aureon Shield delivers autonomous threat defense for core banking systems, achieving up to 42.0% enterprise fraud loss reduction with sub-12ms decision response time."
+    );
+  };
+
   const loadAureonDiscrepancy = () => {
     setInputMode("text");
     setTitle("Summer Campaign — Fraud Prevention Launch");
@@ -256,6 +266,14 @@ export default function NewReviewPage() {
         <div className="flex flex-wrap gap-2">
           {!isSolaria ? (
             <>
+              <button
+                type="button"
+                onClick={loadAureonCompliant}
+                className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200 transition-colors flex items-center gap-1.5"
+              >
+                <Check className="h-3 w-3 text-emerald-600" />
+                <span>✅ Aureon Shield Compliant Copy (High Score Pass)</span>
+              </button>
               <button
                 type="button"
                 onClick={loadAureonDiscrepancy}

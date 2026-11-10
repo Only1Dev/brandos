@@ -76,6 +76,50 @@ async def get_finding_evidence(
     }
 
 
+def _replace_text_safely(original: str, target: str, replacement: str) -> str:
+    if not original or not target or not replacement:
+        return original
+
+    # 1. Exact match
+    if target in original:
+        return original.replace(target, replacement, 1)
+
+    # 2. Cleaned target (strip quotes, brackets, ellipsis)
+    clean_target = target.strip().strip("\"'[]()").rstrip(".…").strip()
+    if clean_target and clean_target in original:
+        return original.replace(clean_target, replacement, 1)
+
+    # 3. Normalized apostrophes and dashes
+    norm_orig = original.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
+    norm_target = clean_target.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
+
+    if norm_target in norm_orig:
+        idx = norm_orig.find(norm_target)
+        return original[:idx] + replacement + original[idx + len(norm_target):]
+
+    # 4. Case-insensitive regex
+    try:
+        pattern = re.compile(re.escape(clean_target), re.IGNORECASE)
+        if pattern.search(original):
+            return pattern.sub(replacement, original, count=1)
+    except Exception:
+        pass
+
+    # 5. Core words match
+    words = [w for w in re.findall(r"\b\w+\b", clean_target) if len(w) > 3]
+    if len(words) >= 2:
+        for length in range(len(words), 1, -1):
+            sub_phrase = " ".join(words[:length])
+            if sub_phrase.lower() in original.lower():
+                try:
+                    pattern = re.compile(re.escape(sub_phrase), re.IGNORECASE)
+                    return pattern.sub(replacement, original, count=1)
+                except Exception:
+                    pass
+
+    return original
+
+
 @router.post("/{id}/accept-suggestion")
 async def accept_suggestion(
     id: str,
@@ -111,18 +155,15 @@ async def accept_suggestion(
     # Get review and current content version
     r_res = await db.execute(select(Review).where(Review.id == finding.review_id))
     review = r_res.scalar_one_or_none()
+    new_text = ""
+    next_version = 1
+
     if review:
         v_res = await db.execute(select(ContentVersion).where(ContentVersion.id == review.content_version_id))
         old_v = v_res.scalar_one_or_none()
         if old_v and old_v.raw_text and sugg.replacement_text:
-            import re
-            new_text = old_v.raw_text
             target = (finding.content_excerpt or "").strip()
-            if target and target in new_text:
-                new_text = new_text.replace(target, sugg.replacement_text, 1)
-            elif target:
-                pattern = re.escape(target)
-                new_text = re.sub(pattern, sugg.replacement_text, new_text, count=1, flags=re.IGNORECASE)
+            new_text = _replace_text_safely(old_v.raw_text, target, sugg.replacement_text)
 
             c_res = await db.execute(select(Content).where(Content.id == review.content_id))
             content = c_res.scalar_one_or_none()
@@ -164,7 +205,12 @@ async def accept_suggestion(
             details={"replacement": sugg.replacement_text},
         )
 
-    return {"status": "accepted", "finding_id": str(finding.id)}
+    return {
+        "status": "accepted",
+        "finding_id": str(finding.id),
+        "new_text": new_text,
+        "version_number": next_version,
+    }
 
 
 @router.post("/{id}/override")

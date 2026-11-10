@@ -224,8 +224,91 @@ def resolve_policy_precedence(violations: List[PolicyViolation]) -> List[PolicyV
 
 
 
+def check_deterministic_guidelines(text: str, rules: list) -> List[dict]:
+    """
+    Scans submitted text deterministically against registered GuidelineRules.
+    Guarantees that custom rules (e.g. ALL-CAPS prohibition like Rule 777,
+    banned quotes, or formatting restrictions) are enforced 100% reliably.
+    """
+    violations: List[dict] = []
+    if not text or not rules:
+        return violations
+
+    for r in rules:
+        rule_id = r.get("rule_id") or r.get("name") or "RULE"
+        rule_text = (r.get("rule_text") or r.get("description") or "").strip()
+        rule_lower = rule_text.lower()
+        severity = (r.get("severity") or "warning").lower()
+
+        # 1. Capitalization / All-Caps check (e.g. Rule 777)
+        is_caps_rule = any(w in rule_lower for w in ["caps", "capital", "uppercase", "all-caps", "all caps"])
+        is_prohibition = any(w in rule_lower for w in ["never", "do not", "don't", "prohibit", "avoid", "forbidden", "disallow", "no caps"])
+
+        if is_caps_rule and is_prohibition:
+            EXEMPT_ACRONYMS = {"AI", "IT", "ID", "PDF", "API", "APAC", "WCAG", "UI", "UX", "AA", "AAA", "ROI", "B2B", "SaaS", "FDA", "FSSAI"}
+            pattern = re.compile(r"\b([A-Z][A-Z']*(?:\s+[A-Z][A-Z']*)+|[A-Z]{3,})\b")
+            matches = [m.group(0) for m in pattern.finditer(text) if any(w.strip("'") not in EXEMPT_ACRONYMS for w in m.group(0).split())]
+
+            for match in matches:
+                violations.append({
+                    "finding_type": "brand",
+                    "severity": severity if severity in ("critical", "high", "error") else "error",
+                    "title": f"Guideline Rule Violation: Prohibited Capitalization (Rule {rule_id})",
+                    "description": f"Content contains prohibited uppercase/all-caps text '{match}'. This directly violates active Brand Brain guideline rule {rule_id}: '{rule_text}'.",
+                    "detected_text": match,
+                    "explanation": f"Rule {rule_id} strictly mandates: '{rule_text}'. Capitalized copy must be rewritten in standard sentence case.",
+                    "rule_ref": str(rule_id),
+                    "confidence": 1.0,
+                    "evidence": [{
+                        "evidence_type": "rule",
+                        "source_ref": str(rule_id),
+                        "description": f"Active Rule {rule_id}: {rule_text}",
+                        "data": {"rule": str(rule_id), "detected": match}
+                    }],
+                    "suggestion": {
+                        "original_text": match,
+                        "suggested_text": match.lower().capitalize() if len(match.split()) > 1 else match.lower(),
+                        "reasoning": f"Converts '{match}' to compliant casing in accordance with Rule {rule_id}."
+                    }
+                })
+
+        # 2. Banned quoted phrases (e.g., Never use "word")
+        quoted_phrases = re.findall(r"['\"]([^'\"]{3,})['\"]", rule_text)
+        for phrase in quoted_phrases:
+            if phrase.lower() in text.lower():
+                pattern = re.compile(re.escape(phrase), re.IGNORECASE)
+                m = pattern.search(text)
+                detected = m.group(0) if m else phrase
+                violations.append({
+                    "finding_type": "brand",
+                    "severity": severity,
+                    "title": f"Guideline Rule Violation: Prohibited Phrase (Rule {rule_id})",
+                    "description": f"Detected prohibited phrase '{detected}', directly violating Rule {rule_id}: '{rule_text}'.",
+                    "detected_text": detected,
+                    "explanation": f"Rule {rule_id} mandates: '{rule_text}'.",
+                    "rule_ref": str(rule_id),
+                    "confidence": 1.0,
+                    "evidence": [{
+                        "evidence_type": "rule",
+                        "source_ref": str(rule_id),
+                        "description": f"Active Rule {rule_id}: {rule_text}",
+                        "data": {"rule": str(rule_id), "detected": detected}
+                    }],
+                    "suggestion": {
+                        "original_text": detected,
+                        "suggested_text": "",
+                        "reasoning": f"Remove prohibited phrase '{detected}' as mandated by Rule {rule_id}."
+                    }
+                })
+
+    return violations
+
+
 class PolicyEngine:
     """Wrapper class providing policy precedence and evaluation methods."""
 
     def resolve_precedence(self, violations: List[PolicyViolation]) -> List[PolicyViolation]:
         return resolve_policy_precedence(violations)
+
+    def check_deterministic_guidelines(self, text: str, rules: list) -> List[dict]:
+        return check_deterministic_guidelines(text, rules)

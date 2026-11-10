@@ -7,9 +7,11 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-def generate_pdf():
-    pdf_path = r"C:\Users\Shivu\.gemini\antigravity\scratch\brandos\backend\uploads\Aureon_Official_Brand_Guidelines_2026.pdf"
-    os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+def generate_pdf(target_dir: str | None = None) -> str:
+    if not target_dir:
+        target_dir = os.path.join(os.path.dirname(__file__), "uploads")
+    os.makedirs(target_dir, exist_ok=True)
+    pdf_path = os.path.join(target_dir, "Aureon_Official_Brand_Guidelines_2026.pdf")
     
     doc = SimpleDocTemplate(pdf_path, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
     styles = getSampleStyleSheet()
@@ -109,6 +111,7 @@ def generate_pdf():
     
     doc.build(story)
     print("Generated:", pdf_path)
+    return pdf_path
 
 if __name__ == "__main__":
     generate_pdf()

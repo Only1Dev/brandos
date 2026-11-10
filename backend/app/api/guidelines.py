@@ -231,19 +231,47 @@ async def load_demo_guideline_pdf(
         guide_title = "Aureon Official Brand Guidelines (2026)"
         slug_target = "aureon"
 
+    os.makedirs(settings.upload_dir, exist_ok=True)
     pdf_path = os.path.join(settings.upload_dir, filename)
     if not os.path.exists(pdf_path):
-        import subprocess
-        import sys
-        script_name = "create_solaria_pdf.py" if brand_key == "solaria" else "create_guideline_pdf.py"
-        script = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), script_name)
-        if os.path.exists(script):
-            subprocess.run([sys.executable, script], check=True)
+        try:
+            backend_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            import sys
+            if backend_root not in sys.path:
+                sys.path.insert(0, backend_root)
+            if brand_key == "solaria":
+                from create_solaria_pdf import generate_pdf as gen_solaria
+                gen_solaria(settings.upload_dir)
+            else:
+                from create_guideline_pdf import generate_pdf as gen_aureon
+                gen_aureon(settings.upload_dir)
+        except Exception as gen_err:
+            logger.warning(f"Could not generate PDF on-the-fly: {gen_err}")
 
-    with open(pdf_path, "rb") as f:
-        pdf_bytes = f.read()
+    raw_text = ""
+    if os.path.exists(pdf_path):
+        try:
+            with open(pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+            raw_text = extract_text_from_pdf(pdf_bytes)
+        except Exception as ext_err:
+            logger.warning(f"Failed extracting PDF text: {ext_err}")
 
-    raw_text = extract_text_from_pdf(pdf_bytes)
+    if not raw_text.strip():
+        if brand_key == "solaria":
+            raw_text = (
+                "Solaria Wellness & Clinical Nutrition. Brand voice is warm, scientifically grounded, transparent. "
+                "Never claim to cure diabetes, 100% cure, or instant medical treatment without FDA/FSSAI clinical drug approval. "
+                "PureHydrate provides 3.0x electrolyte absorption and 0% sugar. Primary color #064E3B, accent #10B981."
+            )
+        else:
+            raw_text = (
+                "Aureon Technologies Brand Guidelines. Authoritative, precise, confident tone. "
+                "Prohibit 100% protection guarantees or #1 superlatives without citation. "
+                "Use 'Fraud Prevention Platform' instead of 'Fraud Protection Platform'. "
+                "Benchmark is 42.0% enterprise fraud reduction."
+            )
+
     structurer = GuidelineStructurer()
     structured_rules = await structurer.structure_guideline_text(raw_text)
 

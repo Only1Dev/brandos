@@ -51,14 +51,17 @@ class GovernanceEngine:
         low_count = sum(1 for f in findings if f.get("severity") in ("low", "info"))
 
         # Zero-Tolerance Direct Disqualification:
-        # If any finding flags Brand Identity & Domain Misalignment or Missing Brand Identity (off-brand submission),
+        # If any finding flags genuine cross-tenant misalignment or out-of-domain breach,
         # immediately set governance_score = 0 and decision = "BLOCKED"!
         is_off_brand = any(
-            "misalignment" in (f.get("title") or "").lower()
-            or "domain" in (f.get("title") or "").lower()
-            or "unapproved third-party" in (f.get("title") or "").lower()
+            f.get("rule_ref") == "BRAND-IDENTITY-001"
+            or f.get("rule_ref") == "CROSS-TENANT-001"
+            or "domain misalignment" in (f.get("title") or "").lower()
+            or "cross-tenant" in (f.get("title") or "").lower()
+            or "out of domain" in (f.get("title") or "").lower()
+            or "out-of-domain" in (f.get("title") or "").lower()
+            or "unapproved third-party visual" in (f.get("title") or "").lower()
             or "missing brand identity" in (f.get("title") or "").lower()
-            or f.get("rule_ref") == "BRAND-IDENTITY-001"
             for f in findings
         )
 

@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Lock,
   Award,
+  Clock,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate, getSeverityBadge, getStatusBadge } from "@/lib/utils";
@@ -104,7 +105,17 @@ export default function ReviewDetailPage() {
   const handleAcceptSuggestion = async (findingId: string) => {
     try {
       setActionLoading(true);
-      await api.acceptSuggestion(findingId);
+      const res = await api.acceptSuggestion(findingId);
+      if (res?.new_text && review?.content) {
+        setReview((prev: any) => ({
+          ...prev,
+          content: {
+            ...prev.content,
+            raw_text: res.new_text,
+            version_number: res.version_number || (prev.content.version_number || 1) + 1,
+          },
+        }));
+      }
       await loadReview();
     } catch (e: any) {
       alert("Error: " + e.message);
@@ -219,10 +230,30 @@ export default function ReviewDetailPage() {
 
           <button
             onClick={() => setShowCertificateModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-colors"
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold shadow-xs transition-colors ${
+              review.status === "approved"
+                ? "bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100"
+                : review.decision === "BLOCKED" || (review.governance_score ?? 0) < 70
+                ? "bg-red-50 border-red-300 text-red-800 hover:bg-red-100"
+                : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50"
+            }`}
           >
-            <Award className="h-3.5 w-3.5 text-amber-500" />
-            <span>Governance Certificate</span>
+            {review.status === "approved" ? (
+              <>
+                <Award className="h-3.5 w-3.5 text-emerald-600" />
+                <span className="font-bold">Official Certificate (Cleared)</span>
+              </>
+            ) : review.decision === "BLOCKED" || (review.governance_score ?? 0) < 70 ? (
+              <>
+                <ShieldAlert className="h-3.5 w-3.5 text-red-600" />
+                <span>Enforcement Notice</span>
+              </>
+            ) : (
+              <>
+                <Clock className="h-3.5 w-3.5 text-amber-500" />
+                <span>Certificate (Pending Sign-Off)</span>
+              </>
+            )}
           </button>
 
           {review.status === "pending" || review.status === "analyzing" ? (
@@ -308,11 +339,13 @@ export default function ReviewDetailPage() {
             <div className="text-sm font-extrabold text-red-950 flex items-center gap-2">
               <span>Zero-Tolerance Firewall Active — Content Publication Blocked</span>
               <span className="text-[10px] bg-red-200 text-red-900 px-2 py-0.5 rounded font-mono font-bold">
-                SCORE 0/100
+                SCORE {review.governance_score ?? 0}/100
               </span>
             </div>
             <div className="text-xs text-red-800 font-medium leading-relaxed">
-              This content violates active brand boundaries (Cross-Tenant Misalignment / Identity Perimeter Violation). Publication is strictly prohibited until all critical findings are remediated.
+              {(review.radar_scores?.domain === 0 || findings.some((f: any) => f.title?.toLowerCase().includes("cross-tenant") || f.title?.toLowerCase().includes("domain misalignment") || f.title?.toLowerCase().includes("out-of-domain") || f.title?.toLowerCase().includes("missing brand identity")))
+                ? "This content violates active brand boundaries (Cross-Tenant Misalignment / Identity Perimeter Violation). Publication is strictly prohibited until all critical findings are remediated."
+                : "This content violates active brand policies (unverified claims, prohibited guarantees, or guideline rule violations). Publication is strictly prohibited until all critical findings are remediated."}
             </div>
           </div>
         </div>

@@ -410,7 +410,19 @@ async def get_review_details(
     term_score = 100
     resilience_score = 100
 
-    if review.decision == "BLOCKED" or review.governance_score == 0:
+    has_domain_violation = any(
+        f.status not in ("accepted", "overridden") and (
+            f.rule_id in ("BRAND-IDENTITY-001", "CROSS-TENANT-001")
+            or "domain misalignment" in f.title.lower()
+            or "cross-tenant" in f.title.lower()
+            or "out of domain" in f.title.lower()
+            or "out-of-domain" in f.title.lower()
+            or "missing brand identity" in f.title.lower()
+        )
+        for f in review.findings
+    )
+
+    if has_domain_violation:
         domain_score = 0
         tone_score = 25
         fact_score = 20
@@ -425,7 +437,7 @@ async def get_review_details(
             sev = (f.severity or "medium").lower()
             penalty = 30 if sev in ("error", "critical") else 15
 
-            if "domain" in cat or "domain" in f.title.lower():
+            if "domain" in cat or "domain misalignment" in f.title.lower() or "cross-tenant" in f.title.lower():
                 domain_score = max(0, domain_score - 50)
             elif agent == "fact" or "fact" in cat or "claim" in cat:
                 fact_score = max(10, fact_score - penalty)
@@ -435,6 +447,10 @@ async def get_review_details(
                 tone_score = max(10, tone_score - penalty)
             else:
                 resilience_score = max(15, resilience_score - penalty)
+
+        if review.decision == "BLOCKED" and domain_score > 0:
+            # Blocked due to rules/facts/tone, but domain is 100% compliant!
+            pass
 
     return {
         "id": str(review.id),

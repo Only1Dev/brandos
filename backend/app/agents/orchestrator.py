@@ -87,6 +87,12 @@ class AnalysisOrchestrator:
             visual_metadata=visual_metadata,
         )
 
+        # Enforce custom guideline rules deterministically (e.g. Rule 777 CAPS prohibition)
+        guideline_rule_findings = self.policy_engine.check_deterministic_guidelines(
+            text=text,
+            rules=rules,
+        )
+
         visual_task = self.visual_agent.evaluate(
             image_bytes=image_bytes,
             mime_type=image_mime,
@@ -108,6 +114,7 @@ class AnalysisOrchestrator:
 
         # Combine raw findings
         combined_findings = [
+            *guideline_rule_findings,
             *fact_findings,
             *brand_findings,
             *term_findings,

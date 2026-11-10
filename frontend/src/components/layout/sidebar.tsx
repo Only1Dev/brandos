@@ -59,11 +59,14 @@ const superAdminNavigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const [knowledgeOpen, setKnowledgeOpen] = useState(true);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const {
     activeBrand,
     brandConfig,
     currentRole,
     currentUser,
+    brandUsers,
+    switchUser,
     setIsBrandModalOpen,
     canEditBrandBrain,
   } = useBrand();
@@ -232,20 +235,23 @@ export function Sidebar() {
       </div>
 
       {/* Interactive User Role & Identity Footer */}
-      <div className="p-3 m-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2">
+      <div className="p-3 m-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2 relative">
         <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
           <span>Active Identity</span>
           <button
-            onClick={() => setIsBrandModalOpen(true)}
-            className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
+            onClick={() => setShowUserDropdown(!showUserDropdown)}
+            className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold transition-colors flex items-center gap-1"
           >
-            Switch ↻
+            <span>Switch</span>
+            <span>{showUserDropdown ? "▲" : "▼"}</span>
           </button>
         </div>
+
+        {/* Selected User Pill */}
         <div
-          onClick={() => setIsBrandModalOpen(true)}
+          onClick={() => setShowUserDropdown(!showUserDropdown)}
           className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/60 cursor-pointer transition-colors"
-          title="Click to switch identity or workspace"
+          title="Click to switch between Creators and Reviewers"
         >
           <div className="flex items-center gap-2.5 truncate">
             <div className={cn(
@@ -264,14 +270,59 @@ export function Sidebar() {
               <div className="text-xs font-semibold text-white leading-tight truncate">
                 {isSuperAdmin ? "Chief Governance Officer" : currentUser?.name}
               </div>
-              <div className="text-[10px] text-slate-400 capitalize leading-tight flex items-center gap-1">
-                <span>{isSuperAdmin ? "Superadmin" : currentRole}</span>
+              <div className="text-[10px] text-slate-400 capitalize leading-tight flex items-center gap-1 truncate">
+                <span>{currentUser?.title || currentRole}</span>
                 {!canEditBrandBrain && !isSuperAdmin && <Lock className="h-2.5 w-2.5 text-amber-400" />}
               </div>
             </div>
           </div>
           <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" title="Active Session" />
         </div>
+
+        {/* Identity Dropdown Popover */}
+        {showUserDropdown && (
+          <div className="absolute bottom-full left-0 right-0 mb-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 z-50 space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-150">
+            <div className="text-[10px] font-bold uppercase text-slate-400 px-2 py-1 tracking-wider border-b border-slate-800">
+              Switch Role in {brandConfig.name.split(" ")[0]}
+            </div>
+            {brandUsers?.map((u) => {
+              const isSelected = currentUser.email === u.email;
+              return (
+                <button
+                  key={u.email}
+                  onClick={() => {
+                    switchUser(u);
+                    setShowUserDropdown(false);
+                    window.location.reload();
+                  }}
+                  className={cn(
+                    "w-full text-left p-2 rounded-lg text-xs flex items-center justify-between transition-colors",
+                    isSelected
+                      ? "bg-indigo-600 text-white font-bold"
+                      : "hover:bg-slate-800 text-slate-300"
+                  )}
+                >
+                  <div className="truncate pr-2">
+                    <div className="font-semibold truncate">{u.name}</div>
+                    <div className={cn("text-[10px] truncate", isSelected ? "text-indigo-200" : "text-slate-400")}>
+                      {u.title}
+                    </div>
+                  </div>
+                  <span className={cn(
+                    "text-[9px] px-1.5 py-0.5 rounded uppercase font-bold shrink-0",
+                    u.role === "admin"
+                      ? "bg-indigo-950 text-indigo-300 border border-indigo-700"
+                      : u.role === "reviewer"
+                      ? "bg-amber-950 text-amber-300 border border-amber-700"
+                      : "bg-sky-950 text-sky-300 border border-sky-700"
+                  )}>
+                    {u.role}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </aside>
   );

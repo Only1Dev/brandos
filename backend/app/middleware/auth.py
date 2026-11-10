@@ -94,9 +94,17 @@ async def get_optional_user(
         except HTTPException:
             pass
 
-    # Check demo prototype headers
+    # Check demo identity headers
+    user_email = request.headers.get("x-user-email")
     user_role = request.headers.get("x-user-role")
     brand_slug = request.headers.get("x-brand-slug")
+
+    if user_email:
+        u_res = await db.execute(select(User).where(User.email == user_email))
+        u = u_res.scalar_one_or_none()
+        if u:
+            return u
+
     if user_role:
         from app.models.organization import Organization
         query = select(User).where(User.role == user_role)

@@ -48,25 +48,26 @@ export const BRANDS: Record<BrandSlug, BrandConfig> = {
   },
 };
 
-interface UserProfile {
+export interface UserProfile {
   name: string;
   email: string;
   role: UserRole;
+  title: string;
 }
 
-const ROLE_USERS: Record<BrandSlug, Record<UserRole, UserProfile>> = {
-  aureon: {
-    admin: { name: "Priya Sharma", email: "admin@aureon.internal", role: "admin" },
-    reviewer: { name: "David Chen", email: "reviewer@aureon.internal", role: "reviewer" },
-    creator: { name: "Alex Rivera", email: "creator@aureon.internal", role: "creator" },
-    superadmin: { name: "Chief Governance Officer", email: "superadmin@brandos.internal", role: "superadmin" },
-  },
-  solaria: {
-    admin: { name: "Maya Lin", email: "admin@solaria.internal", role: "admin" },
-    reviewer: { name: "Marcus Vance", email: "reviewer@solaria.internal", role: "reviewer" },
-    creator: { name: "Chloe Bennett", email: "creator@solaria.internal", role: "creator" },
-    superadmin: { name: "Chief Governance Officer", email: "superadmin@brandos.internal", role: "superadmin" },
-  },
+export const BRAND_USERS: Record<BrandSlug, UserProfile[]> = {
+  aureon: [
+    { name: "Priya Sharma", email: "admin@aureon.internal", role: "admin", title: "Enterprise Brand Admin" },
+    { name: "David Chen", email: "reviewer@aureon.internal", role: "reviewer", title: "Lead Content Reviewer" },
+    { name: "Aarav Patel", email: "aarav.patel@aureon.internal", role: "creator", title: "Senior FinTech Copywriter (Creator 1)" },
+    { name: "Riya Sen", email: "riya.sen@aureon.internal", role: "creator", title: "Growth Content Lead (Creator 2)" },
+  ],
+  solaria: [
+    { name: "Maya Lin", email: "admin@solaria.internal", role: "admin", title: "Chief Brand Director" },
+    { name: "Marcus Vance", email: "reviewer@solaria.internal", role: "reviewer", title: "Compliance Lead" },
+    { name: "Marcus Brody", email: "marcus.brody@solaria.internal", role: "creator", title: "Clinical Brand Specialist (Creator 1)" },
+    { name: "Sophia Lin", email: "sophia.lin@solaria.internal", role: "creator", title: "Lifecycle Campaigner (Creator 2)" },
+  ],
 };
 
 interface BrandContextType {
@@ -74,8 +75,10 @@ interface BrandContextType {
   brandConfig: BrandConfig;
   currentRole: UserRole;
   currentUser: UserProfile;
+  brandUsers: UserProfile[];
   switchBrand: (slug: BrandSlug, role?: UserRole) => void;
   switchRole: (role: UserRole) => void;
+  switchUser: (user: UserProfile) => void;
   isBrandModalOpen: boolean;
   setIsBrandModalOpen: (open: boolean) => void;
   isRegisterModalOpen: boolean;
@@ -89,20 +92,23 @@ const BrandContext = createContext<BrandContextType | undefined>(undefined);
 
 export function BrandProvider({ children }: { children: React.ReactNode }) {
   const [activeBrand, setActiveBrand] = useState<BrandSlug>("aureon");
-  const [currentRole, setCurrentRole] = useState<UserRole>("admin");
+  const [currentUser, setCurrentUser] = useState<UserProfile>(BRAND_USERS.aureon[0]);
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   // Initialize from localStorage
   useEffect(() => {
-    const savedBrand = localStorage.getItem("brandos_active_brand") as BrandSlug;
-    const savedRole = localStorage.getItem("brandos_user_role") as UserRole;
+    const savedBrand = (localStorage.getItem("brandos_active_brand") as BrandSlug) || "aureon";
+    const savedEmail = localStorage.getItem("brandos_user_email");
     const hasChosen = localStorage.getItem("brandos_has_chosen_brand");
+
     if (savedBrand && BRANDS[savedBrand]) {
       setActiveBrand(savedBrand);
-    }
-    if (savedRole) {
-      setCurrentRole(savedRole);
+      const userList = BRAND_USERS[savedBrand];
+      const found = userList.find((u) => u.email === savedEmail) || userList[0];
+      setCurrentUser(found);
+      localStorage.setItem("brandos_user_email", found.email);
+      localStorage.setItem("brandos_user_role", found.role);
     }
     if (!hasChosen) {
       setIsBrandModalOpen(true);
@@ -111,19 +117,32 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
   const switchBrand = (slug: BrandSlug, role: UserRole = "admin") => {
     setActiveBrand(slug);
-    setCurrentRole(role);
+    const userList = BRAND_USERS[slug];
+    const match = userList.find((u) => u.role === role) || userList[0];
+    setCurrentUser(match);
     localStorage.setItem("brandos_active_brand", slug);
-    localStorage.setItem("brandos_user_role", role);
+    localStorage.setItem("brandos_user_role", match.role);
+    localStorage.setItem("brandos_user_email", match.email);
     setIsBrandModalOpen(false);
   };
 
   const switchRole = (role: UserRole) => {
-    setCurrentRole(role);
-    localStorage.setItem("brandos_user_role", role);
+    const userList = BRAND_USERS[activeBrand];
+    const match = userList.find((u) => u.role === role) || userList[0];
+    setCurrentUser(match);
+    localStorage.setItem("brandos_user_role", match.role);
+    localStorage.setItem("brandos_user_email", match.email);
+  };
+
+  const switchUser = (user: UserProfile) => {
+    setCurrentUser(user);
+    localStorage.setItem("brandos_user_role", user.role);
+    localStorage.setItem("brandos_user_email", user.email);
   };
 
   const brandConfig = BRANDS[activeBrand];
-  const currentUser = ROLE_USERS[activeBrand][currentRole];
+  const brandUsers = BRAND_USERS[activeBrand];
+  const currentRole = currentUser.role;
 
   // RBAC permissions
   const canEditBrandBrain = currentRole === "admin" || currentRole === "superadmin";
@@ -137,8 +156,10 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         brandConfig,
         currentRole,
         currentUser,
+        brandUsers,
         switchBrand,
         switchRole,
+        switchUser,
         isBrandModalOpen,
         setIsBrandModalOpen,
         isRegisterModalOpen,

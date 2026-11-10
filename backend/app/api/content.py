@@ -60,7 +60,13 @@ async def list_content(
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
-    result = await db.execute(select(Content).order_by(Content.created_at.desc()))
+    query = select(Content).order_by(Content.created_at.desc())
+    if user and user.organization_id:
+        query = query.where(Content.organization_id == user.organization_id)
+        if user.role == "creator":
+            query = query.where(Content.created_by == user.id)
+
+    result = await db.execute(query)
     items = result.scalars().all()
     return [
         ContentResponse(
@@ -143,6 +149,7 @@ async def create_text_content(
         title=body.title,
         content_type=body.content_type,
         channel=body.channel,
+        created_by=user.id if user else None,
     )
     db.add(content)
     await db.flush()
@@ -259,6 +266,7 @@ async def upload_content_file(
         content_type=detected_content_type,
         channel=channel,
         original_file_url=f"/uploads/{filename}",
+        created_by=user.id if user else None,
     )
     db.add(content)
     await db.flush()

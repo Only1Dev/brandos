@@ -114,9 +114,15 @@ async def accept_suggestion(
     if review:
         v_res = await db.execute(select(ContentVersion).where(ContentVersion.id == review.content_version_id))
         old_v = v_res.scalar_one_or_none()
-        if old_v and old_v.raw_text and finding.content_excerpt and sugg.replacement_text:
-            # Create new content version with replacement applied
-            new_text = old_v.raw_text.replace(finding.content_excerpt, sugg.replacement_text)
+        if old_v and old_v.raw_text and sugg.replacement_text:
+            import re
+            new_text = old_v.raw_text
+            target = (finding.content_excerpt or "").strip()
+            if target and target in new_text:
+                new_text = new_text.replace(target, sugg.replacement_text, 1)
+            elif target:
+                pattern = re.escape(target)
+                new_text = re.sub(pattern, sugg.replacement_text, new_text, count=1, flags=re.IGNORECASE)
 
             c_res = await db.execute(select(Content).where(Content.id == review.content_id))
             content = c_res.scalar_one_or_none()
@@ -132,6 +138,19 @@ async def accept_suggestion(
                 await db.flush()
                 # Update review to point to new version
                 review.content_version_id = new_version.id
+
+        # Recalculate review score now that a finding has been accepted
+        f_res = await db.execute(select(Finding).where(Finding.review_id == review.id))
+        all_findings = f_res.scalars().all()
+        active_errors = [f for f in all_findings if f.status not in ("accepted", "overridden") and f.severity in ("error", "critical")]
+        active_warnings = [f for f in all_findings if f.status not in ("accepted", "overridden") and f.severity == "warning"]
+
+        if len(active_errors) == 0:
+            review.decision = "PASS" if len(active_warnings) == 0 else "WARNING"
+            review.governance_score = max(85.0, 100.0 - (len(active_warnings) * 5.0))
+        else:
+            accepted_count = sum(1 for f in all_findings if f.status in ("accepted", "overridden"))
+            review.governance_score = min(75.0, accepted_count * 25.0)
 
     await db.commit()
 

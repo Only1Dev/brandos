@@ -67,6 +67,7 @@ export default function ReviewsListPage() {
           <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-200">
             <tr>
               <th className="py-3.5 px-4">Content Title</th>
+              <th className="py-3.5 px-4">Creator / Submitter</th>
               <th className="py-3.5 px-4">Channel</th>
               <th className="py-3.5 px-4">Verdict</th>
               <th className="py-3.5 px-4">Governance Score</th>
@@ -78,7 +79,19 @@ export default function ReviewsListPage() {
           <tbody className="divide-y divide-slate-100">
             {reviews.map((rev) => (
               <tr key={rev.id} className="hover:bg-slate-50 transition-colors">
-                <td className="py-4 px-4 font-bold text-slate-900">{rev.content_title}</td>
+                <td className="py-4 px-4 font-bold text-slate-900">
+                  <div>{rev.content_title}</div>
+                  {rev.reviewer_comment && (
+                    <div className="text-[10px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 mt-1 border border-amber-200 inline-flex items-center gap-1 font-medium">
+                      <span>Directive:</span>
+                      <span className="truncate max-w-[200px]">{rev.reviewer_comment}</span>
+                    </div>
+                  )}
+                </td>
+                <td className="py-4 px-4">
+                  <div className="font-semibold text-slate-800">{rev.creator_name || "Enterprise Creator"}</div>
+                  <div className="text-[10px] text-slate-400 font-mono">{rev.creator_email}</div>
+                </td>
                 <td className="py-4 px-4 text-slate-600 capitalize">{rev.channel}</td>
                 <td className="py-4 px-4">
                   <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${getStatusBadge(rev.decision || rev.status)}`}>

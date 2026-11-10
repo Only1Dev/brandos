@@ -32,6 +32,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     ...(typeof window !== "undefined" && localStorage.getItem("brandos_active_brand")
       ? { "X-Brand-Slug": localStorage.getItem("brandos_active_brand")! }
       : {}),
+    ...(typeof window !== "undefined" && localStorage.getItem("brandos_user_email")
+      ? { "X-User-Email": localStorage.getItem("brandos_user_email")! }
+      : {}),
     ...(options.headers as Record<string, string>),
   };
 
@@ -83,6 +86,11 @@ export const api = {
     request<any>(`/api/reviews/${id}/reject`, {
       method: "POST",
       body: JSON.stringify({ comment }),
+    }),
+  saveReviewerNote: (id: string, note: string) =>
+    request<{ status: string; reviewer_comment: string }>(`/api/reviews/${id}/reviewer-notes`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
     }),
   autoRemediateReview: (id: string) =>
     request<{

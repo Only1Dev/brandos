@@ -50,15 +50,38 @@ export default function ReviewDetailPage() {
   const [showRemediationStudio, setShowRemediationStudio] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
 
+  // Reviewer Directives & Feedback Note state
+  const [reviewerNote, setReviewerNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+  const [noteSaved, setNoteSaved] = useState(false);
+
   const loadReview = async () => {
     try {
       setLoading(true);
       const data = await api.getReviewDetails(id);
       setReview(data);
+      if (data?.reviewer_comment) {
+        setReviewerNote(data.reviewer_comment);
+      }
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveReviewerNote = async () => {
+    if (!reviewerNote.trim()) return;
+    try {
+      setSavingNote(true);
+      await api.saveReviewerNote(id, reviewerNote.trim());
+      setNoteSaved(true);
+      setTimeout(() => setNoteSaved(false), 2500);
+      await loadReview();
+    } catch (e: any) {
+      alert("Failed to save directive: " + e.message);
+    } finally {
+      setSavingNote(false);
     }
   };
 
@@ -221,6 +244,24 @@ export default function ReviewDetailPage() {
               <XCircle className="h-4 w-4 text-red-600" />
               <span>Revision Requested</span>
             </div>
+          ) : review.decision === "BLOCKED" || review.governance_score === 0 ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowRejectModal(true)}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-700 hover:bg-red-50 text-xs font-semibold transition-colors"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                <span>Request Revision</span>
+              </button>
+              <div
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-100 border border-red-300 text-red-800 text-xs font-bold cursor-not-allowed"
+                title="Firewall Active: Blocked content cannot be approved for publication. Remediate all critical findings to unlock clearance."
+              >
+                <Lock className="h-3.5 w-3.5 text-red-600" />
+                <span>Approval Blocked by Firewall</span>
+              </div>
+            </div>
           ) : !canApproveReviews ? (
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 text-xs font-semibold" title="Reviewer or Administrator role required to approve publication">
               <Lock className="h-3.5 w-3.5 text-slate-400" />
@@ -255,6 +296,26 @@ export default function ReviewDetailPage() {
           isAnalyzing={analyzing}
           brandName={content?.title || "Active Brand"}
         />
+      )}
+
+      {/* Zero-Tolerance Firewall Active Banner */}
+      {(review.decision === "BLOCKED" || review.governance_score === 0) && (
+        <div className="p-4 rounded-xl bg-gradient-to-r from-red-50 via-rose-50 to-red-50 border-2 border-red-300 flex items-start gap-3 shadow-xs">
+          <div className="h-9 w-9 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <ShieldAlert className="h-5 w-5" />
+          </div>
+          <div className="space-y-1">
+            <div className="text-sm font-extrabold text-red-950 flex items-center gap-2">
+              <span>Zero-Tolerance Firewall Active — Content Publication Blocked</span>
+              <span className="text-[10px] bg-red-200 text-red-900 px-2 py-0.5 rounded font-mono font-bold">
+                SCORE 0/100
+              </span>
+            </div>
+            <div className="text-xs text-red-800 font-medium leading-relaxed">
+              This content violates active brand boundaries (Cross-Tenant Misalignment / Identity Perimeter Violation). Publication is strictly prohibited until all critical findings are remediated.
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Publication Clearance Banner (FR-09 & BrandFlow) */}
@@ -292,6 +353,57 @@ export default function ReviewDetailPage() {
             <div className="text-xs text-red-800 font-medium leading-relaxed">
               <strong>Reviewer Notes:</strong> {review.reviewer_comment || "Content requires corrections to satisfy brand compliance standards."}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reviewer Actionable Directive Notice (for Creators) */}
+      {!canApproveReviews && review.reviewer_comment && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex items-start gap-3 shadow-xs">
+          <MessageSquare className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="text-sm font-bold text-amber-950 flex items-center gap-2">
+              <span>Reviewer Directive for Creator</span>
+              <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-mono font-bold">
+                ACTION REQUIRED
+              </span>
+            </div>
+            <div className="text-xs text-amber-900 font-medium leading-relaxed">
+              {review.reviewer_comment}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reviewer Actionable Directive Editor (for Reviewers/Admins) */}
+      {canApproveReviews && (
+        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+              <MessageSquare className="h-4 w-4 text-indigo-600" />
+              <span>Reviewer Guidance & Directives for Creator</span>
+            </div>
+            {noteSaved && (
+              <span className="text-xs text-emerald-600 font-bold flex items-center gap-1 animate-in fade-in">
+                <Check className="h-3.5 w-3.5" /> Saved & Dispatched to Creator
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <textarea
+              rows={2}
+              value={reviewerNote}
+              onChange={(e) => setReviewerNote(e.target.value)}
+              placeholder="Add specific instructions for the creator (e.g. 'Please adjust claim in paragraph 2 to cite verified 42% reduction and remove unsupported superlatives.')"
+              className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50"
+            />
+            <button
+              onClick={handleSaveReviewerNote}
+              disabled={savingNote || !reviewerNote.trim()}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-xs disabled:opacity-50 self-end shrink-0"
+            >
+              {savingNote ? "Saving..." : "Save Directive"}
+            </button>
           </div>
         </div>
       )}

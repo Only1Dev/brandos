@@ -55,22 +55,34 @@ async def list_reviews(
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
-    query = select(Review).order_by(Review.created_at.desc())
+    query = (
+        select(Review, Content, User)
+        .join(Content, Review.content_id == Content.id)
+        .outerjoin(User, Content.created_by == User.id)
+        .order_by(Review.created_at.desc())
+    )
+
+    if user and user.organization_id:
+        query = query.where(Content.organization_id == user.organization_id)
+        # Creators can ONLY see their own submitted content reviews
+        if user.role == "creator":
+            query = query.where(Content.created_by == user.id)
+
     if status:
         query = query.where(Review.status == status)
-    result = await db.execute(query)
-    reviews = result.scalars().all()
 
-    # Load content titles
+    result = await db.execute(query)
+    rows = result.all()
+
     response = []
-    for r in reviews:
-        c_res = await db.execute(select(Content).where(Content.id == r.content_id))
-        content = c_res.scalar_one_or_none()
+    for r, content, creator in rows:
         response.append({
             "id": str(r.id),
             "content_id": str(r.content_id),
             "content_title": content.title if content else "Untitled",
             "channel": content.channel if content else "general",
+            "creator_name": creator.full_name if creator else "Enterprise Team",
+            "creator_email": creator.email if creator else "",
             "status": r.status,
             "decision": r.decision,
             "governance_score": r.governance_score,
@@ -78,6 +90,7 @@ async def list_reviews(
             "error_count": r.error_count,
             "warning_count": r.warning_count,
             "info_count": r.info_count,
+            "reviewer_comment": r.reviewer_comment,
             "created_at": r.created_at.isoformat() if r.created_at else "",
         })
     return response
@@ -469,6 +482,13 @@ async def approve_review(
     review = result.scalar_one_or_none()
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
+
+    if review.decision == "BLOCKED" or review.governance_score == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Firewall Active: Cannot approve publication for content blocked by BrandOS firewall. All critical findings must be resolved first.",
+        )
+
     review.status = "approved"
     review.reviewed_by = user.id if user else None
     await db.commit()
@@ -517,6 +537,37 @@ async def reject_review(
         )
 
     return {"status": "rejected", "id": str(review.id)}
+
+
+class ReviewerNoteBody(BaseModel):
+    note: str
+
+
+@router.post("/{id}/reviewer-notes")
+async def save_reviewer_note(
+    id: str,
+    body: ReviewerNoteBody,
+    db: AsyncSession = Depends(get_db),
+    user: Optional[User] = Depends(get_optional_user),
+):
+    """Reviewer or Administrator saves/updates direct actionable directives for creators."""
+    result = await db.execute(select(Review).where(Review.id == uuid.UUID(id)))
+    review = result.scalar_one_or_none()
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    review.reviewer_comment = body.note.strip()
+    await db.commit()
+
+    if user:
+        await AuditService.log_action(
+            db=db,
+            user_id=user.id,
+            action="reviewer_directive_saved",
+            entity_type="review",
+            entity_id=review.id,
+            details={"directive": review.reviewer_comment},
+        )
+    return {"status": "saved", "reviewer_comment": review.reviewer_comment}
 
 
 class ApplyRemediationBody(BaseModel):

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sparkles,
   ArrowRight,
@@ -55,11 +55,11 @@ export function AutoRemediationStudio({
   };
 
   // Trigger fetch when modal opens
-  useState(() => {
+  useEffect(() => {
     if (isOpen && !remediationData && !loading) {
       fetchRemediation();
     }
-  });
+  }, [isOpen]);
 
   const handleApply = async () => {
     if (!remediationData?.remediated_text) return;

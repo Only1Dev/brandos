@@ -6,7 +6,14 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from contextlib import asynccontextmanager
+
+# Ensure UTF-8 output encoding on Windows consoles
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,7 +35,6 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     logger.info("Initializing BrandOS backend services...")
     os.makedirs(settings.upload_dir, exist_ok=True)
-    # Ensure database schema is created on startup in development
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
@@ -46,10 +52,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS configuration - permissive for local dev and network devices
+# CORS configuration - allow all origins for web, Vercel, and local dev
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|192\.168\.[0-9]+\.[0-9]+)(:[0-9]+)?$",
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

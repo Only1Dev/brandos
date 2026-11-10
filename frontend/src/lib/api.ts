@@ -3,12 +3,25 @@
  * All backend API communications centralized here.
  */
 
-const BASE_URL = typeof window !== "undefined"
-  ? "" // Use same-origin relative URL in browser to route through Next.js proxy rewrite
-  : (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000");
+function getBaseUrl(): string {
+  // 1. Explicit production backend URL set in Vercel / environment
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  }
+  // 2. In browser local development, talk directly to FastAPI port 8000
+  // to avoid Next.js internal rewrite proxy timeouts on heavy multi-agent PDF audits
+  if (typeof window !== "undefined") {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
+    return "";
+  }
+  return "http://localhost:8000";
+}
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${BASE_URL}${endpoint}`;
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers: Record<string, string> = {
     ...(!isFormData ? { "Content-Type": "application/json" } : {}),

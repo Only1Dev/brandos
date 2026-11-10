@@ -1,0 +1,51 @@
+# Environment variables - NEVER COMMIT
+.env
+.env.local
+.env.production
+.env.*.local
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+
+# Build
+.next/
+out/
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ChromaDB local data
+chroma_data/
+backend/chroma_data/
+
+# Uploads
+backend/uploads/
+frontend/public/uploads/
+
+# Logs
+*.log
+
+# Coverage
+htmlcov/
+.coverage
+coverage/

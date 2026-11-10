@@ -1,0 +1,29 @@
+services:
+  # Python FastAPI Backend
+  - type: web
+    name: brandos-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+
+  # Next.js Frontend
+  - type: web
+    name: brandos-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.x
+      - key: NEXT_PUBLIC_BACKEND_URL
+        fromService:
+          type: web
+          name: brandos-backend
+          property: host

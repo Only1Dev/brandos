@@ -499,10 +499,13 @@ async def approve_review(
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
 
-    if review.decision == "BLOCKED" or review.governance_score == 0:
+    is_blocked = review.decision == "BLOCKED" or review.governance_score == 0
+    is_admin = user and user.role in ("admin", "superadmin")
+
+    if is_blocked and not is_admin:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Firewall Active: Cannot approve publication for content blocked by BrandOS firewall. All critical findings must be resolved first.",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Firewall Active: Manager/Reviewer cannot approve firewall-blocked content. Enterprise Administrator clearance required.",
         )
 
     review.status = "approved"
@@ -510,12 +513,18 @@ async def approve_review(
     await db.commit()
 
     if user:
+        action_name = "review_approved_admin_override" if is_blocked else "review_approved"
         await AuditService.log_action(
             db=db,
             user_id=user.id,
-            action="review_approved",
+            action=action_name,
             entity_type="review",
             entity_id=review.id,
+            details={
+                "score": review.governance_score,
+                "decision": review.decision,
+                "admin_override": is_blocked,
+            },
         )
 
     return {"status": "approved", "id": str(review.id)}

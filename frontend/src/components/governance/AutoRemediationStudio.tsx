@@ -54,12 +54,14 @@ export function AutoRemediationStudio({
     }
   };
 
-  // Trigger fetch when modal opens
+  // Trigger fetch when modal opens or reviewId changes
   useEffect(() => {
-    if (isOpen && !remediationData && !loading) {
+    if (isOpen) {
+      setLoading(true);
+      setError(null);
       fetchRemediation();
     }
-  }, [isOpen]);
+  }, [isOpen, reviewId]);
 
   const handleApply = async () => {
     if (!remediationData?.remediated_text) return;
@@ -117,7 +119,7 @@ export function AutoRemediationStudio({
 
         {/* Content Body */}
         <div className="p-6 flex-1 overflow-y-auto space-y-6">
-          {loading ? (
+          {loading || (!remediationData && !error) ? (
             <div className="py-20 text-center space-y-3">
               <div className="h-10 w-10 rounded-full border-3 border-indigo-600 border-t-transparent animate-spin mx-auto" />
               <div className="text-sm font-bold text-slate-800">Generating Brand-Sanitized Copy...</div>

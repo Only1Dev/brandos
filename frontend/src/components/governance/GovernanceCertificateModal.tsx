@@ -36,14 +36,14 @@ export function GovernanceCertificateModal({
 
   if (!isOpen || !review) return null;
 
-  const isBlocked = review.decision === "BLOCKED" || (review.governance_score ?? 0) < 70;
   const isApproved = review.status === "approved";
+  const isBlocked = !isApproved && (review.decision === "BLOCKED" || (review.governance_score ?? 0) < 70);
   const isPendingApproval = !isBlocked && !isApproved;
 
-  const certId = isBlocked
-    ? `BOS-DENIED-${review.id.slice(0, 8).toUpperCase()}`
-    : isApproved
+  const certId = isApproved
     ? `BOS-CERT-${review.id.slice(0, 8).toUpperCase()}`
+    : isBlocked
+    ? `BOS-DENIED-${review.id.slice(0, 8).toUpperCase()}`
     : `BOS-PENDING-${review.id.slice(0, 8).toUpperCase()}`;
 
   const rawText = review.content?.raw_text || "";
@@ -97,6 +97,10 @@ export function GovernanceCertificateModal({
   const handlePrint = () => {
     if (isPendingApproval) {
       alert("Draft Notice: Final Publication Certificate unlocks only after an authorized Reviewer or Administrator clicks 'Approve for Publication'.");
+      return;
+    }
+    if (isBlocked) {
+      alert("Enforcement Notice: Content publication clearance denied by Firewall. Only approved assets can generate an official printable certificate.");
       return;
     }
     window.print();

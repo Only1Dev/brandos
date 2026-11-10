@@ -77,17 +77,18 @@ async def get_finding_evidence(
 
 
 def _replace_text_safely(original: str, target: str, replacement: str) -> str:
-    if not original or not target or not replacement:
+    if not original or not target:
         return original
+    clean_rep = replacement if replacement is not None else ""
 
     # 1. Exact match
     if target in original:
-        return original.replace(target, replacement, 1)
+        return original.replace(target, clean_rep, 1)
 
     # 2. Cleaned target (strip quotes, brackets, ellipsis)
     clean_target = target.strip().strip("\"'[]()").rstrip(".…").strip()
     if clean_target and clean_target in original:
-        return original.replace(clean_target, replacement, 1)
+        return original.replace(clean_target, clean_rep, 1)
 
     # 3. Normalized apostrophes and dashes
     norm_orig = original.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
@@ -95,27 +96,37 @@ def _replace_text_safely(original: str, target: str, replacement: str) -> str:
 
     if norm_target in norm_orig:
         idx = norm_orig.find(norm_target)
-        return original[:idx] + replacement + original[idx + len(norm_target):]
+        return original[:idx] + clean_rep + original[idx + len(norm_target):]
 
-    # 4. Case-insensitive regex
+    # 4. Whitespace normalized match
+    ws_orig = " ".join(original.split())
+    ws_target = " ".join(clean_target.split())
+    if ws_target in ws_orig:
+        pattern_str = r"\s+".join(re.escape(w) for w in ws_target.split())
+        try:
+            return re.sub(pattern_str, lambda _: clean_rep, original, count=1, flags=re.IGNORECASE)
+        except Exception:
+            pass
+
+    # 5. Case-insensitive regex
     try:
         pattern = re.compile(re.escape(clean_target), re.IGNORECASE)
         if pattern.search(original):
-            return pattern.sub(replacement, original, count=1)
+            return pattern.sub(clean_rep, original, count=1)
     except Exception:
         pass
 
-    # 5. Core words match
-    words = [w for w in re.findall(r"\b\w+\b", clean_target) if len(w) > 3]
+    # 6. Core words match (longest subphrase)
+    words = [w for w in re.findall(r"\b\w+\b", clean_target) if len(w) > 2]
     if len(words) >= 2:
         for length in range(len(words), 1, -1):
-            sub_phrase = " ".join(words[:length])
-            if sub_phrase.lower() in original.lower():
-                try:
-                    pattern = re.compile(re.escape(sub_phrase), re.IGNORECASE)
-                    return pattern.sub(replacement, original, count=1)
-                except Exception:
-                    pass
+            pattern_str = r"\s+".join(re.escape(w) for w in words[:length])
+            try:
+                pattern = re.compile(pattern_str, re.IGNORECASE)
+                if pattern.search(original):
+                    return pattern.sub(clean_rep, original, count=1)
+            except Exception:
+                pass
 
     return original
 

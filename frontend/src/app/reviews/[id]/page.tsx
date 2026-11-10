@@ -20,6 +20,7 @@ import {
   Lock,
   Award,
   Clock,
+  ShieldCheck,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate, getSeverityBadge, getStatusBadge } from "@/lib/utils";
@@ -276,23 +277,53 @@ export default function ReviewDetailPage() {
               <span>Revision Requested</span>
             </div>
           ) : review.decision === "BLOCKED" || review.governance_score === 0 ? (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowRejectModal(true)}
-                disabled={actionLoading}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-700 hover:bg-red-50 text-xs font-semibold transition-colors"
-              >
-                <XCircle className="h-3.5 w-3.5" />
-                <span>Request Revision</span>
-              </button>
-              <div
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-100 border border-red-300 text-red-800 text-xs font-bold cursor-not-allowed"
-                title="Firewall Active: Blocked content cannot be approved for publication. Remediate all critical findings to unlock clearance."
-              >
-                <Lock className="h-3.5 w-3.5 text-red-600" />
-                <span>Approval Blocked by Firewall</span>
+            currentRole === "admin" || currentRole === "superadmin" ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowRejectModal(true)}
+                  disabled={actionLoading}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-700 hover:bg-red-50 text-xs font-semibold transition-colors"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  <span>Request Revision</span>
+                </button>
+                <button
+                  onClick={handleApprove}
+                  disabled={actionLoading}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-emerald-600 hover:from-amber-700 hover:to-emerald-700 text-white text-xs font-bold shadow-sm transition-all"
+                  title="Enterprise Administrator Privilege: Override firewall block and authorize publication clearance"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Admin Override & Approve</span>
+                </button>
               </div>
-            </div>
+            ) : currentRole === "reviewer" ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowRejectModal(true)}
+                  disabled={actionLoading}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-700 hover:bg-red-50 text-xs font-semibold transition-colors"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  <span>Request Revision</span>
+                </button>
+                <div
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-100 border border-red-300 text-red-800 text-xs font-bold cursor-not-allowed"
+                  title="Firewall Active: Manager cannot approve blocked content. Enterprise Administrator clearance required."
+                >
+                  <Lock className="h-3.5 w-3.5 text-red-600" />
+                  <span>Approval Blocked by Firewall (Admin Only)</span>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 text-xs font-semibold"
+                title="Reviewer or Administrator role required to approve publication"
+              >
+                <Lock className="h-3.5 w-3.5 text-slate-400" />
+                <span>Approval Restricted ({currentRole})</span>
+              </div>
+            )
           ) : !canApproveReviews ? (
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 text-xs font-semibold" title="Reviewer or Administrator role required to approve publication">
               <Lock className="h-3.5 w-3.5 text-slate-400" />

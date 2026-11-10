@@ -98,32 +98,51 @@ def check_numerical_claims(
     text: str,
 ) -> List[PolicyViolation]:
     """
-    Compare extracted numerical values against approved facts.
-    Uses tolerance for comparison.
+    Compare extracted numerical values against approved facts with strict topic relevance.
+    Only compares a number to a fact if the distinctive topic keywords of that fact match.
     """
     violations: List[PolicyViolation] = []
+    text_lower = text.lower()
+
+    BRAND_STOP_WORDS = {
+        "aureon", "shield", "solaria", "purehydrate", "technologies", "wellness",
+        "the", "and", "has", "for", "with", "from", "that", "this", "our", "are", 
+        "was", "been", "platform", "delivers", "achieves", "contains", "audited", 
+        "verified", "company", "official", "average", "rate", "level", "levels", 
+        "data", "benchmark", "report", "standard", "annual", "basis", "state"
+    }
 
     for fact in facts:
-        if not fact.is_active or fact.numerical_value is None:
+        if not getattr(fact, "is_active", True) or getattr(fact, "numerical_value", None) is None:
+            continue
+
+        stmt = getattr(fact, "statement", "") or ""
+        topic_words = [w for w in re.findall(r"\b[a-z]{3,}\b", stmt.lower()) if w not in BRAND_STOP_WORDS]
+        if not topic_words:
+            topic_words = [w for w in re.findall(r"\b[a-z]{3,}\b", stmt.lower())]
+
+        # Only compare if the content text actually mentions this fact's distinctive topic words
+        matched_topic_words = [w for w in topic_words if w in text_lower]
+        min_matches = 2 if len(topic_words) >= 2 else 1
+        if len(matched_topic_words) < min_matches:
             continue
 
         for num in extracted_numbers:
             num_value = num.get("value")
             num_unit = num.get("unit", "").lower()
-            fact_unit = (fact.numerical_unit or "").lower()
+            fact_unit = (getattr(fact, "numerical_unit", None) or "").lower()
 
             # Only compare if units match or one is empty
-            if fact_unit and num_unit and fact_unit != num_unit:
+            if fact_unit and num_unit and fact_unit != num_unit and not (fact_unit == "%" and num_unit == "%"):
                 continue
 
             if num_value is None:
                 continue
 
-            tolerance = fact.numerical_tolerance or 0.0
+            tolerance = getattr(fact, "numerical_tolerance", None) or 0.0
             diff = abs(num_value - fact.numerical_value)
 
             if diff > tolerance and diff / max(abs(fact.numerical_value), 1e-9) > 0.01:
-                # Potential mismatch — check if the fact statement is related
                 raw = num.get("raw", str(num_value))
                 violations.append(PolicyViolation(
                     fact_id=fact.id,

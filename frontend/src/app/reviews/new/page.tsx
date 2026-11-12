@@ -14,11 +14,13 @@ import {
   X,
   FileCode,
   Shield,
+  ShieldCheck,
   Leaf,
   AlertTriangle,
   Download,
   Flame,
   Check,
+  Lock,
 } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -405,13 +407,20 @@ export default function NewReviewPage() {
         {/* Text Input Mode */}
         {inputMode === "text" ? (
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-semibold text-slate-700">
-                Marketing Copy or Article Body <span className="text-red-500">*</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <span>Marketing Copy or Article Body</span>
+                <span className="text-red-500">*</span>
               </label>
-              <span className="text-[11px] text-slate-400">
-                {rawText.length > 0 ? `${rawText.trim().split(/\s+/).length} words` : "0 words"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                  <Lock className="h-2.5 w-2.5 text-emerald-600" />
+                  <span>Confidential Draft (ZDR Active)</span>
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {rawText.length > 0 ? `${rawText.trim().split(/\s+/).length} words` : "0 words"}
+                </span>
+              </div>
             </div>
             <textarea
               rows={8}
@@ -460,6 +469,29 @@ export default function NewReviewPage() {
             )}
           </div>
         )}
+
+        {/* Confidentiality & AI Service Transparency Disclosure */}
+        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+              <Lock className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+              <span>Enterprise Confidentiality & AI Disclosure Notice</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" /> Zero Data Retention Enforced
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Enterprise Security SLA</span>
+          </div>
+          <p className="text-[11px] text-slate-600 leading-relaxed">
+            <strong>Confidential Material Protection:</strong> Submitted copy, campaign attachments, and proprietary brand guidelines are processed ephemerally within your tenant&apos;s isolated perimeter. Data is never retained externally, stored permanently by third parties, or used to train public AI models.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 pt-1.5 border-t border-slate-200/60 font-mono">
+            <span>• Text Analysis: Groq Llama 3.3 70B (Zero-Retention)</span>
+            <span>• Visual Inspection: Google Gemini 1.5 Pro (Ephemeral Vision)</span>
+            <span>• Ground Truth: Supabase pgvector RAG</span>
+            <span>• Governance: Human Reviewer Authority Enforced</span>
+          </div>
+        </div>
 
         {/* Submit Action */}
         <div className="pt-2 flex items-center justify-between border-t border-slate-100">

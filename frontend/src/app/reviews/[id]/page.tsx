@@ -235,6 +235,20 @@ export default function ReviewDetailPage() {
               <span>•</span>
               <span>Submitted: {formatDate(review.created_at)}</span>
             </div>
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                <Lock className="h-2.5 w-2.5 text-indigo-600" />
+                <span>Zero Data Retention SLA</span>
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                <Sparkles className="h-2.5 w-2.5 text-indigo-600" />
+                <span>AI Disclosed: Llama 3.3 70B &bull; Gemini 1.5 Pro &bull; TruthMark RAG</span>
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+                <span>Confidential Material Protected</span>
+              </span>
+            </div>
           </div>
         </div>
 

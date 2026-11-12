@@ -49,10 +49,12 @@ Evaluate the following content thoroughly for:
    - If a rule specifies banned terms, tone constraints, or requirements, cite the exact rule_id in rule_ref.
 3. Content Substance & Anti-Gibberish Standards (CRITICAL):
    If the content consists of meaningless placeholder text, keyboard mash, or random characters (e.g. 'abcd', 'asdf', 'test123'), you MUST flag a CRITICAL violation citing rule_ref 'BRAND-SUBSTANCE-001' with title "Content Quality Standard: Meaningless Placeholder Copy".
-4. Tone and Voice violations (e.g., aggressive, overly defensive, informal/slang where forbidden, hype-driven)
-5. Absolute guarantees or prohibited promises (e.g. "guarantees 100% protection", "zero risk", "revolutionary")
-6. Unsupported superlatives (e.g. "India's #1", "the best in the market", "industry leader" without citation)
-7. Channel appropriateness (e.g., inappropriate length, tone mismatch for channel)
+4. Confidential & Proprietary Information Leakage (CRITICAL DLP):
+   If the content contains internal classification banners (e.g. "CONFIDENTIAL", "STRICTLY CONFIDENTIAL", "INTERNAL USE ONLY", "DO NOT DISTRIBUTE", "NDA PROTECTED"), private staging URLs, or exposed credentials, you MUST flag a CRITICAL violation citing rule_ref 'BRAND-CONFIDENTIAL-001' with title "Confidential & Proprietary Information Leakage".
+5. Tone and Voice violations (e.g., aggressive, overly defensive, informal/slang where forbidden, hype-driven)
+6. Absolute guarantees or prohibited promises (e.g. "guarantees 100% protection", "zero risk", "revolutionary")
+7. Unsupported superlatives (e.g. "India's #1", "the best in the market", "industry leader" without citation)
+8. Channel appropriateness (e.g., inappropriate length, tone mismatch for channel)
 
 For every violation detected:
 - Cite the relevant rule_id (if matched from guidelines or 'BRAND-IDENTITY-001')

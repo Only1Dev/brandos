@@ -78,6 +78,16 @@ export default function NewReviewPage() {
     );
   };
 
+  const loadConfidentialLeakage = () => {
+    setInputMode("text");
+    setTitle("Aureon Q4 Release Preview — Internal Memo");
+    setChannel("instagram");
+    setContentType("social_post");
+    setRawText(
+      "CONFIDENTIAL & PROPRIETARY — INTERNAL USE ONLY. DO NOT DISTRIBUTE.\n\nUpcoming Aureon Shield v2.4 rollout testing on https://staging.aureon.internal with secret_key=sk_live_9948210941829. Contact lead dev at dev-ops@internal.aureon.net for testing credentials."
+    );
+  };
+
   const loadCrossBrandCopy = () => {
     setInputMode("text");
     if (!isSolaria) {
@@ -299,6 +309,15 @@ export default function NewReviewPage() {
                 title="Submits cross-tenant copy to evaluate boundary enforcement"
               >
                 <span>⚠️ Cross-Tenant Misalignment Test (Solaria Copy → Score 0/100)</span>
+              </button>
+              <button
+                type="button"
+                onClick={loadConfidentialLeakage}
+                className="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 text-xs font-semibold border border-purple-200 transition-colors flex items-center gap-1.5"
+                title="Submits confidential internal-only text with staging credentials to test Data Loss Prevention"
+              >
+                <Lock className="h-3 w-3 text-purple-600" />
+                <span>🔒 Confidential Info Leakage Test (Internal Markers & Secret Key → Score 0/100 Blocked)</span>
               </button>
             </>
           ) : (

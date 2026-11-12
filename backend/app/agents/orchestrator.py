@@ -98,6 +98,11 @@ class AnalysisOrchestrator:
             text=text,
         )
 
+        # Enforce Data Loss Prevention (DLP) & Confidential Material Shield
+        confidentiality_findings = self.policy_engine.check_confidentiality_dlp(
+            text=text,
+        )
+
         visual_task = self.visual_agent.evaluate(
             image_bytes=image_bytes,
             mime_type=image_mime,
@@ -119,6 +124,7 @@ class AnalysisOrchestrator:
 
         # Combine raw findings
         combined_findings = [
+            *confidentiality_findings,
             *substance_findings,
             *guideline_rule_findings,
             *fact_findings,

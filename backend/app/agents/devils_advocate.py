@@ -135,6 +135,9 @@ class DevilsAdvocateAgent:
                     or "missing mandatory" in title_lower
                     or "mandatory" in title_lower
                     or "guideline rule violation" in title_lower
+                    or "confidential" in title_lower
+                    or "leakage" in title_lower
+                    or "security" in title_lower
                     or rule_ref.startswith("rule")
                     or rule_ref.startswith("brand-")
                     or finding.get("severity") == "critical"

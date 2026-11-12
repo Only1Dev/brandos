@@ -243,6 +243,88 @@ def resolve_policy_precedence(violations: List[PolicyViolation]) -> List[PolicyV
 
 
 
+def check_confidentiality_dlp(text: str) -> List[dict]:
+    """
+    Zero-tolerance Data Loss Prevention (DLP) & Confidential Material Shield.
+    Detects internal classification markers, secrets, credentials, staging URLs,
+    and private employee PII to prevent accidental leakage of confidential company info.
+    """
+    violations = []
+    if not text or not text.strip():
+        return violations
+
+    text_lower = text.lower()
+
+    # 1. Internal Classification Banners & Watermarks
+    CONFIDENTIAL_MARKERS = [
+        r"\b(?:strictly\s+confidential|confidential\s+and\s+proprietary|internal\s+use\s+only|do\s+not\s+distribute|internal\s+only|company\s+confidential|nda\s+protected|under\s+nda|not\s+for\s+public\s+release|for\s+internal\s+eyes\s+only)\b",
+        r"\b(?:confidential\s*[:-]\s*internal|confidential\s+document|proprietary\s+information)\b",
+    ]
+
+    for pattern_str in CONFIDENTIAL_MARKERS:
+        m = re.search(pattern_str, text, re.IGNORECASE)
+        if m:
+            matched_text = m.group(0)
+            violations.append({
+                "finding_type": "brand",
+                "severity": "critical",
+                "title": "Confidential & Proprietary Information Leakage",
+                "description": f"Content contains internal classification marker '{matched_text}'. BrandOS zero-tolerance firewall strictly blocks publishing confidential internal materials to public channels.",
+                "detected_text": matched_text,
+                "explanation": "Protecting confidential brand materials is mandatory. Outgoing public copy must never contain internal-only banners, confidential disclaimers, or NDA-protected markings.",
+                "rule_ref": "BRAND-CONFIDENTIAL-001",
+                "confidence": 1.0,
+                "evidence": [{
+                    "evidence_type": "policy",
+                    "source_ref": "BRAND-CONFIDENTIAL-001",
+                    "description": "Zero-tolerance DLP: Internal classification banners and confidential company markers are blocked from public release.",
+                    "data": {"leak_detected": matched_text}
+                }],
+                "suggestion": {
+                    "original_text": matched_text,
+                    "suggested_text": "",
+                    "reasoning": "Remove internal confidentiality banners before publishing to public channels."
+                }
+            })
+            break
+
+    # 2. Leaked Secrets, Staging Endpoints, & Private Credentials
+    CREDENTIAL_PATTERNS = [
+        (r"\b(?:sk_[a-zA-Z0-9_\-]{16,}|ghp_[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16})\b", "Exposed Secret / API Key Token"),
+        (r"\b(?:password|passwd|api_key|secret_key|private_key)\s*[:=]\s*['\"]?([^\s'\"]{6,})['\"]?", "Exposed Internal Credential"),
+        (r"\b(?:https?://)?(?:[a-zA-Z0-9_\-]+\.)*(?:staging\.[a-zA-Z0-9_\-]+\.(?:net|com|org)|[a-zA-Z0-9_\-]+\.internal|[a-zA-Z0-9_\-]+\.local|localhost(?::\d+)?)\b", "Exposed Internal Staging / Dev Endpoint"),
+    ]
+
+    for pattern_str, label in CREDENTIAL_PATTERNS:
+        m = re.search(pattern_str, text, re.IGNORECASE)
+        if m:
+            matched_text = m.group(0)
+            violations.append({
+                "finding_type": "brand",
+                "severity": "critical",
+                "title": f"Security & Confidentiality Breach: {label}",
+                "description": f"Content contains sensitive internal data: '{matched_text}'. Public content must never expose internal credentials, secrets, or staging environments.",
+                "detected_text": matched_text,
+                "explanation": f"Detected {label}. BrandOS security perimeter prevents accidental leak of private company infrastructure or authorization secrets.",
+                "rule_ref": "BRAND-SECURITY-001",
+                "confidence": 1.0,
+                "evidence": [{
+                    "evidence_type": "security_policy",
+                    "source_ref": "BRAND-SECURITY-001",
+                    "description": f"Data Loss Prevention (DLP): {label} intercepted before publication.",
+                    "data": {"detected": matched_text}
+                }],
+                "suggestion": {
+                    "original_text": matched_text,
+                    "suggested_text": "[REDACTED]",
+                    "reasoning": "Redact private company credentials and internal endpoints."
+                }
+            })
+            break
+
+    return violations
+
+
 def check_substance_quality(text: str) -> List[dict]:
     """
     Zero-tolerance publication firewall against placeholder copy, keyboard mash,
@@ -458,3 +540,6 @@ class PolicyEngine:
 
     def check_substance_quality(self, text: str) -> List[dict]:
         return check_substance_quality(text)
+
+    def check_confidentiality_dlp(self, text: str) -> List[dict]:
+        return check_confidentiality_dlp(text)

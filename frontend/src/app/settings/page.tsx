@@ -306,23 +306,32 @@ export default function SettingsPage() {
         </table>
       </div>
 
-      {/* Enterprise Security SLA Card */}
+      {/* Enterprise Security SLA & AI Transparency Card */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
           <Server className="h-4 w-4 text-indigo-600" />
-          <span>Enterprise Security & Data Isolation Guarantees</span>
+          <span>Enterprise Security, Data Isolation & AI Service Disclosure</span>
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="font-bold text-slate-800 mb-1">Zero Data Retention Policy</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-1.5">
+            <div className="font-bold text-slate-800">Zero Data Retention Policy</div>
             <p className="text-slate-500 text-[11px] leading-relaxed">
               Inference pipelines process content ephemerally. Customer copy, design files, and proprietary guidelines are never stored externally or used for model training.
             </p>
           </div>
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="font-bold text-slate-800 mb-1">Immutable Audit Trail Logging</div>
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-1.5">
+            <div className="font-bold text-slate-800">Immutable Audit Trail</div>
             <p className="text-slate-500 text-[11px] leading-relaxed">
               Every compliance finding, human approval, suggestion acceptance, and override justification is logged into a tamper-evident audit ledger with 365-day retention.
+            </p>
+          </div>
+          <div className="p-3.5 bg-indigo-50/50 rounded-xl border border-indigo-100 space-y-1.5">
+            <div className="font-bold text-indigo-950 flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+              <span>AI Service Transparency</span>
+            </div>
+            <p className="text-slate-600 text-[11px] leading-relaxed">
+              BrandOS utilizes Groq Llama 3.3 70B (Zero-Retention Text Inference), Google Gemini 1.5 Pro (Multimodal Vision), and Supabase pgvector with strict enterprise data isolation.
             </p>
           </div>
         </div>

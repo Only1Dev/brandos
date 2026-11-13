@@ -206,10 +206,11 @@ export const api = {
     const qs = params.toString();
     return request<any[]>(`/api/claims${qs ? `?${qs}` : ""}`);
   },
-  createClaim: (data: any) =>
+  createClaim: (data: any, brand?: string) =>
     request<any>("/api/claims", {
       method: "POST",
       body: JSON.stringify(data),
+      headers: brand ? { "X-Brand-Slug": brand } : undefined,
     }),
   verifyClaim: (id: string) =>
     request<any>(`/api/claims/${id}/verify`, { method: "POST" }),

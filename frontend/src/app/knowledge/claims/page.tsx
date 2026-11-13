@@ -115,6 +115,7 @@ export default function ClaimsPage() {
   const handleVerifyTruthMark = async (id: string, text: string) => {
     try {
       setVerifyingId(id);
+      const targetClaim = claims.find((c) => c.id === id) || (diffClaim?.id === id ? diffClaim : null);
       const res = await api.verifyClaim(id);
       showNotification(
         res.status === "verified"
@@ -122,8 +123,25 @@ export default function ClaimsPage() {
           : `Disputed: Flagged for rule violation`
       );
       if (res.status === "verified") {
+        try {
+          await api.createFact(
+            {
+              statement: text || targetClaim?.statement || res.statement,
+              category: targetClaim?.category || res.category || "statistic",
+              source: "Certified from verified claim ledger",
+              numerical_value: targetClaim?.numerical_value,
+              numerical_unit: targetClaim?.numerical_unit,
+            },
+            activeBrand
+          );
+        } catch {
+          // If already created by backend or duplicate, ignore
+        }
         playSuccessChime();
-        setPromotedToast({ statement: text });
+        setPromotedToast({
+          statement: text || targetClaim?.statement || res.statement,
+          category: targetClaim?.category || res.category,
+        });
         setTimeout(() => setPromotedToast(null), 6500);
       }
       await loadClaims();
@@ -143,10 +161,24 @@ export default function ClaimsPage() {
         setDiffClaim((prev: any) => ({ ...prev, status: newStatus }));
       }
       if (newStatus === "verified") {
+        try {
+          await api.createFact(
+            {
+              statement: targetClaim?.statement || res.statement,
+              category: targetClaim?.category || res.category || "statistic",
+              source: "Certified from verified claim ledger",
+              numerical_value: targetClaim?.numerical_value,
+              numerical_unit: targetClaim?.numerical_unit,
+            },
+            activeBrand
+          );
+        } catch {
+          // If already created by backend or duplicate, ignore
+        }
         playSuccessChime();
         setPromotedToast({
           statement: targetClaim?.statement || res.statement || "Verified claim",
-          category: targetClaim?.category,
+          category: targetClaim?.category || res.category,
         });
         setTimeout(() => setPromotedToast(null), 6500);
       }
@@ -178,7 +210,7 @@ export default function ClaimsPage() {
         numerical_value: numericalValue ? parseFloat(numericalValue) : null,
         numerical_unit: numericalUnit || null,
         valid_until: validUntil || null,
-      });
+      }, activeBrand);
       setShowAddModal(false);
       setStatement("");
       setNumericalValue("");

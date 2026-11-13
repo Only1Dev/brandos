@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Database, CheckCircle2, AlertCircle, Trash2, Lock, Pencil, X } from "lucide-react";
+import { Plus, Database, CheckCircle2, AlertCircle, Trash2, Lock, Pencil, X, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { useBrand } from "@/context/BrandContext";
@@ -108,25 +108,41 @@ export default function FactsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Approved Organizational Facts</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Approved Organizational Facts</h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              {facts.length} Verified Facts
+            </span>
+          </div>
           <p className="text-sm text-slate-500 mt-1">
             Verified ground-truth metrics, statistics, and product specifications used by the Fact Agent.
           </p>
         </div>
-        {canEditBrandBrain ? (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all"
+            type="button"
+            onClick={loadFacts}
+            disabled={loading}
+            className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer"
+            title="Refresh facts from Brand Brain"
           >
-            <Plus className="h-4 w-4" />
-            <span>Add Approved Fact</span>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-indigo-600" : ""}`} />
           </button>
-        ) : (
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
-            <Lock className="h-3.5 w-3.5 text-amber-600" />
-            <span>Read-Only Mode ({currentRole})</span>
-          </div>
-        )}
+          {canEditBrandBrain ? (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Approved Fact</span>
+            </button>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+              <Lock className="h-3.5 w-3.5 text-amber-600" />
+              <span>Read-Only Mode ({currentRole})</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {!canEditBrandBrain && (

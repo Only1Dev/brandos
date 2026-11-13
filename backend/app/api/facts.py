@@ -81,6 +81,7 @@ async def list_facts(
         query = query.where(Fact.organization_id == target_org_id)
     if category:
         query = query.where(Fact.category == category)
+    query = query.order_by(Fact.created_at.desc())
     result = await db.execute(query)
     facts = result.scalars().all()
 
@@ -132,6 +133,29 @@ async def create_fact(
             db.add(org)
             await db.flush()
         target_org_id = org.id
+
+    # Check if this exact fact statement already exists actively
+    existing_res = await db.execute(
+        select(Fact).where(
+            Fact.organization_id == target_org_id,
+            Fact.statement == body.statement,
+            Fact.is_active.is_(True),
+        )
+    )
+    existing_fact = existing_res.scalars().first()
+    if existing_fact:
+        return FactResponse(
+            id=str(existing_fact.id),
+            statement=existing_fact.statement,
+            category=existing_fact.category,
+            source=existing_fact.source,
+            numerical_value=existing_fact.numerical_value,
+            numerical_unit=existing_fact.numerical_unit,
+            valid_from=existing_fact.valid_from.isoformat() if existing_fact.valid_from else None,
+            valid_until=existing_fact.valid_until.isoformat() if existing_fact.valid_until else None,
+            is_active=existing_fact.is_active,
+            is_expired=existing_fact.is_expired,
+        )
 
     fact = Fact(
         organization_id=target_org_id,

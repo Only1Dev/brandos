@@ -400,7 +400,7 @@ export default function AssetsPage() {
                 type="submit"
                 className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer ${
                   isThemeDirty
-                    ? "bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-600 shadow-sm"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 shadow-md"
                     : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-2xs"
                 }`}
               >

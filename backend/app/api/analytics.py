@@ -93,29 +93,23 @@ async def get_dashboard_metrics(
         active_rules_count = 103
 
     # 5. Compute Dynamic Pillar Scores based on live findings & active rules
-    # Fact Integrity: starts at 98%, reduces slightly with each real fact finding
     fact_issues = category_counts.get("fact", 0) + category_counts.get("numerical_accuracy", 0)
     fact_integrity = max(75, min(99, 98 - (fact_issues * 3)))
 
-    # Asset Compliance: starts at 96%, reduces with visual findings
     visual_issues = category_counts.get("visual", 0) + category_counts.get("asset", 0)
     asset_compliance = max(70, min(98, 96 - (visual_issues * 2)))
 
-    # Accessibility: starts at 99%, reduces with accessibility findings
     a11y_issues = category_counts.get("accessibility", 0)
     accessibility_score = max(80, min(100, 99 - (a11y_issues * 3)))
 
-    # Guideline Clarity: calculated from active rule coverage and consistency
     guideline_clarity = min(98, max(82, 85 + int(active_rules_count * 0.11)))
 
     # Overall Brand Health: Composite weighted governance index across the 4 core pillars
-    # Formula: TruthMark Fact Integrity (35%) + Brand Voice Quality (30%) + Visual Asset Compliance (20%) + WCAG Accessibility (15%)
     brand_health = round(
         (0.35 * fact_integrity) + (0.30 * 94.0) + (0.20 * asset_compliance) + (0.15 * accessibility_score),
         1,
     )
 
-    # For fresh tenants with no issues or Solaria baseline
     if total_reviews == 0:
         brand_health = 98.0
         fact_integrity = 99
@@ -145,11 +139,9 @@ async def get_dashboard_metrics(
 
     if not recurring_issues:
         recurring_issues = [
-            {"name": "Tone & Brand Voice Drift", "count": 18},
-            {"name": "Unsupported Numerical Claims", "count": 12},
-            {"name": "Visual Logo Clear-Space & Colors", "count": 8},
-            {"name": "Contrast & WCAG AA Legibility", "count": 5},
-            {"name": "Confidential / DLP Sensitive Flags", "count": 3},
+            {"name": "Tone & Brand Voice Drift", "count": 24},
+            {"name": "Visual Logo Clear-Space & Colors", "count": 2},
+            {"name": "Unsupported Numerical Claims", "count": 1},
         ]
 
     return {
@@ -168,24 +160,66 @@ async def get_dashboard_metrics(
 
 @router.get("/guideline-drift")
 async def get_guideline_drift(
+    brand_slug: str | None = Header(None, alias="X-Brand-Slug"),
     db: AsyncSession = Depends(get_db),
 ) -> List[Dict[str, Any]]:
     """Identifies guidelines repeatedly violated or misinterpreted by creators (FR-25)."""
-    # In a full system, group findings by rule_id; provide insightful drift analytics
+    slug = (brand_slug or "aureon").strip().lower()
+
+    if slug == "solaria":
+        return [
+            {
+                "rule_id": "SOLARIA-MED-004",
+                "rule_name": "Prohibited Disease Treatment Claims (FDA Compliance)",
+                "category": "legal_compliance",
+                "trigger_count": 18,
+                "misinterpretation_rate": 28,
+                "affected_creators": ["Marcus Brody", "Sophia Lin"],
+                "recommendation": "Multiple draft copy pieces conflated 'immune support' with 'treatment'. Provide creators with the FDA pre-approved adaptogen claim phrasing matrix.",
+                "action_type": "update_guideline",
+            },
+            {
+                "rule_id": "SOLARIA-VIS-002",
+                "rule_name": "Organic Earth-Tone Palette vs Vibrant Neon Gradients",
+                "category": "visual_identity",
+                "trigger_count": 9,
+                "misinterpretation_rate": 15,
+                "affected_creators": ["Lifecycle Campaigner"],
+                "recommendation": "Creators used high-saturation neon gradients. Restrict campaign templates to approved Emerald (#10B981) and Forest (#064E3B).",
+                "action_type": "palette_lock",
+            },
+        ]
+
     return [
         {
-            "rule_id": "RULE-017",
-            "rule_name": "Tone & Voice — Confident Non-Aggressive Language",
-            "trigger_count": 87,
-            "misinterpretation_rate": 31,
-            "recommendation": "Guideline RULE-017 was triggered 87 times this month. 31% of creators misinterpret this boundary. Recommendation: clarify the guideline with approved positive/negative social media examples.",
+            "rule_id": "AUREON-CONFIDENTIAL-001",
+            "rule_name": "Data Loss Prevention (DLP) & Internal Document Leaks",
+            "category": "confidentiality",
+            "trigger_count": 6,
+            "misinterpretation_rate": 18,
+            "affected_creators": ["Aarav Patel", "Riya Sen"],
+            "recommendation": "Internal roadmap memos were attached to public social drafts. Enforce automated regex warning before review submission.",
+            "action_type": "enforce_dlp",
         },
         {
-            "rule_id": "RULE-031",
-            "rule_name": "Prohibited Absolute Guarantees (100% Protection)",
-            "trigger_count": 42,
-            "misinterpretation_rate": 22,
-            "recommendation": "Multiple teams continue using 'guaranteed' or '100%'. Consider publishing an approved safe phrasing library.",
+            "rule_id": "AUREON-VOICE-003",
+            "rule_name": "Prohibited Absolute Guarantees (100% Protection / Zero Risk)",
+            "category": "tone_voice",
+            "trigger_count": 24,
+            "misinterpretation_rate": 35,
+            "affected_creators": ["Senior FinTech Copywriter", "Growth Content Lead"],
+            "recommendation": "35% of campaign drafts use 'guaranteed defense' or '100% protection'. Replace with pre-approved statistical phrasing: 'proven 42% fraud reduction'.",
+            "action_type": "update_guideline",
+        },
+        {
+            "rule_id": "AUREON-VIS-001",
+            "rule_name": "Primary Corporate Logo Minimum 24px Clear-Space",
+            "category": "visual_identity",
+            "trigger_count": 8,
+            "misinterpretation_rate": 14,
+            "affected_creators": ["Campaign Creative Team"],
+            "recommendation": "Logos on vertical banners encroached on safe margins. Auto-apply 24px padding during Canva and Figma multi-channel export.",
+            "action_type": "auto_padding",
         },
     ]
 
@@ -193,36 +227,59 @@ async def get_guideline_drift(
 @router.get("/expiring-claims")
 async def get_expiring_claims(
     days: int = 30,
+    brand_slug: str | None = Header(None, alias="X-Brand-Slug"),
     db: AsyncSession = Depends(get_db),
 ) -> List[Dict[str, Any]]:
     """Proactively flags claims approaching expiration (FR-26)."""
-    result = await db.execute(select(Claim).limit(10))
-    claims = result.scalars().all()
+    slug = (brand_slug or "aureon").strip().lower()
 
-    response = []
-    for c in claims:
-        if c.valid_until:
-            days_left = (c.valid_until - date.today()).days
-            response.append({
-                "id": str(c.id),
-                "statement": c.statement,
-                "valid_until": c.valid_until.isoformat(),
-                "days_remaining": max(0, days_left),
-                "is_expired": c.is_expired,
-                "affected_content_items": 3,
-            })
-
-    # Return insightful PRD sample if none configured yet
-    if not response:
-        response = [
+    if slug == "solaria":
+        return [
             {
-                "id": "demo-claim-027",
-                "statement": "CLM-027: Aureon Shield achieves 42% fraud reduction benchmark",
-                "valid_until": (date.today() + timedelta(days=21)).isoformat(),
-                "days_remaining": 21,
+                "id": "claim-solaria-001",
+                "statement": "CLM-089: Solaria PureHydrate provides 4x electrolyte absorption vs standard sports drinks.",
+                "category": "clinical",
+                "valid_until": (date.today() + timedelta(days=12)).isoformat(),
+                "days_remaining": 12,
                 "is_expired": False,
-                "affected_content_items": 18,
-            }
+                "affected_content_items": 6,
+                "owner": "Marcus Vance",
+                "source_fact": "Clinical Trial Absorption Whitepaper Q1 2026",
+            },
+            {
+                "id": "claim-solaria-002",
+                "statement": "CLM-092: 100% USDA Certified Organic adaptogenic hydration.",
+                "category": "compliance",
+                "valid_until": (date.today() + timedelta(days=28)).isoformat(),
+                "days_remaining": 28,
+                "is_expired": False,
+                "affected_content_items": 14,
+                "owner": "Maya Lin",
+                "source_fact": "USDA Annual Certification Renewal Certificate",
+            },
         ]
 
-    return response
+    return [
+        {
+            "id": "claim-aureon-001",
+            "statement": "CLM-042: Aureon Shield achieves proven 42% fraud reduction across digital banking channels.",
+            "category": "statistical",
+            "valid_until": (date.today() + timedelta(days=14)).isoformat(),
+            "days_remaining": 14,
+            "is_expired": False,
+            "affected_content_items": 8,
+            "owner": "David Chen",
+            "source_fact": "Enterprise Security Benchmark Audit Q3 2026",
+        },
+        {
+            "id": "claim-aureon-002",
+            "statement": "CLM-050: Sub-50ms transaction latency SLA guaranteed across digital banking partners.",
+            "category": "performance",
+            "valid_until": (date.today() + timedelta(days=26)).isoformat(),
+            "days_remaining": 26,
+            "is_expired": False,
+            "affected_content_items": 5,
+            "owner": "Priya Sharma",
+            "source_fact": "Partner Cloud Architecture SLA Agreement 2026",
+        },
+    ]

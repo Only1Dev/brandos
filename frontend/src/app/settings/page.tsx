@@ -25,6 +25,32 @@ import {
 } from "lucide-react";
 import { useBrand, UserProfile, UserRole, RolePermissions } from "@/context/BrandContext";
 
+function arePermsEqual(a: RolePermissions, b: RolePermissions): boolean {
+  if (!a || !b || !a.creator || !b.creator || !a.reviewer || !b.reviewer) return true;
+  const cKeys: (keyof RolePermissions["creator"])[] = [
+    "submitDrafts",
+    "autoRemediate",
+    "viewAllReviews",
+    "directPublish",
+    "editBrandBrain",
+  ];
+  const rKeys: (keyof RolePermissions["reviewer"])[] = [
+    "submitDrafts",
+    "autoRemediate",
+    "viewAllReviews",
+    "directPublish",
+    "overrideFindings",
+    "editBrandBrain",
+  ];
+  for (const k of cKeys) {
+    if (Boolean(a.creator[k]) !== Boolean(b.creator[k])) return false;
+  }
+  for (const k of rKeys) {
+    if (Boolean(a.reviewer[k]) !== Boolean(b.reviewer[k])) return false;
+  }
+  return true;
+}
+
 export default function SettingsPage() {
   const {
     activeBrand,
@@ -43,18 +69,18 @@ export default function SettingsPage() {
   const isAdmin = currentRole === "admin" || isSuperAdmin;
 
   // Local state for interactive role permission editing
-  const [localPerms, setLocalPerms] = useState<RolePermissions>(rolePermissions);
-  const [savedPermsBaseline, setSavedPermsBaseline] = useState<RolePermissions>(rolePermissions);
+  const [localPerms, setLocalPerms] = useState<RolePermissions>(() => JSON.parse(JSON.stringify(rolePermissions)));
+  const [savedPermsBaseline, setSavedPermsBaseline] = useState<RolePermissions>(() => JSON.parse(JSON.stringify(rolePermissions)));
   const [permsSaved, setPermsSaved] = useState(false);
 
   // Sync baseline when brand or rolePermissions change
   useEffect(() => {
-    setLocalPerms(rolePermissions);
-    setSavedPermsBaseline(rolePermissions);
+    setLocalPerms(JSON.parse(JSON.stringify(rolePermissions)));
+    setSavedPermsBaseline(JSON.parse(JSON.stringify(rolePermissions)));
   }, [rolePermissions, activeBrand]);
 
   // Dynamic dirty check: true only if current localPerms differs from saved baseline
-  const isRoleDirty = JSON.stringify(localPerms) !== JSON.stringify(savedPermsBaseline);
+  const isRoleDirty = !arePermsEqual(localPerms, savedPermsBaseline);
 
   // Local state for approval thresholds
   const [minScoreThreshold, setMinScoreThreshold] = useState<number>(85);
@@ -124,7 +150,7 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!isAdmin) return;
     updateRolePermissions(localPerms);
-    setSavedPermsBaseline(localPerms); // Reverts back to white since localPerms matches baseline
+    setSavedPermsBaseline(JSON.parse(JSON.stringify(localPerms))); // Reverts back to white since localPerms matches baseline
     setPermsSaved(true);
     setTimeout(() => setPermsSaved(false), 3500);
   };
@@ -569,7 +595,7 @@ export default function SettingsPage() {
                 type="submit"
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
                   isRoleDirty
-                    ? "bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-600 shadow-sm"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 shadow-md"
                     : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-2xs"
                 }`}
               >
@@ -709,25 +735,6 @@ export default function SettingsPage() {
             </button>
           </div>
 
-          {/* Permanent TruthMark Grounding Status (No toggle switch, always active!) */}
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-            <div>
-              <div className="font-bold text-slate-900 flex items-center gap-2">
-                <span>TruthMark™ Topic-Isolated Fact Verification</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Always Active
-                </span>
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
-                Permanently enforced core firewall defense. Evaluates factual claims strictly against identical topic domains to prevent cross-fact contamination.
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg shrink-0">
-              <Check className="h-3.5 w-3.5" />
-              <span>Core Shield Enforced</span>
-            </div>
-          </div>
-
           {isAdmin && (
             <div className="flex items-center justify-between pt-2">
               {thresholdsSaved ? (
@@ -746,7 +753,7 @@ export default function SettingsPage() {
                 type="submit"
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
                   isThresholdDirty
-                    ? "bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-600 shadow-sm"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 shadow-md"
                     : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-2xs"
                 }`}
               >

@@ -199,13 +199,24 @@ export const api = {
     request<any>(`/api/facts/${id}`, { method: "DELETE" }),
 
   // Claims
-  getClaims: (status?: string) =>
-    request<any[]>(`/api/claims${status ? `?status=${status}` : ""}`),
+  getClaims: (status?: string, brand?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (brand) params.set("brand", brand);
+    const qs = params.toString();
+    return request<any[]>(`/api/claims${qs ? `?${qs}` : ""}`);
+  },
   createClaim: (data: any) =>
     request<any>("/api/claims", {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  verifyClaim: (id: string) =>
+    request<any>(`/api/claims/${id}/verify`, { method: "POST" }),
+  transitionClaim: (id: string, new_status: string) =>
+    request<any>(`/api/claims/${id}/transition?new_status=${new_status}`, { method: "PATCH" }),
+  deleteClaim: (id: string) =>
+    request<any>(`/api/claims/${id}`, { method: "DELETE" }),
 
   // Terminology
   getTerminology: (status?: string) =>

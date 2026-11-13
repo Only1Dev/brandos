@@ -18,6 +18,7 @@ from app.config import get_settings
 from app.database import get_db
 from app.models.content import Content, ContentVersion
 from app.models.organization import Organization
+from app.models.review import Review
 from app.models.user import User
 from app.middleware.auth import get_optional_user
 from app.ingestion.pdf_parser import extract_text_from_pdf
@@ -44,6 +45,11 @@ class ContentResponse(BaseModel):
     channel: str
     current_version: int
     created_at: str
+    review_id: Optional[str] = None
+    review_status: Optional[str] = None
+    review_decision: Optional[str] = None
+    review_score: Optional[float] = None
+    raw_snippet: Optional[str] = None
 
 
 class ContentVersionResponse(BaseModel):
@@ -78,17 +84,76 @@ async def list_content(
 
     result = await db.execute(query)
     items = result.scalars().all()
-    return [
-        ContentResponse(
-            id=str(c.id),
-            title=c.title,
-            content_type=c.content_type,
-            channel=c.channel,
-            current_version=c.current_version,
-            created_at=c.created_at.isoformat() if c.created_at else "",
+    if not items:
+        return []
+
+    content_ids = [c.id for c in items]
+
+    # Batch query reviews and versions for these content items
+    rev_res = await db.execute(
+        select(Review)
+        .where(Review.content_id.in_(content_ids))
+        .order_by(Review.created_at.desc())
+    )
+    reviews_by_content: dict[str, Review] = {}
+    for r in rev_res.scalars().all():
+        cid = str(r.content_id)
+        if cid not in reviews_by_content:
+            reviews_by_content[cid] = r
+
+    ver_res = await db.execute(
+        select(ContentVersion)
+        .where(ContentVersion.content_id.in_(content_ids))
+        .order_by(ContentVersion.version_number.desc())
+    )
+    versions_by_content: dict[str, ContentVersion] = {}
+    for v in ver_res.scalars().all():
+        cid = str(v.content_id)
+        if cid not in versions_by_content:
+            versions_by_content[cid] = v
+
+    res = []
+    for c in items:
+        cid = str(c.id)
+        r = reviews_by_content.get(cid)
+        v = versions_by_content.get(cid)
+
+        # Inferred channel if set to default instagram
+        inferred_channel = c.channel or "Instagram"
+        t_lower = (c.title or "").lower()
+        if "internal memo" in t_lower or "memo" in t_lower:
+            inferred_channel = "Internal Memo"
+        elif "linkedin" in t_lower:
+            inferred_channel = "LinkedIn"
+        elif "press release" in t_lower or "release" in t_lower:
+            inferred_channel = "Press Release"
+        elif "bank" in t_lower or "financial" in t_lower or "audit" in t_lower:
+            inferred_channel = "Financial Audit"
+        elif "image" in c.content_type.lower():
+            inferred_channel = "Brand Assets"
+        elif inferred_channel:
+            inferred_channel = inferred_channel.title()
+
+        snippet = None
+        if v and v.raw_text:
+            snippet = v.raw_text[:140] + ("..." if len(v.raw_text) > 140 else "")
+
+        res.append(
+            ContentResponse(
+                id=cid,
+                title=c.title,
+                content_type=c.content_type,
+                channel=inferred_channel,
+                current_version=c.current_version,
+                created_at=c.created_at.isoformat() if c.created_at else "",
+                review_id=str(r.id) if r else None,
+                review_status=r.status if r else "pending",
+                review_decision=r.decision if r else None,
+                review_score=float(r.overall_score) if (r and r.overall_score is not None) else None,
+                raw_snippet=snippet,
+            )
         )
-        for c in items
-    ]
+    return res
 
 
 @router.get("/{id}")

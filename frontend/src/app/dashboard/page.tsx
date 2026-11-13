@@ -69,13 +69,6 @@ export default function DashboardPage() {
             Real-time organizational content integrity and pre-publication firewall health across human and AI creators.
           </p>
         </div>
-        <Link
-          href="/reviews/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 transition-all shrink-0"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span>Launch Governance Firewall</span>
-        </Link>
       </div>
 
       {/* BrandOS 5 Core Modules Strip (PRD Section 5) */}
@@ -317,7 +310,7 @@ export default function DashboardPage() {
               href="/reviews/new"
               className="inline-flex items-center gap-1.5 px-4 py-2 mt-4 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 shadow-sm"
             >
-              Submit Content Now
+              Start New Review
             </Link>
           </div>
         ) : (

@@ -77,16 +77,6 @@ export default function ContentPage() {
             All submitted marketing copy, documents, and creative assets tracked with versioning.
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href="/reviews/new"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Submit New Content</span>
-          </Link>
-        </div>
       </div>
 
       {/* Role notice if not admin */}

@@ -252,7 +252,7 @@ export default function NewReviewPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-bold text-slate-900">
-                Submit Content to {brandConfig.name} Firewall
+                New Content Review — {brandConfig.name}
               </h1>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase bg-slate-100 text-slate-700">
                 slug: {brandConfig.slug}
@@ -530,7 +530,7 @@ export default function NewReviewPage() {
             )}
           >
             <Send className="h-3.5 w-3.5" />
-            <span>{submitting ? "Running Governance Firewall..." : "Submit to Firewall"}</span>
+            <span>{submitting ? "Running Governance Firewall..." : "Run Governance Review"}</span>
           </button>
         </div>
       </form>

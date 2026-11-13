@@ -71,13 +71,6 @@ export default function ReviewsListPage() {
             Pre-publication governance reviews across text, documents, and visual content.
           </p>
         </div>
-        <Link
-          href="/reviews/new"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          <span>New Review</span>
-        </Link>
       </div>
 
       {/* Filter Tabs & Search */}

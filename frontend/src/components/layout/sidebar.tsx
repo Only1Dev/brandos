@@ -59,15 +59,11 @@ const superAdminNavigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const [knowledgeOpen, setKnowledgeOpen] = useState(true);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const {
     activeBrand,
     brandConfig,
     currentRole,
     currentUser,
-    brandUsers,
-    switchUser,
-    setIsBrandModalOpen,
     canEditBrandBrain,
   } = useBrand();
 
@@ -103,34 +99,20 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* Workspace Organization Switcher */}
-        <div className="p-3 mx-3 my-3 bg-slate-800/70 rounded-xl border border-slate-700/60 shadow-xs">
-          <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            <span>{isSuperAdmin ? "System Scope" : "Active Workspace"}</span>
-            <button
-              onClick={() => setIsBrandModalOpen(true)}
-              className="text-indigo-400 hover:text-indigo-300 text-[10px] font-bold flex items-center gap-1 transition-colors"
-              title="Switch Workspace"
-            >
-              <RefreshCw className="h-2.5 w-2.5" />
-              Switch
-            </button>
+        {/* Workspace Organization Indicator (Locked Perimeter) */}
+        <div className="p-3 mx-3 my-3 bg-slate-800/60 rounded-xl border border-slate-700/50 shadow-xs">
+          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            {isSuperAdmin ? "System Scope" : "Active Workspace"}
           </div>
-          <button
-            onClick={() => setIsBrandModalOpen(true)}
-            className="w-full text-left font-semibold text-white text-xs truncate flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors group"
-          >
-            <div className="flex items-center gap-2 truncate">
-              <span className={cn(
-                "h-2 w-2 rounded-full shrink-0",
-                isSuperAdmin ? "bg-purple-400" : isSolaria ? "bg-emerald-400" : "bg-indigo-400"
-              )} />
-              <span className="truncate">
-                {isSuperAdmin ? "All Brand Workspaces" : brandConfig.name}
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-400 group-hover:text-white">▾</span>
-          </button>
+          <div className="w-full text-left font-semibold text-white text-xs truncate flex items-center gap-2 p-1">
+            <span className={cn(
+              "h-2 w-2 rounded-full shrink-0 animate-pulse",
+              isSuperAdmin ? "bg-purple-400" : isSolaria ? "bg-emerald-400" : "bg-indigo-400"
+            )} />
+            <span className="truncate">
+              {isSuperAdmin ? "All Brand Workspaces" : brandConfig.name}
+            </span>
+          </div>
         </div>
 
         {/* Navigation Links */}
@@ -234,25 +216,13 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Interactive User Role & Identity Footer */}
-      <div className="p-3 m-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2 relative">
-        <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-          <span>Active Identity</span>
-          <button
-            onClick={() => setShowUserDropdown(!showUserDropdown)}
-            className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold transition-colors flex items-center gap-1"
-          >
-            <span>Switch</span>
-            <span>{showUserDropdown ? "▲" : "▼"}</span>
-          </button>
+      {/* Authenticated Identity Footer (Read-Only Status) */}
+      <div className="p-3 m-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1.5">
+        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+          Authenticated Identity
         </div>
 
-        {/* Selected User Pill */}
-        <div
-          onClick={() => setShowUserDropdown(!showUserDropdown)}
-          className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-800/60 cursor-pointer transition-colors"
-          title="Click to switch between Creators and Reviewers"
-        >
+        <div className="flex items-center justify-between p-1 rounded-lg">
           <div className="flex items-center gap-2.5 truncate">
             <div className={cn(
               "h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0",
@@ -276,53 +246,8 @@ export function Sidebar() {
               </div>
             </div>
           </div>
-          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" title="Active Session" />
+          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" title="Active Authenticated Session" />
         </div>
-
-        {/* Identity Dropdown Popover */}
-        {showUserDropdown && (
-          <div className="absolute bottom-full left-0 right-0 mb-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 z-50 space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-150">
-            <div className="text-[10px] font-bold uppercase text-slate-400 px-2 py-1 tracking-wider border-b border-slate-800">
-              Switch Role in {brandConfig.name.split(" ")[0]}
-            </div>
-            {brandUsers?.map((u) => {
-              const isSelected = currentUser.email === u.email;
-              return (
-                <button
-                  key={u.email}
-                  onClick={() => {
-                    switchUser(u);
-                    setShowUserDropdown(false);
-                    window.location.reload();
-                  }}
-                  className={cn(
-                    "w-full text-left p-2 rounded-lg text-xs flex items-center justify-between transition-colors",
-                    isSelected
-                      ? "bg-indigo-600 text-white font-bold"
-                      : "hover:bg-slate-800 text-slate-300"
-                  )}
-                >
-                  <div className="truncate pr-2">
-                    <div className="font-semibold truncate">{u.name}</div>
-                    <div className={cn("text-[10px] truncate", isSelected ? "text-indigo-200" : "text-slate-400")}>
-                      {u.title}
-                    </div>
-                  </div>
-                  <span className={cn(
-                    "text-[9px] px-1.5 py-0.5 rounded uppercase font-bold shrink-0",
-                    u.role === "admin"
-                      ? "bg-indigo-950 text-indigo-300 border border-indigo-700"
-                      : u.role === "reviewer"
-                      ? "bg-amber-950 text-amber-300 border border-amber-700"
-                      : "bg-sky-950 text-sky-300 border border-sky-700"
-                  )}>
-                    {u.role}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
     </aside>
   );

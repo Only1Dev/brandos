@@ -76,6 +76,9 @@ interface BrandContextType {
   currentRole: UserRole;
   currentUser: UserProfile;
   brandUsers: UserProfile[];
+  isAuthenticated: boolean;
+  login: (slug: BrandSlug, user: UserProfile) => void;
+  logout: () => void;
   switchBrand: (slug: BrandSlug, role?: UserRole) => void;
   switchRole: (role: UserRole) => void;
   switchUser: (user: UserProfile) => void;
@@ -93,6 +96,7 @@ const BrandContext = createContext<BrandContextType | undefined>(undefined);
 export function BrandProvider({ children }: { children: React.ReactNode }) {
   const [activeBrand, setActiveBrand] = useState<BrandSlug>("aureon");
   const [currentUser, setCurrentUser] = useState<UserProfile>(BRAND_USERS.aureon[0]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
@@ -100,7 +104,13 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedBrand = (localStorage.getItem("brandos_active_brand") as BrandSlug) || "aureon";
     const savedEmail = localStorage.getItem("brandos_user_email");
-    const hasChosen = localStorage.getItem("brandos_has_chosen_brand");
+    const authState = localStorage.getItem("brandos_is_authenticated");
+
+    if (authState === "false") {
+      setIsAuthenticated(false);
+    } else {
+      setIsAuthenticated(true);
+    }
 
     if (savedBrand && BRANDS[savedBrand]) {
       setActiveBrand(savedBrand);
@@ -110,19 +120,37 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("brandos_user_email", found.email);
       localStorage.setItem("brandos_user_role", found.role);
     }
-    if (!hasChosen) {
-      setIsBrandModalOpen(true);
-    }
   }, []);
+
+  const login = (slug: BrandSlug, user: UserProfile) => {
+    setActiveBrand(slug);
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    localStorage.setItem("brandos_active_brand", slug);
+    localStorage.setItem("brandos_user_email", user.email);
+    localStorage.setItem("brandos_user_role", user.role);
+    localStorage.setItem("brandos_is_authenticated", "true");
+    localStorage.setItem("brandos_has_chosen_brand", "true");
+    setIsBrandModalOpen(false);
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    localStorage.setItem("brandos_is_authenticated", "false");
+    localStorage.removeItem("brandos_has_chosen_brand");
+  };
 
   const switchBrand = (slug: BrandSlug, role: UserRole = "admin") => {
     setActiveBrand(slug);
     const userList = BRAND_USERS[slug];
     const match = userList.find((u) => u.role === role) || userList[0];
     setCurrentUser(match);
+    setIsAuthenticated(true);
     localStorage.setItem("brandos_active_brand", slug);
     localStorage.setItem("brandos_user_role", match.role);
     localStorage.setItem("brandos_user_email", match.email);
+    localStorage.setItem("brandos_is_authenticated", "true");
+    localStorage.setItem("brandos_has_chosen_brand", "true");
     setIsBrandModalOpen(false);
   };
 
@@ -157,6 +185,9 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         currentRole,
         currentUser,
         brandUsers,
+        isAuthenticated,
+        login,
+        logout,
         switchBrand,
         switchRole,
         switchUser,

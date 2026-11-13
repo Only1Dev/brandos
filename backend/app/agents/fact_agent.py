@@ -88,9 +88,10 @@ class FactAgent:
             "pure", "hydrate", "brand", "brandos", "core", "product", "system"
         }
 
-        # 1. Deterministic Sentence-Level Topic Pre-scan
+        # 1. Deterministic Clause-Level Topic Pre-scan (Strict Topic Isolation)
         findings: List[Dict[str, Any]] = []
         verified_claims: set[str] = set()
+        evaluated_claim_numbers: set[str] = set()
 
         # Format facts context with full statement and metric grounding
         facts_text_list = []
@@ -123,13 +124,15 @@ class FactAgent:
                 "unit": unit,
                 "topic_words": topic_words,
                 "fact_ref": f.get("fact_id", f"FACT-{str(f.get('id', ''))[:6].upper()}"),
+                "id": str(f.get("id")),
             })
 
-        # Sentence-by-sentence evaluation to avoid cross-topic false conflicts
-        sentences = [s.strip() for s in re.split(r"[.\n;!?]+", text) if s.strip()]
-        for sentence in sentences:
-            s_lower = sentence.lower()
-            num_matches = re.findall(r"(\d+(?:\.\d+)?)\s*(%|[a-zA-Z]+)?", sentence)
+        # Clause-by-clause evaluation to avoid cross-topic false conflicts
+        # Split on sentence boundaries as well as compound connectors (', and', ';', ', while', ', but')
+        clauses = [c.strip() for c in re.split(r"(?<=[.!?;])\s+|\s*,\s*(?:and|while|but|whereas|plus)\s*", text, flags=re.IGNORECASE) if c.strip()]
+        for clause in clauses:
+            c_lower = clause.lower()
+            num_matches = re.findall(r"(\d+(?:\.\d+)?)\s*(%|[a-zA-Z]+)?", clause)
             if not num_matches:
                 continue
 
@@ -143,8 +146,8 @@ class FactAgent:
 
                 claimed_str = f"{found_num_str}{found_unit}" if found_unit else found_num_str
 
-                # Find all facts that share topic keywords with this sentence
-                matching_facts = []
+                # Score facts based on topic keyword overlap in this specific clause
+                scored_facts = []
                 for ft in fact_topics:
                     num_val = ft["num_val"]
                     if num_val is None:
@@ -156,14 +159,20 @@ class FactAgent:
                     if not unit_matches:
                         continue
 
-                    # Check topic relevance in this exact sentence
-                    matched_topic_words = [w for w in ft["topic_words"] if w in s_lower]
+                    # Check topic relevance in this exact clause
+                    matched_topic_words = [w for w in ft["topic_words"] if w in c_lower]
+                    score = len(matched_topic_words)
                     min_matches = 2 if len(ft["topic_words"]) >= 2 else 1
-                    if len(matched_topic_words) >= min_matches:
-                        matching_facts.append(ft)
+                    if score >= min_matches:
+                        scored_facts.append((score, ft))
 
-                if not matching_facts:
+                if not scored_facts:
                     continue
+
+                # Strictly isolate to facts sharing the HIGHEST topic overlap
+                scored_facts.sort(key=lambda x: x[0], reverse=True)
+                top_score = scored_facts[0][0]
+                matching_facts = [ft for score, ft in scored_facts if score == top_score]
 
                 # Check if this number matches ANY of the topic-relevant approved facts
                 is_num_verified = False
@@ -176,10 +185,12 @@ class FactAgent:
                         verified_claims.add(str(int(found_num)) if found_num.is_integer() else str(found_num))
                         break
 
+                evaluated_claim_numbers.add(found_num_str)
+
                 if is_num_verified:
                     continue
 
-                # If not verified by any matching fact, report conflict against the closest matching fact
+                # If not verified by any matching fact for this topic, report conflict against the closest matching fact in this topic
                 best_match = min(matching_facts, key=lambda ft: abs(found_num - float(ft["num_val"])))
                 diff = abs(found_num - float(best_match["num_val"]))
                 approved_str = f"{best_match['num_val']}{best_match['unit']}" if best_match['unit'] else str(best_match['num_val'])
@@ -264,20 +275,23 @@ class FactAgent:
                         except Exception:
                             pass
             if isinstance(raw_findings, list):
-                det_detected = {f["detected_text"] for f in findings if "detected_text" in f}
+                det_detected = {f.get("detected_text", "") for f in findings if f.get("detected_text")}
+                det_facts = {f.get("evidence", [{}])[0].get("source_ref") for f in findings if f.get("evidence")}
+
                 for item in raw_findings:
-                    fact_ref = item.get("fact_ref", "FACT-APPROVED")
+                    fact_ref = (item.get("fact_ref") or "FACT-APPROVED").strip()
                     approved_val = item.get("approved_value", "")
                     claimed_val = item.get("claimed_value", "")
                     detected = (item.get("detected_text") or "").strip()
 
-                    # Check if already covered by deterministic check or is a verified ground-truth claim
+                    # Extract all numbers referenced in this finding
                     claimed_nums = re.findall(r"\d+(?:\.\d+)?", f"{detected} {claimed_val}")
+
+                    # 1. If any claimed number matches a verified ground-truth claim in this content, DROP
                     if any(num in verified_claims for num in claimed_nums):
-                        # Number was already verified as ground truth against an approved fact!
                         continue
 
-                    # Check if claimed number matches ANY active approved fact in the organization
+                    # 2. Check if claimed number matches ANY active approved fact in the organization
                     matches_approved_fact = False
                     for ft in fact_topics:
                         if ft.get("num_val") is not None:
@@ -291,63 +305,78 @@ class FactAgent:
                     if matches_approved_fact:
                         continue
 
-                    det_facts = {f.get("evidence", [{}])[0].get("source_ref") for f in findings if f.get("evidence")}
-                    if detected in det_detected or detected in verified_claims or fact_ref in det_facts:
+                    # 3. If this exact number was already evaluated and reported under its legitimate topic,
+                    # DO NOT evaluate this same number against another unrelated fact!
+                    if any(num in evaluated_claim_numbers for num in claimed_nums):
                         continue
 
-                    # Cross-topic validation: prevent comparing unrelated topics (e.g. swipe rate vs fraud or water levels)
+                    if detected and detected in det_detected:
+                        continue
+
+                    # 4. Strictly identify the approved fact object being referenced
                     matched_fact_obj = None
                     for ft in fact_topics:
-                        if ft["fact_ref"] == fact_ref or str(ft["fact"].get("id")) == fact_ref:
+                        if ft["fact_ref"] == fact_ref or ft["id"] == fact_ref or str(ft["fact"].get("id")) == fact_ref or ft["fact"].get("fact_id") == fact_ref:
                             matched_fact_obj = ft
                             break
 
-                    if matched_fact_obj:
-                        # Ensure the specific sentence or text window around detected actually mentions this fact's distinctive topic keywords
-                        window_text = text.lower()
-                        if detected.lower() in text.lower():
-                            d_idx = text.lower().find(detected.lower())
-                            start_w = max(0, d_idx - 120)
-                            end_w = min(len(text), d_idx + len(detected) + 120)
-                            window_text = text[start_w:end_w].lower()
-
-                        matched_words = [w for w in matched_fact_obj["topic_words"] if w in window_text]
-                        min_req = 2 if len(matched_fact_obj["topic_words"]) >= 2 else 1
-                        if len(matched_words) < min_req:
-                            # False cross-topic comparison! Drop this finding.
-                            continue
-
-                    # Find corresponding fact object if any
-                    matched_fact_id = matched_fact_obj["fact"].get("id") if matched_fact_obj else None
-                    if not matched_fact_id:
-                        for f in facts:
-                            if f.get("fact_id") == fact_ref:
-                                matched_fact_id = f.get("id")
+                    # Fallback fuzzy match on statement or approved value
+                    if not matched_fact_obj and approved_val:
+                        for ft in fact_topics:
+                            if str(ft.get("num_val")) in str(approved_val):
+                                matched_fact_obj = ft
                                 break
+
+                    # If finding claims a conflict but cannot identify any approved fact in knowledge base, drop hallucination
+                    if not matched_fact_obj:
+                        continue
+
+                    # 5. Cross-topic validation: Ensure the specific text window around detected actually mentions this fact's distinctive topic keywords
+                    window_text = text.lower()
+                    if detected.lower() in text.lower():
+                        d_idx = text.lower().find(detected.lower())
+                        start_w = max(0, d_idx - 100)
+                        end_w = min(len(text), d_idx + len(detected) + 100)
+                        window_text = text[start_w:end_w].lower()
+
+                    matched_words = [w for w in matched_fact_obj["topic_words"] if w in window_text]
+                    min_req = 2 if len(matched_fact_obj["topic_words"]) >= 2 else 1
+                    if len(matched_words) < min_req:
+                        # False cross-topic comparison! Drop this finding immediately.
+                        continue
+
+                    # Mark numbers as evaluated to prevent subsequent false conflicts
+                    for cn in claimed_nums:
+                        evaluated_claim_numbers.add(cn)
+                    if detected:
+                        det_detected.add(detected)
+
+                    # Find corresponding fact object id
+                    matched_fact_id = matched_fact_obj["fact"].get("id")
 
                     findings.append({
                         "finding_type": "fact",
                         "severity": item.get("severity", "high").lower(),
-                        "title": item.get("title", "Unsupported Factual Claim"),
+                        "title": item.get("title", f"Factual Metric Conflict ({matched_fact_obj['fact_ref']})"),
                         "description": item.get("description", ""),
-                        "detected_text": item.get("detected_text", ""),
+                        "detected_text": detected,
                         "explanation": item.get("explanation", ""),
                         "confidence": float(item.get("confidence", 0.95)),
                         "fact_id": matched_fact_id,
                         "evidence": [{
                             "evidence_type": "fact",
-                            "source_ref": fact_ref,
+                            "source_ref": matched_fact_obj["fact_ref"],
                             "description": f"Approved value is '{approved_val}', whereas content claims '{claimed_val}'.",
                             "data": {
                                 "approved_value": approved_val,
                                 "claimed_value": claimed_val,
-                                "source_ref": fact_ref,
+                                "source_ref": matched_fact_obj["fact_ref"],
                             }
                         }],
                         "suggestion": item.get("suggestion", {
-                            "original_text": item.get("detected_text", ""),
+                            "original_text": detected,
                             "suggested_text": f"Verified metric: {approved_val}" if approved_val else "",
-                            "reasoning": "Aligns with verified facts database"
+                            "reasoning": f"Aligns with active verified fact: '{matched_fact_obj['statement']}'"
                         })
                     })
 

@@ -37,7 +37,6 @@ export default function LoginPage() {
   const [selectedUser, setSelectedUser] = useState<UserProfile>(
     BRAND_USERS.aureon[0]
   );
-  const [userQuery, setUserQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [password, setPassword] = useState("aureon-admin");
   const [showPassword, setShowPassword] = useState(false);
@@ -105,7 +104,6 @@ export default function LoginPage() {
     setSelectedBrand(slug);
     const defaultUser = BRAND_USERS[slug][0];
     setSelectedUser(defaultUser);
-    setUserQuery("");
     setPassword(`${slug}-${defaultUser.role}`);
     setErrorMsg("");
     setStep(2);
@@ -114,21 +112,10 @@ export default function LoginPage() {
   // Handle Team Member selection in Step 2
   const handleSelectUser = (user: UserProfile) => {
     setSelectedUser(user);
-    setUserQuery("");
     setPassword(`${selectedBrand}-${user.role}`);
     setIsDropdownOpen(false);
     setErrorMsg("");
   };
-
-  // Filter users based on query
-  const filteredUsers = BRAND_USERS[selectedBrand].filter(
-    (u) =>
-      !userQuery.trim() ||
-      u.name.toLowerCase().includes(userQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(userQuery.toLowerCase()) ||
-      u.role.toLowerCase().includes(userQuery.toLowerCase()) ||
-      (u.title && u.title.toLowerCase().includes(userQuery.toLowerCase()))
-  );
 
   // Sign In Handler
   const handleBrandLogin = (e: React.FormEvent) => {
@@ -394,10 +381,7 @@ export default function LoginPage() {
 
               <div className="relative">
                 <div
-                  onClick={() => {
-                    setIsDropdownOpen(!isDropdownOpen);
-                    setUserQuery("");
-                  }}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/10 hover:border-white/20 text-white text-xs flex items-center justify-between cursor-pointer focus-within:ring-2 focus-within:ring-indigo-500 transition-all"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -448,39 +432,8 @@ export default function LoginPage() {
 
                 {/* Dropdown Options */}
                 {isDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-slate-900/98 backdrop-blur-2xl border border-white/20 shadow-2xl p-2 space-y-1.5 max-h-88 overflow-y-auto ring-1 ring-black/50">
-                    {/* Search box inside dropdown */}
-                    <div className="relative p-1">
-                      <input
-                        type="text"
-                        value={userQuery}
-                        onChange={(e) => setUserQuery(e.target.value)}
-                        placeholder="Search by name, title, or role..."
-                        className="w-full pl-3 pr-8 py-2 text-xs rounded-lg bg-white/10 border border-white/15 text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 transition-all"
-                        autoFocus
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      {userQuery && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setUserQuery("");
-                          }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs px-1 rounded cursor-pointer"
-                          title="Clear search filter"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="px-2 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                      <span>Available Identities</span>
-                      <span>{filteredUsers.length} of {BRAND_USERS[selectedBrand].length}</span>
-                    </div>
-
-                    {filteredUsers.map((u) => {
+                  <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-[#0f172a] border border-slate-700 shadow-2xl p-1.5 space-y-1 max-h-60 overflow-y-auto ring-1 ring-black/40">
+                    {BRAND_USERS[selectedBrand].map((u) => {
                       const isSelected = selectedUser.email === u.email;
                       return (
                         <div

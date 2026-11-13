@@ -40,8 +40,10 @@ interface SuperAdminOrg {
   name: string;
   slug: BrandSlug;
   description: string;
+  status?: string;
   primary_color: string;
   pdf_file: string;
+  created_at?: string;
   stats: OrgStats;
 }
 
@@ -69,6 +71,31 @@ export default function SuperAdminPage() {
   const [confirmInput, setConfirmInput] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [approvingSlug, setApprovingSlug] = useState<string | null>(null);
+
+  const handleApprove = async (slug: string, name: string) => {
+    try {
+      setApprovingSlug(slug);
+      await api.approveOrganization(slug);
+      try {
+        const raw = localStorage.getItem("brandos_custom_registered_orgs");
+        const list = raw ? JSON.parse(raw) : [];
+        const existing = list.find((o: any) => o.slug === slug);
+        if (existing) {
+          existing.status = "active";
+        } else {
+          list.push({ slug, name, status: "active", created_at: new Date().toISOString() });
+        }
+        localStorage.setItem("brandos_custom_registered_orgs", JSON.stringify(list));
+      } catch {}
+      setMessage(`Brand workspace "${name}" (${slug}) has been approved and activated! It is now accessible on the public portal.`);
+      await fetchOverview();
+    } catch (e: any) {
+      setMessage("Error approving brand: " + (e.message || "Failed"));
+    } finally {
+      setApprovingSlug(null);
+    }
+  };
 
   const fetchOverview = async () => {
     try {
@@ -165,6 +192,9 @@ export default function SuperAdminPage() {
     },
   };
 
+  const pendingOrgs = organizations.filter((org) => org.status === "pending");
+  const activeOrgs = organizations.filter((org) => org.status !== "pending");
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Top Banner */}
@@ -250,15 +280,97 @@ export default function SuperAdminPage() {
         </div>
       </div>
 
+      {/* Pending Workspace Approvals Section */}
+      {pendingOrgs.length > 0 && (
+        <div className="space-y-4 bg-amber-500/5 border-2 border-amber-500/30 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-600 font-bold shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-slate-900">
+                    Workspace Access Requests Awaiting SuperAdmin Approval ({pendingOrgs.length})
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 uppercase tracking-wider animate-pulse">
+                    Action Required
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Companies registered through the public portal must be approved here before they become visible on the homepage or accessible to creators.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+            {pendingOrgs.map((org) => (
+              <div
+                key={org.id}
+                className="bg-white rounded-xl border border-amber-200 p-5 shadow-xs flex flex-col justify-between space-y-4"
+              >
+                <div>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center font-black text-lg">
+                        {org.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-slate-900 text-sm">{org.name}</h3>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold">
+                            slug: {org.slug}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{org.description}</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                      Pending Review
+                    </span>
+                  </div>
+
+                  <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-[11px] text-slate-600 font-mono space-y-1">
+                    <div>Authorized Boundary: <strong className="text-slate-800">{org.description || "Enterprise Perimeter"}</strong></div>
+                    <div>Admin Contact: <strong className="text-slate-800">admin@{org.slug}.internal</strong></div>
+                    <div>Seeded Governance: <span className="text-emerald-700 font-semibold">{org.stats.rules_count} Rules, {org.stats.facts_count} Verified Facts</span></div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => openDeleteModal(org.slug, org.name)}
+                    className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Reject & Decline</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleApprove(org.slug, org.name)}
+                    disabled={approvingSlug === org.slug}
+                    className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>{approvingSlug === org.slug ? "Approving..." : "Approve & Activate Workspace"}</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Side-by-Side Brand Cards */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-900">Brand Workspaces & Compliance Posture</h2>
+          <h2 className="text-base font-bold text-slate-900">Active Brand Workspaces & Compliance Posture</h2>
           <span className="text-xs text-slate-500">Click any brand to switch workspace</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {organizations.map((org) => {
+          {activeOrgs.map((org) => {
             const isSolaria = org.slug === "solaria";
             const pdfUrl = isSolaria
               ? "/Solaria_Wellness_Official_Brand_Guidelines_2026.pdf"

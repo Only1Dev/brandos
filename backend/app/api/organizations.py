@@ -33,6 +33,7 @@ class OrgCreate(BaseModel):
     description: Optional[str] = None
     domain: Optional[str] = None
     primary_color: Optional[str] = "#4F46E5"
+    source: Optional[str] = "superadmin"  # "superadmin" | "homepage"
 
 
 class OrgResponse(BaseModel):
@@ -40,6 +41,7 @@ class OrgResponse(BaseModel):
     name: str
     slug: str
     description: Optional[str] = None
+    status: str = "active"
     created_at: str
 
     class Config:
@@ -48,10 +50,15 @@ class OrgResponse(BaseModel):
 
 @router.get("", response_model=List[OrgResponse])
 async def list_organizations(
+    status: Optional[str] = "active",
+    include_pending: bool = False,
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_user),
 ):
-    result = await db.execute(select(Organization).order_by(Organization.name.asc()))
+    query = select(Organization).order_by(Organization.name.asc())
+    if not include_pending and status:
+        query = query.where(Organization.status == status)
+    result = await db.execute(query)
     orgs = result.scalars().all()
     return [
         OrgResponse(
@@ -59,6 +66,7 @@ async def list_organizations(
             name=o.name,
             slug=o.slug,
             description=o.description,
+            status=o.status or "active",
             created_at=o.created_at.isoformat() if o.created_at else "",
         )
         for o in orgs
@@ -128,8 +136,10 @@ async def superadmin_overview(
             "name": o.name,
             "slug": o.slug,
             "description": o.description,
+            "status": o.status or "active",
             "primary_color": primary_color,
             "pdf_file": pdf_file,
+            "created_at": o.created_at.isoformat() if o.created_at else "",
             "stats": {
                 "guidelines_count": guidelines_count,
                 "rules_count": rules_count,
@@ -147,14 +157,18 @@ async def superadmin_overview(
         total_rules_all += rules_count
         total_facts_all += facts_count
 
+    pending_count = sum(1 for o in orgs if (o.status or "active") == "pending")
+
     return {
         "organizations": overview,
         "global_summary": {
             "total_brands": len(orgs),
+            "total_active_brands": len(orgs) - pending_count,
+            "pending_approvals_count": pending_count,
             "total_reviews": total_reviews_all,
             "total_governance_rules": total_rules_all,
             "total_verified_facts": total_facts_all,
-            "platform_status": "All Brand Brains Operational",
+            "platform_status": f"{pending_count} Pending Approval" if pending_count > 0 else "All Brand Brains Operational",
         }
     }
 
@@ -183,6 +197,7 @@ async def get_organization(
         "name": org.name,
         "slug": org.slug,
         "description": org.description,
+        "status": org.status or "active",
         "primary_color": primary_color,
         "pdf_file": pdf_file,
         "created_at": org.created_at.isoformat() if org.created_at else "",
@@ -206,10 +221,16 @@ async def create_organization(
     if existing.scalar_one_or_none():
         clean_slug = f"{clean_slug}-{uuid.uuid4().hex[:4]}"
 
+    # If added through superadmin, status is 'active' immediately.
+    # If added through homepage, status is 'pending' awaiting SuperAdmin approval.
+    is_superadmin = (body.source == "superadmin") or (current_user and current_user.role == "superadmin")
+    initial_status = "active" if is_superadmin else "pending"
+
     org = Organization(
         name=body.name.strip(),
         slug=clean_slug,
         description=body.description or body.domain or f"Enterprise brand workspace for {body.name.strip()}",
+        status=initial_status,
     )
     db.add(org)
     await db.flush()
@@ -283,8 +304,49 @@ async def create_organization(
         name=org.name,
         slug=org.slug,
         description=org.description,
+        status=org.status or "active",
         created_at=org.created_at.isoformat() if org.created_at else "",
     )
+
+
+@router.post("/{slug_or_id}/approve")
+async def approve_organization(
+    slug_or_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user),
+):
+    """
+    Approve and activate a pending brand workspace application from the SuperAdmin Master Console.
+    Once approved, the brand workspace becomes active and appears on the public portal selector.
+    """
+    clean_target = slug_or_id.strip().lower()
+    org = None
+    try:
+        org_uuid = uuid.UUID(slug_or_id)
+        res = await db.execute(select(Organization).where(Organization.id == org_uuid))
+        org = res.scalar_one_or_none()
+    except ValueError:
+        pass
+
+    if not org:
+        res = await db.execute(select(Organization).where(Organization.slug == clean_target))
+        org = res.scalar_one_or_none()
+
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    org.status = "active"
+    await db.commit()
+    await db.refresh(org)
+
+    return {
+        "status": "success",
+        "id": str(org.id),
+        "name": org.name,
+        "slug": org.slug,
+        "org_status": org.status,
+        "message": f"Brand workspace '{org.name}' ({org.slug}) approved and activated successfully.",
+    }
 
 
 @router.delete("/{slug_or_id}")

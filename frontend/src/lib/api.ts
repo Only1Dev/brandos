@@ -264,10 +264,14 @@ export const api = {
     request<any>("/api/organizations/superadmin/overview"),
   getOrganizations: () =>
     request<any[]>("/api/organizations"),
-  createOrganization: (data: { name: string; slug?: string; description?: string; domain?: string; primary_color?: string }) =>
+  createOrganization: (data: { name: string; slug?: string; description?: string; domain?: string; primary_color?: string; source?: string }) =>
     request<any>("/api/organizations", {
       method: "POST",
       body: JSON.stringify(data),
+    }),
+  approveOrganization: (slugOrId: string) =>
+    request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}/approve`, {
+      method: "POST",
     }),
   deleteOrganization: (slugOrId: string) =>
     request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}`, {

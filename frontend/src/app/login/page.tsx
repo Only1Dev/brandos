@@ -55,6 +55,7 @@ export default function LoginPage() {
     name: string;
     description?: string;
     industry?: string;
+    status?: string;
     rules_count?: number;
     facts_count?: number;
   }
@@ -96,9 +97,15 @@ export default function LoginPage() {
         let localOrgs: OrgItem[] = [];
         try {
           const raw = localStorage.getItem("brandos_custom_registered_orgs");
-          if (raw) localOrgs = JSON.parse(raw);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            // Only list active/approved brands on the homepage
+            localOrgs = parsed.filter((o: any) => o.status === "active");
+          }
         } catch {}
-        const mergedList = [...(orgList || []), ...localOrgs];
+        // Filter out any pending orgs from backend list as well
+        const activeRemoteOrgs = (orgList || []).filter((o: any) => o.status !== "pending");
+        const mergedList = [...activeRemoteOrgs, ...localOrgs];
         const rawOrgs: OrgItem[] =
           mergedList && mergedList.length > 0
             ? mergedList
@@ -139,6 +146,7 @@ export default function LoginPage() {
         for (const org of rawOrgs) {
           const s = org.slug.toLowerCase();
           if (s === "aureon" || s === "solaria") continue;
+          if (org.status === "pending") continue;
           const cleanName = org.name
             ? org.name.charAt(0).toUpperCase() + org.name.slice(1)
             : org.slug;

@@ -38,6 +38,8 @@ async def lifespan(app: FastAPI):
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status VARCHAR(32) DEFAULT 'active';"))
         logger.info("Database schema verified.")
     except Exception as e:
         logger.warning(f"Database initialization note (may already exist via Supabase): {e}")

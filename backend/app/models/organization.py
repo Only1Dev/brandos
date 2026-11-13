@@ -19,6 +19,7 @@ class Organization(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="active", nullable=False)
     logo_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     settings: Mapped[dict | None] = mapped_column(
         "settings", nullable=True, type_=Text  # stored as JSON string

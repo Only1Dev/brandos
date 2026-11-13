@@ -59,48 +59,13 @@ class AnalysisOrchestrator:
 
         logger.info(f"Starting governance analysis for brand={brand_name}, channel={channel}, type={content_type}")
 
-        # 1. Parallel Agent Execution
-        brand_task = self.brand_agent.evaluate(
-            text=text,
-            rules=rules,
-            channel=channel,
-            content_type=content_type,
-            brand_name=brand_name,
-            brand_domain=brand_domain,
-        )
-
-        fact_task = self.fact_agent.evaluate(
-            text=text,
-            facts=facts,
-            brand_name=brand_name,
-        )
-
-        # Terminology and Accessibility are deterministic and synchronous/fast
-        term_findings = self.terminology_agent.evaluate(
-            text=text,
-            rules=terminology_rules,
-        )
-
-        a11y_findings = self.accessibility_agent.evaluate(
-            text=text,
-            channel=channel,
-            visual_metadata=visual_metadata,
-        )
-
-        # Enforce custom guideline rules deterministically (e.g. Rule 777 CAPS prohibition, mandatory keyword inclusion)
-        guideline_rule_findings = self.policy_engine.check_deterministic_guidelines(
-            text=text,
-            rules=rules,
-        )
-
-        # Enforce content quality standard (blocks placeholder text, gibberish like 'abcd')
-        substance_findings = self.policy_engine.check_substance_quality(
-            text=text,
-        )
-
-        # Enforce Data Loss Prevention (DLP) & Confidential Material Shield
-        confidentiality_findings = self.policy_engine.check_confidentiality_dlp(
-            text=text,
+        # Check if this is a media file upload with auto-generated placeholder text
+        is_media_file_upload = bool(
+            image_bytes
+            and (
+                text.strip().startswith("[Video creative uploaded:")
+                or text.strip().startswith("[File uploaded:")
+            )
         )
 
         visual_task = self.visual_agent.evaluate(
@@ -111,16 +76,72 @@ class AnalysisOrchestrator:
             brand_domain=brand_domain,
         ) if image_bytes else None
 
-        # Await async agents concurrently
-        if visual_task:
-            brand_findings, fact_findings, visual_findings = await asyncio.gather(
-                brand_task, fact_task, visual_task
-            )
+        if is_media_file_upload:
+            # For pure media uploads, the video/image itself is the governed asset.
+            # Avoid false-positive text-placeholder checks on the filename wrapper.
+            brand_findings = []
+            fact_findings = []
+            term_findings = []
+            a11y_findings = []
+            guideline_rule_findings = []
+            substance_findings = []
+            confidentiality_findings = []
+            visual_findings = (await visual_task) if visual_task else []
         else:
-            brand_findings, fact_findings = await asyncio.gather(
-                brand_task, fact_task
+            # 1. Parallel Agent Execution for text or multimodal copy
+            brand_task = self.brand_agent.evaluate(
+                text=text,
+                rules=rules,
+                channel=channel,
+                content_type=content_type,
+                brand_name=brand_name,
+                brand_domain=brand_domain,
             )
-            visual_findings = []
+
+            fact_task = self.fact_agent.evaluate(
+                text=text,
+                facts=facts,
+                brand_name=brand_name,
+            )
+
+            # Terminology and Accessibility are deterministic and synchronous/fast
+            term_findings = self.terminology_agent.evaluate(
+                text=text,
+                rules=terminology_rules,
+            )
+
+            a11y_findings = self.accessibility_agent.evaluate(
+                text=text,
+                channel=channel,
+                visual_metadata=visual_metadata,
+            )
+
+            # Enforce custom guideline rules deterministically (e.g. Rule 777 CAPS prohibition, mandatory keyword inclusion)
+            guideline_rule_findings = self.policy_engine.check_deterministic_guidelines(
+                text=text,
+                rules=rules,
+            )
+
+            # Enforce content quality standard (blocks placeholder text, gibberish like 'abcd')
+            substance_findings = self.policy_engine.check_substance_quality(
+                text=text,
+            )
+
+            # Enforce Data Loss Prevention (DLP) & Confidential Material Shield
+            confidentiality_findings = self.policy_engine.check_confidentiality_dlp(
+                text=text,
+            )
+
+            # Await async agents concurrently
+            if visual_task:
+                brand_findings, fact_findings, visual_findings = await asyncio.gather(
+                    brand_task, fact_task, visual_task
+                )
+            else:
+                brand_findings, fact_findings = await asyncio.gather(
+                    brand_task, fact_task
+                )
+                visual_findings = []
 
         # Combine raw findings
         combined_findings = [

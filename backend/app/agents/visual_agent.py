@@ -164,7 +164,11 @@ class VisualAgent:
                 )
 
             content_str = response.strip()
-            if content_str.startswith("```json"):
+            start_idx = content_str.find("[")
+            end_idx = content_str.rfind("]")
+            if start_idx != -1 and end_idx != -1:
+                content_str = content_str[start_idx : end_idx + 1]
+            elif content_str.startswith("```json"):
                 content_str = content_str[7:]
             if content_str.startswith("```"):
                 content_str = content_str[3:]

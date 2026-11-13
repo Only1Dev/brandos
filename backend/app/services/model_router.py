@@ -259,7 +259,7 @@ class ModelRouter:
         models = ["gemini-3.1-flash-lite", "gemini-3.8-flash"]
         last_error = None
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=35.0) as client:
             for model_name in models:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self._gemini_key}"
                 payload = {
@@ -275,12 +275,7 @@ class ModelRouter:
                                 },
                             ]
                         }
-                    ],
-                    "generationConfig": {
-                        "temperature": 0.1,
-                        "maxOutputTokens": 2048,
-                        "responseMimeType": "application/json",
-                    },
+                    ]
                 }
                 try:
                     res = await client.post(url, json=payload)
@@ -316,10 +311,10 @@ class ModelRouter:
         import base64
         video_data = base64.b64encode(video_bytes).decode("utf-8")
 
-        models = ["gemini-3.8-flash", "gemini-2.5-flash"]
+        models = ["gemini-3.8-flash", "gemini-3.7-flash"]
         last_error = None
 
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             for model_name in models:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self._gemini_key}"
                 payload = {
@@ -335,12 +330,7 @@ class ModelRouter:
                                 },
                             ]
                         }
-                    ],
-                    "generationConfig": {
-                        "temperature": 0.1,
-                        "maxOutputTokens": 2048,
-                        "responseMimeType": "application/json",
-                    },
+                    ]
                 }
                 try:
                     res = await client.post(url, json=payload)

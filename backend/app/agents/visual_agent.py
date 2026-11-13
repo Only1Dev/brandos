@@ -72,6 +72,51 @@ Return ONLY a valid JSON array of findings with this exact schema:
 If NO visual violations are detected, return `[]`.
 """
 
+VISUAL_VIDEO_AGENT_SYSTEM_PROMPT = """You are the Multimodal Video & Visual Governance Agent for BrandOS, an enterprise content governance platform.
+Your job is to inspect video commercials, social motion graphics, and video presentations against APPROVED BRAND ASSETS for {brand_name}.
+
+ACTIVE WORKSPACE BRAND:
+Brand Name: {brand_name}
+Brand Domain: {brand_domain}
+
+APPROVED BRAND ASSETS:
+{assets_context}
+
+Evaluate the entire video (both visual scenes and spoken audio) thoroughly for:
+1. Video Brand Identity & Logo Presence:
+   - Does the video clearly feature official {brand_name} branding and approved logo marks (e.g. LOGO-PRIMARY-V3)?
+   - If the video contains unrelated third-party content, external product demos, or memes with no brand identity, flag a critical violation.
+2. Scene-Level Logo Integrity & Clearspace:
+   - Is the logo distorted, squished, stretched, or placed without minimum required 24px clearspace?
+   - Is an outdated logo version used (e.g. V1 instead of V3)?
+3. Brand Color Palette in Motion:
+   - Do title cards, lower-thirds, and backgrounds adhere to approved brand colors (#4F46E5, #0F172A)?
+4. Spoken Dialogue & Audio Governance:
+   - Does spoken dialogue in the audio track make unauthorized or extreme superlative claims (e.g. '100% unbreakable', 'miracle cure', '#1 guaranteed')?
+   - Does the speaker mispronounce the brand name or violate confidential internal naming?
+
+Return ONLY a valid JSON array of findings with this exact schema:
+[
+  {{
+    "finding_type": "visual",
+    "severity": "critical" | "high" | "medium" | "low",
+    "title": "Short title describing video violation (e.g. 'Video Scene 00:02 - Missing Logo Clearspace' or 'Audio Track - Superlative Claim')",
+    "description": "What was detected in the video frames or audio track",
+    "detected_text": "[Timestamp / Scene / Spoken quote]",
+    "explanation": "Why this violates brand guidelines",
+    "asset_ref": "LOGO-PRIMARY-V3",
+    "confidence": 0.0 to 1.0,
+    "suggestion": {{
+      "original_text": "Detected video element or spoken line",
+      "suggested_text": "Compliant alternative or correction",
+      "reasoning": "Brand governance compliance"
+    }}
+  }}
+]
+
+If NO violations are detected, return `[]`.
+"""
+
 
 class VisualAgent:
     """Evaluates images, documents, and logos against approved brand visual assets."""
@@ -96,18 +141,27 @@ class VisualAgent:
             for a in approved_assets
         ]) if approved_assets else "Primary Logo: LOGO-PRIMARY-V3 (Approved version 3.0). Brand Colors: Indigo (#4F46E5), Slate (#0F172A)."
 
-        prompt = VISUAL_AGENT_SYSTEM_PROMPT.format(
+        is_video = mime_type.startswith("video/")
+        prompt_template = VISUAL_VIDEO_AGENT_SYSTEM_PROMPT if is_video else VISUAL_AGENT_SYSTEM_PROMPT
+        prompt = prompt_template.format(
             assets_context=assets_text,
             brand_name=brand_name,
             brand_domain=brand_domain,
         )
 
         try:
-            response = await self.router.gemini_vision(
-                prompt=prompt,
-                image_bytes=image_bytes,
-                mime_type=mime_type,
-            )
+            if is_video:
+                response = await self.router.analyze_video(
+                    video_bytes=image_bytes,
+                    prompt=prompt,
+                    mime_type=mime_type,
+                )
+            else:
+                response = await self.router.gemini_vision(
+                    prompt=prompt,
+                    image_bytes=image_bytes,
+                    mime_type=mime_type,
+                )
 
             content_str = response.strip()
             if content_str.startswith("```json"):

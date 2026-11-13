@@ -43,9 +43,31 @@ export default function NewReviewPage() {
   const [contentType, setContentType] = useState("social_post");
   const [rawText, setRawText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Video Test Fixtures
+  const loadVideoDemo = () => {
+    setInputMode("text");
+    setTitle("Aureon Shield — Core Banking Video Commercial");
+    setChannel("youtube");
+    setContentType("video");
+    setRawText(
+      "[00:02 - Voiceover] Core banking threats demand zero-latency intelligence. Aureon Shield delivers autonomous threat defense, achieving up to 42.0% enterprise fraud loss reduction.\n\n[00:06 - On-Screen Title] Aureon Shield™ · Autonomous Threat Defense · Sub-12ms Response Time\n\n[00:10 - Spoken Dialogue] Our security architecture guards over $4.2B in daily transactions with certified banking-grade encryption and zero data retention."
+    );
+  };
+
+  const loadVideoViolationDemo = () => {
+    setInputMode("text");
+    setTitle("Social Video Reel — High-Yield Promo");
+    setChannel("instagram");
+    setContentType("video");
+    setRawText(
+      "[00:01 - Host Spoken Line] Tired of fraud? Aureon is the world's only 100% unbreakable banking firewall, guaranteeing 0 fraud ever!\n\n[00:04 - Screen Banner] 100% Guaranteed Protection · #1 In Cyber Defense\n\n[00:08 - Audio Callout] Sign up today and eliminate 99.9% of all banking loss overnight."
+    );
+  };
 
   // Test fixtures for Aureon
   const loadAureonCompliant = () => {
@@ -140,8 +162,15 @@ export default function NewReviewPage() {
       const lower = file.name.toLowerCase();
       if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp")) {
         setContentType("image");
+        setVideoPreviewUrl(null);
+      } else if (lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".webm") || lower.endsWith(".m4v")) {
+        setContentType("video");
+        setVideoPreviewUrl(URL.createObjectURL(file));
       } else if (lower.endsWith(".pdf") || lower.endsWith(".docx") || lower.endsWith(".doc")) {
         setContentType("document");
+        setVideoPreviewUrl(null);
+      } else {
+        setVideoPreviewUrl(null);
       }
     }
   };
@@ -319,6 +348,22 @@ export default function NewReviewPage() {
                 <Lock className="h-3 w-3 text-purple-600" />
                 <span>🔒 Confidential Info Leakage Test (Internal Markers & Secret Key → Score 0/100 Blocked)</span>
               </button>
+              <button
+                type="button"
+                onClick={loadVideoDemo}
+                className="px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-semibold border border-sky-200 transition-colors flex items-center gap-1.5"
+                title="Loads a video commercial script with spoken dialogue & on-screen lower-thirds"
+              >
+                <span>🎥 Video Commercial Demo (Spoken Dialogue & Lower-Thirds)</span>
+              </button>
+              <button
+                type="button"
+                onClick={loadVideoViolationDemo}
+                className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-semibold border border-rose-200 transition-colors flex items-center gap-1.5"
+                title="Loads a video commercial script with superlative claim violations"
+              >
+                <span>⚠️ Video Spoken Superlatives Test ('100% Unbreakable', 99.9%)</span>
+              </button>
             </>
           ) : (
             <>
@@ -384,11 +429,14 @@ export default function NewReviewPage() {
             >
               <option value="instagram">Instagram</option>
               <option value="linkedin">LinkedIn</option>
+              <option value="youtube">YouTube / Video Commercial</option>
+              <option value="tiktok">TikTok / Reels Motion</option>
               <option value="twitter">X / Twitter</option>
               <option value="website">Corporate Website</option>
               <option value="blog">Engineering Blog</option>
               <option value="email">Customer Newsletter</option>
               <option value="press_release">Press Release</option>
+              <option value="internal_memo">Internal Memo</option>
             </select>
           </div>
         </div>
@@ -455,7 +503,7 @@ export default function NewReviewPage() {
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-400 bg-slate-50/50 transition-colors relative cursor-pointer">
               <input
                 type="file"
-                accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.txt"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.txt,.mp4,.mov,.webm,.m4v"
                 onChange={handleFileChange}
                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
               />
@@ -464,26 +512,50 @@ export default function NewReviewPage() {
                 {selectedFile ? selectedFile.name : "Click or Drag File to Upload"}
               </div>
               <div className="text-[11px] text-slate-400 mt-1">
-                Supports Visual Creatives (PNG, JPG, WEBP), Documents (PDF, DOCX) and Text files (Up to 25MB)
+                Supports Video (MP4, MOV, WebM), Visual Creatives (PNG, JPG), Documents (PDF, DOCX) and Text files (Up to 50MB)
               </div>
             </div>
 
             {selectedFile && (
-              <div className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-900">
-                <div className="flex items-center gap-2">
-                  <File className="h-4 w-4 text-indigo-600" />
-                  <span className="font-semibold">{selectedFile.name}</span>
-                  <span className="text-[10px] text-indigo-500 font-mono">
-                    ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-900">
+                  <div className="flex items-center gap-2">
+                    <File className="h-4 w-4 text-indigo-600" />
+                    <span className="font-semibold">{selectedFile.name}</span>
+                    <span className="text-[10px] text-indigo-500 font-mono">
+                      ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </span>
+                    {contentType === "video" && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                        🎥 Video Multimodal Mode Active
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setVideoPreviewUrl(null);
+                    }}
+                    className="text-slate-400 hover:text-red-600 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedFile(null)}
-                  className="text-slate-400 hover:text-red-600 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+
+                {videoPreviewUrl && (
+                  <div className="rounded-xl overflow-hidden border border-slate-700 bg-black p-2 shadow-sm">
+                    <div className="text-[11px] font-bold text-slate-300 mb-1 flex items-center justify-between px-1">
+                      <span>Live Video Preview</span>
+                      <span className="text-[10px] text-indigo-400">Audio track &amp; frames ready for Gemini inspection</span>
+                    </div>
+                    <video
+                      src={videoPreviewUrl}
+                      controls
+                      className="w-full max-h-56 rounded-lg bg-black"
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

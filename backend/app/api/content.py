@@ -313,6 +313,29 @@ async def upload_content_file(
             # Fallback gracefully if OCR vision call fails
             extracted_text = f"[Image creative uploaded: {file.filename}]"
 
+    # 5. Video Files (MP4, MOV, WebM, M4V, AVI)
+    elif lower_fn.endswith((".mp4", ".mov", ".webm", ".m4v", ".avi")):
+        detected_content_type = "video"
+        try:
+            from app.services.model_router import get_model_router
+            router = get_model_router()
+            mime = "video/mp4" if lower_fn.endswith((".mp4", ".m4v")) else "video/webm" if lower_fn.endswith(".webm") else "video/quicktime"
+            video_prompt = (
+                "You are an enterprise content auditor analyzing an organizational marketing or announcement video. "
+                "1. Transcribe all spoken speech, voiceovers, and audio statements verbatim. "
+                "2. Transcribe any on-screen banners, lower-thirds, headline text, and legal disclaimers. "
+                "Output a clear text transcript with scene and timestamp labels (e.g. [00:02 - Spoken Audio] ..., [00:05 - On-Screen Text] ...). "
+                "If no speech or text exists, describe the visual content."
+            )
+            transcription = await router.analyze_video(video_bytes=content_bytes, prompt=video_prompt, mime_type=mime)
+            if transcription:
+                extracted_text = transcription.strip()
+            else:
+                extracted_text = f"[Video creative uploaded: {file.filename}]"
+        except Exception as e:
+            logger.warning(f"Video analysis extraction note: {e}")
+            extracted_text = f"[Video creative uploaded: {file.filename}]"
+
     target_org = None
     if organization_slug:
         res = await db.execute(select(Organization).where(Organization.slug == organization_slug))

@@ -545,6 +545,23 @@ export default function ReviewDetailPage() {
               </div>
             )}
 
+            {/* Video Creative Player Preview */}
+            {content?.file_url && (content.content_type === "video" || content.file_url.match(/\.(mp4|mov|webm|m4v|avi)$/i)) && (
+              <div className="mb-4 rounded-xl overflow-hidden border border-slate-700 bg-black flex flex-col items-center justify-center p-1 shadow-md">
+                <video
+                  src={api.getFileUrl(content.file_url)}
+                  controls
+                  className="w-full max-h-72 rounded-lg bg-black object-contain"
+                />
+                <div className="w-full px-3 py-1.5 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800 mt-1">
+                  <span className="flex items-center gap-1.5 font-bold text-indigo-400">
+                    <span>🎥</span> Multimodal Video Inspection Active
+                  </span>
+                  <span>Audio &amp; Visual Frames Governed</span>
+                </div>
+              </div>
+            )}
+
             {/* Document Download Link */}
             {content?.file_url && (content.file_url.endsWith(".pdf") || content.file_url.endsWith(".docx") || content.file_url.endsWith(".doc")) && (
               <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center justify-between text-xs">

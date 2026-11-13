@@ -172,6 +172,10 @@ async def run_analysis(
                 with open(local_path, "rb") as f:
                     image_bytes = f.read()
                 image_mime = "image/jpeg" if lower_path.endswith((".jpg", ".jpeg")) else "image/png"
+            elif lower_path.endswith((".mp4", ".mov", ".webm", ".m4v", ".avi")):
+                with open(local_path, "rb") as f:
+                    image_bytes = f.read()
+                image_mime = "video/mp4" if lower_path.endswith((".mp4", ".m4v")) else "video/webm" if lower_path.endswith(".webm") else "video/quicktime"
 
     review.status = "analyzing"
     await db.commit()

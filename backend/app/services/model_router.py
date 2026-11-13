@@ -297,6 +297,61 @@ class ModelRouter:
             logger.error(f"All Gemini vision model attempts failed: {last_error}")
         return ""
 
+    async def analyze_video(
+        self,
+        video_bytes: bytes,
+        prompt: str,
+        mime_type: str = "video/mp4",
+    ) -> str:
+        """
+        Multimodal video analysis using Gemini 3.8 Flash.
+        Evaluates both video visual scenes (logos, banners, color palette)
+        and audio track (speech, spoken claims, dialogue).
+        """
+        import base64
+        video_data = base64.b64encode(video_bytes).decode("utf-8")
+
+        models = ["gemini-3.8-flash", "gemini-2.5-flash"]
+        last_error = None
+
+        async with httpx.AsyncClient(timeout=90.0) as client:
+            for model_name in models:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self._gemini_key}"
+                payload = {
+                    "contents": [
+                        {
+                            "parts": [
+                                {"text": prompt},
+                                {
+                                    "inline_data": {
+                                        "mime_type": mime_type,
+                                        "data": video_data,
+                                    }
+                                },
+                            ]
+                        }
+                    ]
+                }
+                try:
+                    res = await client.post(url, json=payload)
+                    if res.status_code == 200:
+                        data = res.json()
+                        candidates = data.get("candidates", [])
+                        if candidates and "content" in candidates[0]:
+                            parts = candidates[0]["content"].get("parts", [])
+                            if parts:
+                                return parts[0].get("text", "").strip()
+                    else:
+                        logger.warning(f"Gemini video {model_name} HTTP {res.status_code}: {res.text[:120]}")
+                        last_error = Exception(f"HTTP {res.status_code}: {res.text[:120]}")
+                except Exception as e:
+                    logger.warning(f"Gemini video analysis error with {model_name}: {e}")
+                    last_error = e
+
+        if last_error:
+            logger.error(f"All Gemini video model attempts failed: {last_error}")
+        return ""
+
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
         Generate embeddings using HuggingFace Inference API (all-MiniLM-L6-v2).

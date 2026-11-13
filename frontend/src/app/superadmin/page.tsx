@@ -20,6 +20,7 @@ import {
   KeyRound,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
 
 interface OrgStats {
@@ -63,6 +64,12 @@ export default function SuperAdminPage() {
   const [ingesting, setIngesting] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
+  // Unstop-style confirmation modal state (type "CONFIRM" to proceed)
+  const [deleteModalOrg, setDeleteModalOrg] = useState<{ slug: string; name: string } | null>(null);
+  const [confirmInput, setConfirmInput] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
   const fetchOverview = async () => {
     try {
       setLoading(true);
@@ -98,20 +105,35 @@ export default function SuperAdminPage() {
     }
   };
 
-  const handleDeleteOrg = async (slug: string, name: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to permanently delete the brand workspace "${name}" (${slug})? All associated guidelines, rules, and facts will be removed.`
-      )
-    ) {
+  const openDeleteModal = (slug: string, name: string) => {
+    setDeleteModalOrg({ slug, name });
+    setConfirmInput("");
+    setDeleteError("");
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalOrg(null);
+    setConfirmInput("");
+    setDeleteError("");
+    setIsDeleting(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModalOrg) return;
+    if (confirmInput.trim().toUpperCase() !== "CONFIRM") {
+      setDeleteError("Please type 'CONFIRM' to authorize deletion.");
       return;
     }
     try {
-      await api.deleteOrganization(slug);
-      setMessage(`Brand workspace "${name}" successfully deleted.`);
+      setIsDeleting(true);
+      setDeleteError("");
+      await api.deleteOrganization(deleteModalOrg.slug);
+      setMessage(`Brand workspace "${deleteModalOrg.name}" (${deleteModalOrg.slug}) has been permanently deleted.`);
+      closeDeleteModal();
       await fetchOverview();
     } catch (e: any) {
-      alert("Error deleting brand: " + e.message);
+      setDeleteError("Error deleting brand: " + (e.message || "Failed"));
+      setIsDeleting(false);
     }
   };
 
@@ -340,7 +362,7 @@ export default function SuperAdminPage() {
 
                     {!["aureon", "solaria"].includes(org.slug) && (
                       <button
-                        onClick={() => handleDeleteOrg(org.slug, org.name)}
+                        onClick={() => openDeleteModal(org.slug, org.name)}
                         className="px-3 py-2 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-semibold flex items-center gap-1 transition-colors"
                         title="Delete this brand workspace"
                       >
@@ -404,6 +426,114 @@ export default function SuperAdminPage() {
           </div>
         </div>
       </div>
+
+      {/* ======================================================== */}
+      {/* UNSTOP-STYLE CONFIRMATION MODAL: TYPE "CONFIRM" TO PROCEED */}
+      {/* ======================================================== */}
+      {deleteModalOrg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl bg-[#0f172a] border border-rose-500/40 p-6 shadow-2xl shadow-rose-950/50 space-y-5 text-white">
+            {/* Close button */}
+            <button
+              onClick={closeDeleteModal}
+              disabled={isDeleting}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-start gap-3.5 pr-6">
+              <div className="h-10 w-10 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-white tracking-tight">
+                  Delete Brand Workspace?
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  This action is <strong className="text-rose-400 font-semibold">permanent and irreversible</strong>. All Brand Brain rules, verified facts, claims, and audit logs for <span className="text-white font-semibold">{deleteModalOrg.name}</span> (<code className="text-rose-300 font-mono text-[11px]">{deleteModalOrg.slug}</code>) will be purged.
+                </p>
+              </div>
+            </div>
+
+            {/* Warning Safeguard Box */}
+            <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/20 text-xs text-rose-300 space-y-1">
+              <div className="font-semibold flex items-center gap-1.5 text-rose-200">
+                <Shield className="h-3.5 w-3.5 text-rose-400" />
+                <span>Zero-Tolerance Deletion Safeguard</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                To prevent accidental deletion of enterprise brand identity, type <strong className="text-white font-mono bg-white/10 px-1 py-0.5 rounded uppercase">CONFIRM</strong> in the box below to authorize.
+              </p>
+            </div>
+
+            {/* Verification Input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                <span>Verification Phrase:</span>
+                <span className="text-[11px] font-mono text-slate-400">
+                  Type: <strong className="text-rose-400 font-bold">CONFIRM</strong>
+                </span>
+              </label>
+
+              <input
+                type="text"
+                autoFocus
+                value={confirmInput}
+                onChange={(e) => {
+                  setConfirmInput(e.target.value);
+                  if (deleteError) setDeleteError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && confirmInput.trim().toUpperCase() === "CONFIRM" && !isDeleting) {
+                    handleConfirmDelete();
+                  }
+                }}
+                placeholder="Type CONFIRM to confirm..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/10 text-white font-mono text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all uppercase"
+              />
+            </div>
+
+            {deleteError && (
+              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+                {deleteError}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/[0.08]">
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 border border-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={confirmInput.trim().toUpperCase() !== "CONFIRM" || isDeleting}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-rose-600/30 transition-all flex items-center gap-1.5"
+              >
+                {isDeleting ? (
+                  <>
+                    <RotateCw className="h-3.5 w-3.5 animate-spin" />
+                    <span>Deleting Workspace...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete Workspace</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

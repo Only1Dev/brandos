@@ -69,13 +69,13 @@ async def list_audit_events(
         target_org = org_res.scalar_one_or_none()
         if target_org:
             target_org_id = target_org.id
+        else:
+            return []
     elif user and user.organization_id and user.role != "superadmin":
         target_org_id = user.organization_id
 
     if target_org_id:
-        query = query.where(
-            (AuditEvent.organization_id == target_org_id) | (AuditEvent.organization_id.is_(None))
-        )
+        query = query.where(AuditEvent.organization_id == target_org_id)
     if entity_type:
         query = query.where(AuditEvent.resource_type == entity_type)
     if action:

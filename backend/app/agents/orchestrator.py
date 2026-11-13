@@ -61,11 +61,9 @@ class AnalysisOrchestrator:
 
         # Check if this is a media file upload with auto-generated placeholder text
         is_media_file_upload = bool(
-            image_bytes
-            and (
-                text.strip().startswith("[Video creative uploaded:")
-                or text.strip().startswith("[File uploaded:")
-            )
+            text.strip().startswith("[Video creative uploaded:")
+            or text.strip().startswith("[Image creative uploaded:")
+            or text.strip().startswith("[File uploaded:")
         )
 
         visual_task = self.visual_agent.evaluate(

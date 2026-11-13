@@ -27,11 +27,12 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 @router.get("/dashboard")
 async def get_dashboard_metrics(
     db: AsyncSession = Depends(get_db),
+    brand: str | None = None,
     brand_slug: str | None = Header(None, alias="X-Brand-Slug"),
 ) -> Dict[str, Any]:
     """Governance health indicators, scores, and issue summaries (FR-27)."""
     # 1. Resolve Active Organization
-    slug = (brand_slug or "aureon").strip().lower()
+    slug = (brand or brand_slug or "aureon").strip().lower()
     org_res = await db.execute(select(Organization).where(Organization.slug == slug))
     org = org_res.scalars().first()
     if not org:
@@ -160,11 +161,12 @@ async def get_dashboard_metrics(
 
 @router.get("/guideline-drift")
 async def get_guideline_drift(
+    brand: str | None = None,
     brand_slug: str | None = Header(None, alias="X-Brand-Slug"),
     db: AsyncSession = Depends(get_db),
 ) -> List[Dict[str, Any]]:
     """Identifies guidelines repeatedly violated or misinterpreted by creators (FR-25)."""
-    slug = (brand_slug or "aureon").strip().lower()
+    slug = (brand or brand_slug or "aureon").strip().lower()
 
     if slug == "solaria":
         return [
@@ -189,8 +191,8 @@ async def get_guideline_drift(
                 "action_type": "palette_lock",
             },
         ]
-
-    return [
+    elif slug == "aureon":
+        return [
         {
             "rule_id": "AUREON-CONFIDENTIAL-001",
             "rule_name": "Data Loss Prevention (DLP) & Internal Document Leaks",
@@ -222,16 +224,18 @@ async def get_guideline_drift(
             "action_type": "auto_padding",
         },
     ]
+    return []
 
 
 @router.get("/expiring-claims")
 async def get_expiring_claims(
     days: int = 30,
+    brand: str | None = None,
     brand_slug: str | None = Header(None, alias="X-Brand-Slug"),
     db: AsyncSession = Depends(get_db),
 ) -> List[Dict[str, Any]]:
     """Proactively flags claims approaching expiration (FR-26)."""
-    slug = (brand_slug or "aureon").strip().lower()
+    slug = (brand or brand_slug or "aureon").strip().lower()
 
     if slug == "solaria":
         return [
@@ -258,8 +262,8 @@ async def get_expiring_claims(
                 "source_fact": "USDA Annual Certification Renewal Certificate",
             },
         ]
-
-    return [
+    elif slug == "aureon":
+        return [
         {
             "id": "claim-aureon-001",
             "statement": "CLM-042: Aureon Shield achieves proven 42% fraud reduction across digital banking channels.",
@@ -283,3 +287,4 @@ async def get_expiring_claims(
             "source_fact": "Partner Cloud Architecture SLA Agreement 2026",
         },
     ]
+    return []

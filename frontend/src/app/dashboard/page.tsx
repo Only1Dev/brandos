@@ -59,8 +59,8 @@ export default function DashboardPage() {
     async function loadData() {
       try {
         const [dashData, revData] = await Promise.all([
-          api.getDashboard().catch(() => null),
-          api.getReviews().catch(() => []),
+          api.getDashboard(activeBrand).catch(() => null),
+          api.getReviews(undefined, activeBrand).catch(() => []),
         ]);
 
         const revList = Array.isArray(revData) ? revData : [];
@@ -81,33 +81,35 @@ export default function DashboardPage() {
           }
         });
 
-        const computedFact = Math.max(75, Math.min(99, 98 - (factIssues > 0 ? Math.min(factIssues, 5) * 3 : 0)));
-        const computedAsset = Math.max(70, Math.min(98, 96 - (visualIssues > 0 ? Math.min(visualIssues, 5) * 2 : 2)));
-        const computedA11y = Math.max(80, Math.min(100, 99 - (a11yIssues * 3)));
-        const computedClarity = isSolaria ? 96 : 94;
+        const computedFact = revList.length === 0 ? 100 : Math.max(75, Math.min(99, 98 - (factIssues > 0 ? Math.min(factIssues, 5) * 3 : 0)));
+        const computedAsset = revList.length === 0 ? 100 : Math.max(70, Math.min(98, 96 - (visualIssues > 0 ? Math.min(visualIssues, 5) * 2 : 2)));
+        const computedA11y = revList.length === 0 ? 100 : Math.max(80, Math.min(100, 99 - (a11yIssues * 3)));
+        const computedClarity = isSolaria ? 96 : 98;
 
         // Composite Health formula: 35% TruthMark + 30% Voice + 20% Visual + 15% Accessibility
         const compositeHealth = Number(
           ((0.35 * computedFact) + (0.30 * 94.0) + (0.20 * computedAsset) + (0.15 * computedA11y)).toFixed(1)
         );
 
+        const isCustomBrand = activeBrand !== "aureon" && activeBrand !== "solaria";
+
         let finalMetrics = dashData;
         if (!finalMetrics || finalMetrics.brand_health < 50) {
           // If dashData has the old unweighted average bug (< 50) or is unavailable, use composite health
           finalMetrics = {
             ...(dashData || {}),
-            brand_health: (dashData?.brand_health && dashData.brand_health >= 50) ? dashData.brand_health : compositeHealth,
+            brand_health: (dashData?.brand_health && dashData.brand_health >= 50) ? dashData.brand_health : (isCustomBrand && revList.length === 0 ? 100 : compositeHealth),
             fact_integrity: (dashData?.fact_integrity && dashData.fact_integrity >= 70) ? dashData.fact_integrity : computedFact,
             asset_compliance: (dashData?.asset_compliance && dashData.asset_compliance >= 70) ? dashData.asset_compliance : computedAsset,
             accessibility_score: (dashData?.accessibility_score && dashData.accessibility_score >= 70) ? dashData.accessibility_score : computedA11y,
             guideline_clarity: (dashData?.guideline_clarity && dashData.guideline_clarity >= 70) ? dashData.guideline_clarity : computedClarity,
-            total_reviews: dashData?.total_reviews || revList.length || 8,
-            severity_breakdown: dashData?.severity_breakdown || { error: 2, warning: 4, info: 6 },
-            recurring_issues: dashData?.recurring_issues || [
+            total_reviews: dashData?.total_reviews ?? revList.length,
+            severity_breakdown: dashData?.severity_breakdown || (isCustomBrand ? { error: 0, warning: 0, info: 0 } : { error: 2, warning: 4, info: 6 }),
+            recurring_issues: dashData?.recurring_issues || (isCustomBrand ? [] : [
               { name: "Tone & Brand Voice Drift", count: 24 },
               { name: "Visual Logo Clear-Space & Colors", count: 2 },
               { name: "Unsupported Numerical Claims", count: 1 },
-            ],
+            ]),
           };
         }
         setMetrics(finalMetrics);

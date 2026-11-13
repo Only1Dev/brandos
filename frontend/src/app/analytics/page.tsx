@@ -58,9 +58,9 @@ export default function AnalyticsPage() {
       try {
         setLoading(true);
         const [driftData, expiringData, dashData] = await Promise.all([
-          api.getGuidelineDrift().catch(() => []),
-          api.getExpiringClaims(30).catch(() => []),
-          api.getDashboard().catch(() => null),
+          api.getGuidelineDrift(activeBrand).catch(() => []),
+          api.getExpiringClaims(30, activeBrand).catch(() => []),
+          api.getDashboard(activeBrand).catch(() => null),
         ]);
         setDrift(driftData || []);
         setExpiring(expiringData || []);

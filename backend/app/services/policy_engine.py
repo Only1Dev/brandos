@@ -332,7 +332,12 @@ def check_substance_quality(text: str) -> List[dict]:
     """
     violations = []
     cleaned = text.strip()
-    if not cleaned or cleaned.startswith("[Video creative uploaded:") or cleaned.startswith("[File uploaded:"):
+    if (
+        not cleaned
+        or cleaned.startswith("[Video creative uploaded:")
+        or cleaned.startswith("[Image creative uploaded:")
+        or cleaned.startswith("[File uploaded:")
+    ):
         return violations
 
     cleaned_lower = cleaned.lower()

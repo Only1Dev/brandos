@@ -43,12 +43,24 @@ class TerminologyResponse(BaseModel):
 @router.get("", response_model=List[TerminologyResponse])
 async def list_terminology(
     status_filter: Optional[str] = None,
+    brand: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(TerminologyRule).where(TerminologyRule.is_active == True)
-    if user and user.organization_id and user.role != "superadmin":
-        query = query.where(TerminologyRule.organization_id == user.organization_id)
+    target_org_id = None
+    if brand:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand))
+        target_org = org_res.scalar_one_or_none()
+        if target_org:
+            target_org_id = target_org.id
+        else:
+            return []
+    elif user and user.organization_id and user.role != "superadmin":
+        target_org_id = user.organization_id
+
+    if target_org_id:
+        query = query.where(TerminologyRule.organization_id == target_org_id)
     if status_filter:
         query = query.where(TerminologyRule.status == status_filter)
     result = await db.execute(query)
@@ -71,18 +83,29 @@ async def list_terminology(
 @router.post("", response_model=TerminologyResponse)
 async def create_terminology(
     body: TerminologyCreate,
+    brand: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
-    org_res = await db.execute(select(Organization).limit(1))
-    org = org_res.scalar_one_or_none()
-    if not org:
-        org = Organization(name="Default Workspace", slug="default-workspace")
-        db.add(org)
-        await db.flush()
+    target_org_id = None
+    if brand:
+        org_res = await db.execute(select(Organization).where(Organization.slug == brand))
+        target_org = org_res.scalar_one_or_none()
+        if target_org:
+            target_org_id = target_org.id
+    if not target_org_id and user and user.organization_id:
+        target_org_id = user.organization_id
+    if not target_org_id:
+        org_res = await db.execute(select(Organization).limit(1))
+        target_org = org_res.scalar_one_or_none()
+        if not target_org:
+            target_org = Organization(name="Default Workspace", slug="default-workspace")
+            db.add(target_org)
+            await db.flush()
+        target_org_id = target_org.id
 
     rule = TerminologyRule(
-        organization_id=user.organization_id if user and user.organization_id else org.id,
+        organization_id=target_org_id,
         term=body.term,
         preferred_alternative=body.preferred_alternative,
         term_type=body.status,

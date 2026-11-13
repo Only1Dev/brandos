@@ -117,8 +117,8 @@ async def list_claims(
 
     # Seed illustrative high-fidelity claims if none exist for this tenant
     if not response and org:
-        seed_items = (
-            [
+        if org.slug == "aureon":
+            seed_items = [
                 {
                     "text": "Aureon Shield platform achieves 42% fraud reduction across digital banking channels.",
                     "cat": "statistical",
@@ -156,8 +156,8 @@ async def list_claims(
                     "matched": "Pending Q4 2026 recertification audit.",
                 },
             ]
-            if org.slug == "aureon"
-            else [
+        elif org.slug == "solaria":
+            seed_items = [
                 {
                     "text": "Solaria BioImmune delivers 300mg certified organic elderberry extract per serving.",
                     "cat": "clinical",
@@ -177,40 +177,42 @@ async def list_claims(
                     "matched": "Under peer-review evaluation by Clinical Governance Council.",
                 },
             ]
-        )
+        else:
+            seed_items = []
 
-        for item in seed_items:
-            c = Claim(
-                organization_id=org.id,
-                claim_text=item["text"],
-                category=item["cat"],
-                status=item["status"],
-                confidence=item["conf"],
-                numerical_value=item["val"],
-                numerical_unit=item["unit"],
-            )
-            db.add(c)
-        await db.commit()
+        if seed_items:
+            for item in seed_items:
+                c = Claim(
+                    organization_id=org.id,
+                    claim_text=item["text"],
+                    category=item["cat"],
+                    status=item["status"],
+                    confidence=item["conf"],
+                    numerical_value=item["val"],
+                    numerical_unit=item["unit"],
+                )
+                db.add(c)
+            await db.commit()
 
-        # Re-query newly created claims
-        res_after = await db.execute(select(Claim).where(Claim.organization_id == org.id))
-        return [
-            ClaimResponse(
-                id=str(c.id),
-                statement=c.claim_text,
-                category=c.category,
-                status=c.status,
-                confidence=round(float(c.confidence or 0.95), 2),
-                numerical_value=c.numerical_value,
-                numerical_unit=c.numerical_unit,
-                matched_fact_statement=seed_items[idx]["matched"] if idx < len(seed_items) else None,
-                valid_from="2026-01-01",
-                valid_until="2026-12-31",
-                is_expired=False,
-                created_at=datetime.utcnow().isoformat(),
-            )
-            for idx, c in enumerate(res_after.scalars().all())
-        ]
+            # Re-query newly created claims
+            res_after = await db.execute(select(Claim).where(Claim.organization_id == org.id))
+            return [
+                ClaimResponse(
+                    id=str(c.id),
+                    statement=c.claim_text,
+                    category=c.category,
+                    status=c.status,
+                    confidence=round(float(c.confidence or 0.95), 2),
+                    numerical_value=c.numerical_value,
+                    numerical_unit=c.numerical_unit,
+                    matched_fact_statement=seed_items[idx]["matched"] if idx < len(seed_items) else None,
+                    valid_from="2026-01-01",
+                    valid_until="2026-12-31",
+                    is_expired=False,
+                    created_at=datetime.utcnow().isoformat(),
+                )
+                for idx, c in enumerate(res_after.scalars().all())
+            ]
 
     return response
 

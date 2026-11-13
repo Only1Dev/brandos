@@ -19,7 +19,7 @@ export default function TerminologyPage() {
   const loadTerms = async () => {
     try {
       setLoading(true);
-      const data = await api.getTerminology();
+      const data = await api.getTerminology(undefined, activeBrand);
       setTerms(data);
     } catch (e) {
       console.error(e);
@@ -35,12 +35,15 @@ export default function TerminologyPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.createTerminology({
-        term,
-        preferred_alternative: preferred,
-        status,
-        context,
-      });
+      await api.createTerminology(
+        {
+          term,
+          preferred_alternative: preferred,
+          status,
+          context,
+        },
+        activeBrand
+      );
       setShowAddModal(false);
       setTerm("");
       setPreferred("");

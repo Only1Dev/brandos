@@ -25,6 +25,8 @@ import {
   BrandSlug,
   BRAND_USERS,
   UserProfile,
+  getBrandConfig,
+  getBrandUsers,
 } from "@/context/BrandContext";
 import { api } from "@/lib/api";
 
@@ -47,39 +49,136 @@ export default function LoginPage() {
   const [isSuperAdminMode, setIsSuperAdminMode] = useState(false);
   const [superAdminPass, setSuperAdminPass] = useState("superadmin-master");
 
+  interface OrgItem {
+    id?: string;
+    slug: string;
+    name: string;
+    description?: string;
+    industry?: string;
+    rules_count?: number;
+    facts_count?: number;
+  }
+
+  const [organizations, setOrganizations] = useState<OrgItem[]>([
+    {
+      slug: "aureon",
+      name: "Aureon Technologies",
+      description: "Enterprise banking risk defense, autonomous fraud mitigation, and Aureon Shield intelligence.",
+      industry: "FinTech & Security",
+      rules_count: 114,
+      facts_count: 3,
+    },
+    {
+      slug: "solaria",
+      name: "Solaria Wellness",
+      description: "Clinical-grade preventative wellness, adaptogenic cellular hydration, and PureHydrate.",
+      industry: "Nutraceuticals",
+      rules_count: 98,
+      facts_count: 2,
+    },
+  ]);
+
   // Dynamic counts for live credibility
   const [brandStats, setBrandStats] = useState<
     Record<string, { rules_count: number; facts_count: number }>
-  >({});
+  >({
+    aureon: { rules_count: 114, facts_count: 3 },
+    solaria: { rules_count: 98, facts_count: 2 },
+  });
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Fetch live rules & facts
+    // Fetch live organizations, rules & facts
     async function loadStats() {
       try {
-        const [aureonRules, aureonFacts, solariaRules, solariaFacts] =
-          await Promise.all([
-            api.getRules(undefined, "aureon").catch(() => []),
-            api.getFacts(undefined, "aureon").catch(() => []),
-            api.getRules(undefined, "solaria").catch(() => []),
-            api.getFacts(undefined, "solaria").catch(() => []),
-          ]);
-        setBrandStats({
-          aureon: {
-            rules_count: aureonRules.length || 114,
-            facts_count: aureonFacts.length || 3,
-          },
-          solaria: {
-            rules_count: solariaRules.length || 98,
-            facts_count: solariaFacts.length || 2,
-          },
+        const orgList = await api.getOrganizations().catch(() => []);
+        const rawOrgs: OrgItem[] =
+          orgList && orgList.length > 0
+            ? orgList
+            : [
+                {
+                  slug: "aureon",
+                  name: "Aureon Technologies",
+                  description:
+                    "Enterprise banking risk defense, autonomous fraud mitigation, and Aureon Shield intelligence.",
+                  industry: "FinTech & Security",
+                },
+                {
+                  slug: "solaria",
+                  name: "Solaria Wellness",
+                  description:
+                    "Clinical-grade preventative wellness, adaptogenic cellular hydration, and PureHydrate.",
+                  industry: "Nutraceuticals",
+                },
+              ];
+
+        // Deduplicate orgs by slug and normalize
+        const uniqueMap = new Map<string, OrgItem>();
+        uniqueMap.set("aureon", {
+          slug: "aureon",
+          name: "Aureon Technologies",
+          description:
+            "Enterprise banking risk defense, autonomous fraud mitigation, and Aureon Shield intelligence.",
+          industry: "FinTech & Security",
         });
-      } catch {
-        setBrandStats({
-          aureon: { rules_count: 114, facts_count: 3 },
-          solaria: { rules_count: 98, facts_count: 2 },
+        uniqueMap.set("solaria", {
+          slug: "solaria",
+          name: "Solaria Wellness",
+          description:
+            "Clinical-grade preventative wellness, adaptogenic cellular hydration, and PureHydrate.",
+          industry: "Nutraceuticals",
         });
+
+        for (const org of rawOrgs) {
+          const s = org.slug.toLowerCase();
+          if (s === "aureon" || s === "solaria") continue;
+          const cleanName = org.name
+            ? org.name.charAt(0).toUpperCase() + org.name.slice(1)
+            : org.slug;
+          uniqueMap.set(org.slug, {
+            ...org,
+            name: cleanName,
+            industry:
+              org.description && org.description.length < 32
+                ? org.description
+                : "Enterprise Workspace",
+          });
+        }
+
+        const orgArray = Array.from(uniqueMap.values());
+
+        // Enriched with rules & facts count
+        const statsMap: Record<string, { rules_count: number; facts_count: number }> = {};
+        await Promise.all(
+          orgArray.map(async (org) => {
+            try {
+              const [rules, facts] = await Promise.all([
+                api.getRules(undefined, org.slug).catch(() => []),
+                api.getFacts(undefined, org.slug).catch(() => []),
+              ]);
+              statsMap[org.slug] = {
+                rules_count:
+                  rules.length ||
+                  (org.slug === "aureon" ? 114 : org.slug === "solaria" ? 98 : 3),
+                facts_count:
+                  facts.length ||
+                  (org.slug === "aureon" ? 3 : org.slug === "solaria" ? 2 : 0),
+              };
+            } catch {
+              statsMap[org.slug] = {
+                rules_count:
+                  org.slug === "aureon" ? 114 : org.slug === "solaria" ? 98 : 3,
+                facts_count:
+                  org.slug === "aureon" ? 3 : org.slug === "solaria" ? 2 : 0,
+              };
+            }
+          })
+        );
+        setBrandStats(statsMap);
+        setOrganizations(orgArray);
+      } catch (err) {
+        console.error("Error loading organizations:", err);
       }
     }
     loadStats();
@@ -102,7 +201,8 @@ export default function LoginPage() {
   // Handle Brand Selection in Step 1
   const handleSelectBrand = (slug: BrandSlug) => {
     setSelectedBrand(slug);
-    const defaultUser = BRAND_USERS[slug][0];
+    const users = getBrandUsers(slug);
+    const defaultUser = users[0];
     setSelectedUser(defaultUser);
     setPassword(`${slug}-${defaultUser.role}`);
     setErrorMsg("");
@@ -151,7 +251,8 @@ export default function LoginPage() {
     }
   };
 
-  const brandCfg = BRANDS[selectedBrand];
+  const brandCfg = getBrandConfig(selectedBrand);
+  const brandUsers = getBrandUsers(selectedBrand);
 
   return (
     <div className="relative min-h-screen w-full bg-[#080B14] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
@@ -213,88 +314,73 @@ export default function LoginPage() {
             </div>
 
             {/* Brand Options */}
-            <div className="space-y-3">
-              {/* Aureon Card */}
-              <div
-                onClick={() => handleSelectBrand("aureon")}
-                className="group cursor-pointer rounded-2xl p-4.5 bg-white/[0.03] hover:bg-indigo-950/40 border border-white/10 hover:border-indigo-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/10 flex items-start justify-between"
-              >
-                <div className="flex items-start gap-3.5">
-                  <div className="h-11 w-11 rounded-xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <Shield className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-white text-sm group-hover:text-indigo-300 transition-colors">
-                        Aureon Technologies
-                      </h3>
-                      <span className="text-[10px] px-2 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold">
-                        FinTech & Security
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      Enterprise banking risk defense, autonomous fraud mitigation, and Aureon Shield intelligence.
-                    </p>
-                    <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-2.5">
-                      <span className="text-slate-300 font-semibold">
-                        {brandStats.aureon?.rules_count ?? 114} Guideline Rules
-                      </span>
-                      <span>•</span>
-                      <span className="text-slate-300 font-semibold">
-                        {brandStats.aureon?.facts_count ?? 3} Verified Facts
-                      </span>
-                      <span>•</span>
-                      <span className="text-indigo-400 font-medium">
-                        4 Personas
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="h-8 w-8 rounded-lg bg-white/5 group-hover:bg-indigo-600 text-slate-400 group-hover:text-white flex items-center justify-center shrink-0 transition-all mt-1">
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-              </div>
+            <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+              {organizations.map((org) => {
+                const isAureon = org.slug === "aureon";
+                const isSolaria = org.slug === "solaria";
+                const stats = brandStats[org.slug] || {
+                  rules_count: org.rules_count ?? (isAureon ? 114 : isSolaria ? 98 : 3),
+                  facts_count: org.facts_count ?? (isAureon ? 3 : isSolaria ? 2 : 0),
+                };
+                const personasCount = getBrandUsers(org.slug).length;
 
-              {/* Solaria Card */}
-              <div
-                onClick={() => handleSelectBrand("solaria")}
-                className="group cursor-pointer rounded-2xl p-4.5 bg-white/[0.03] hover:bg-emerald-950/40 border border-white/10 hover:border-emerald-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/10 flex items-start justify-between"
-              >
-                <div className="flex items-start gap-3.5">
-                  <div className="h-11 w-11 rounded-xl bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <Leaf className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-white text-sm group-hover:text-emerald-300 transition-colors">
-                        Solaria Wellness
-                      </h3>
-                      <span className="text-[10px] px-2 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
-                        Nutraceuticals
-                      </span>
+                return (
+                  <div
+                    key={org.slug}
+                    onClick={() => handleSelectBrand(org.slug)}
+                    className="group cursor-pointer rounded-2xl p-4.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-indigo-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/10 flex items-start justify-between"
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <div
+                        className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                          isAureon
+                            ? "bg-indigo-600/30 border border-indigo-500/40 text-indigo-300"
+                            : isSolaria
+                            ? "bg-emerald-600/30 border border-emerald-500/40 text-emerald-300"
+                            : "bg-purple-600/30 border border-purple-500/40 text-purple-300"
+                        }`}
+                      >
+                        {isAureon ? (
+                          <Shield className="h-5 w-5" />
+                        ) : isSolaria ? (
+                          <Leaf className="h-5 w-5" />
+                        ) : (
+                          <Building2 className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-white text-sm group-hover:text-indigo-300 transition-colors">
+                            {org.name}
+                          </h3>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold">
+                            {org.industry || (isAureon ? "FinTech & Security" : isSolaria ? "Nutraceuticals" : "Enterprise Workspace")}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                          {org.description || "Enterprise autonomous brand governance workspace."}
+                        </p>
+                        <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-2.5">
+                          <span className="text-slate-300 font-semibold">
+                            {stats.rules_count} Guideline Rules
+                          </span>
+                          <span>•</span>
+                          <span className="text-slate-300 font-semibold">
+                            {stats.facts_count} Verified Facts
+                          </span>
+                          <span>•</span>
+                          <span className="text-indigo-400 font-medium">
+                            {personasCount} Personas
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      Clinical-grade preventative wellness, adaptogenic cellular hydration, and PureHydrate.
-                    </p>
-                    <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-2.5">
-                      <span className="text-slate-300 font-semibold">
-                        {brandStats.solaria?.rules_count ?? 98} Guideline Rules
-                      </span>
-                      <span>•</span>
-                      <span className="text-slate-300 font-semibold">
-                        {brandStats.solaria?.facts_count ?? 2} Verified Facts
-                      </span>
-                      <span>•</span>
-                      <span className="text-emerald-400 font-medium">
-                        4 Personas
-                      </span>
+                    <div className="h-8 w-8 rounded-lg bg-white/5 group-hover:bg-indigo-600 text-slate-400 group-hover:text-white flex items-center justify-center shrink-0 transition-all mt-1">
+                      <ArrowRight className="h-4 w-4" />
                     </div>
                   </div>
-                </div>
-                <div className="h-8 w-8 rounded-lg bg-white/5 group-hover:bg-emerald-600 text-slate-400 group-hover:text-white flex items-center justify-center shrink-0 transition-all mt-1">
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-              </div>
+                );
+              })}
             </div>
 
             {/* Bottom Utility Row */}
@@ -346,13 +432,17 @@ export default function LoginPage() {
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
                   selectedBrand === "aureon"
                     ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
-                    : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                    : selectedBrand === "solaria"
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                    : "bg-purple-500/20 text-purple-300 border-purple-500/30"
                 }`}
               >
                 {selectedBrand === "aureon" ? (
                   <Shield className="h-3.5 w-3.5" />
-                ) : (
+                ) : selectedBrand === "solaria" ? (
                   <Leaf className="h-3.5 w-3.5" />
+                ) : (
+                  <Building2 className="h-3.5 w-3.5" />
                 )}
                 <span>{brandCfg.name}</span>
               </div>
@@ -433,7 +523,7 @@ export default function LoginPage() {
                 {/* Dropdown Options */}
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-[#0f172a] border border-slate-700 shadow-2xl p-1.5 space-y-1 max-h-60 overflow-y-auto ring-1 ring-black/40">
-                    {BRAND_USERS[selectedBrand].map((u) => {
+                    {brandUsers.map((u) => {
                       const isSelected = selectedUser.email === u.email;
                       return (
                         <div
@@ -546,7 +636,9 @@ export default function LoginPage() {
               className={`w-full py-3 rounded-xl font-bold text-xs text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
                 selectedBrand === "aureon"
                   ? "bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 shadow-indigo-500/25"
-                  : "bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 shadow-emerald-500/25"
+                  : selectedBrand === "solaria"
+                  ? "bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 shadow-emerald-500/25"
+                  : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-purple-500/25"
               }`}
             >
               <span>

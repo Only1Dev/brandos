@@ -220,13 +220,20 @@ export const api = {
     request<any>(`/api/claims/${id}`, { method: "DELETE" }),
 
   // Terminology
-  getTerminology: (status?: string) =>
-    request<any[]>(`/api/terminology${status ? `?status_filter=${status}` : ""}`),
-  createTerminology: (data: any) =>
-    request<any>("/api/terminology", {
+  getTerminology: (status?: string, brand?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.set("status_filter", status);
+    if (brand) params.set("brand", brand);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return request<any[]>(`/api/terminology${qs}`);
+  },
+  createTerminology: (data: any, brand?: string) => {
+    const qs = brand ? `?brand=${encodeURIComponent(brand)}` : "";
+    return request<any>(`/api/terminology${qs}`, {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    });
+  },
   deleteTerminology: (id: string) =>
     request<any>(`/api/terminology/${id}`, { method: "DELETE" }),
 
@@ -235,12 +242,17 @@ export const api = {
     request<any[]>(`/api/assets${type ? `?asset_type=${type}` : ""}`),
 
   // Analytics
-  getDashboard: () =>
-    request<any>("/api/analytics/dashboard"),
-  getGuidelineDrift: () =>
-    request<any[]>("/api/analytics/guideline-drift"),
-  getExpiringClaims: (days?: number) =>
-    request<any[]>(`/api/analytics/expiring-claims${days ? `?days=${days}` : ""}`),
+  getDashboard: (brand?: string) =>
+    request<any>(`/api/analytics/dashboard${brand ? `?brand=${brand}` : ""}`),
+  getGuidelineDrift: (brand?: string) =>
+    request<any[]>(`/api/analytics/guideline-drift${brand ? `?brand=${brand}` : ""}`),
+  getExpiringClaims: (days?: number, brand?: string) => {
+    const params = new URLSearchParams();
+    if (days) params.set("days", String(days));
+    if (brand) params.set("brand", brand);
+    const qs = params.toString();
+    return request<any[]>(`/api/analytics/expiring-claims${qs ? `?${qs}` : ""}`);
+  },
 
   // Organizations & Superadmin
   getSuperAdminOverview: () =>

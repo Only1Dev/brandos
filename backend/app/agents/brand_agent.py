@@ -49,7 +49,7 @@ Evaluate the following content thoroughly for:
    - If a rule prohibits writing in caps (e.g. Rule 777: "Never ever write anything in caps"), check for ALL CAPS text, uppercase shouting, or capitalized words, and return a violation citing that rule_id (e.g. '777').
    - If a rule specifies banned terms, tone constraints, or requirements, cite the exact rule_id in rule_ref.
 3. Content Substance & Anti-Gibberish Standards (CRITICAL):
-   If the content consists of meaningless placeholder text, keyboard mash, or random characters (e.g. 'abcd', 'asdf', 'test123'), you MUST flag a CRITICAL violation citing rule_ref 'BRAND-SUBSTANCE-001' with title "Content Quality Standard: Meaningless Placeholder Copy".
+   If the content consists of meaningless placeholder text, keyboard mash, or random characters (e.g. 'abcd', 'asdf', 'test123'), you MUST flag a CRITICAL violation citing rule_ref 'BRAND-SUBSTANCE-001' with title "Content Quality Standard: Meaningless Placeholder Copy". (Note: If the content is an uploaded creative indicator like '[Video creative uploaded: ...]', '[Image creative uploaded: ...]', or '[File uploaded: ...]', do NOT flag it as placeholder copy).
 4. Confidential & Proprietary Information Leakage (CRITICAL DLP):
    If the content contains internal classification banners (e.g. "CONFIDENTIAL", "STRICTLY CONFIDENTIAL", "INTERNAL USE ONLY", "DO NOT DISTRIBUTE", "NDA PROTECTED"), private staging URLs, or exposed credentials, you MUST flag a CRITICAL violation citing rule_ref 'BRAND-CONFIDENTIAL-001' with title "Confidential & Proprietary Information Leakage".
 5. Tone, Voice & Personality Taxonomy (15-Field Voice Fingerprint):

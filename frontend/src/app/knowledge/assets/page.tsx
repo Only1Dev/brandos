@@ -135,10 +135,10 @@ export default function AssetsPage() {
                 style={{ color: primaryColor }}
                 className="font-extrabold text-2xl tracking-tighter"
               >
-                {isSolaria ? "SOLARIA" : "AUREON"}
+                {brandConfig.name.toUpperCase()}
               </span>
               <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-widest mt-0.5">
-                {isSolaria ? "CELLULAR NUTRITION" : "SHIELD INTELLIGENCE"}
+                {(tagline || brandConfig.tagline || "ENTERPRISE IDENTITY").toUpperCase()}
               </span>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function AssetsPage() {
               style={{ backgroundColor: primaryColor }}
               className="h-16 w-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-md"
             >
-              {isSolaria ? "S" : "A"}
+              {brandConfig.name.charAt(0).toUpperCase()}
             </div>
           </div>
           <div>

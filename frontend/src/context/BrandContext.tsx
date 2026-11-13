@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-export type BrandSlug = "aureon" | "solaria";
+export type BrandSlug = "aureon" | "solaria" | string;
 export type UserRole = "admin" | "reviewer" | "creator" | "superadmin";
 export type ThemeMode = "light" | "dark";
 
@@ -20,7 +20,7 @@ export interface BrandConfig {
   defaultCreatorPassword: string;
 }
 
-export const BRANDS: Record<BrandSlug, BrandConfig> = {
+export const BRANDS: Record<string, BrandConfig> = {
   aureon: {
     slug: "aureon",
     name: "Aureon Technologies",
@@ -49,6 +49,33 @@ export const BRANDS: Record<BrandSlug, BrandConfig> = {
   },
 };
 
+export const getBrandConfig = (slug: string): BrandConfig => {
+  if (slug === "aureon" || slug === "solaria") {
+    return BRANDS[slug];
+  }
+  let savedTheme: any = null;
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(`brandos_theme_${slug}`);
+      if (raw) savedTheme = JSON.parse(raw);
+    } catch {}
+  }
+  const cleanName = savedTheme?.name || slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  return {
+    slug,
+    name: cleanName,
+    tagline: savedTheme?.tagline || "Enterprise Autonomous Governance",
+    domain: savedTheme?.domain || `${cleanName} enterprise operations and products`,
+    primaryColor: savedTheme?.primaryColor || "#6366F1",
+    accentColor: savedTheme?.accentColor || "#38BDF8",
+    pdfFilename: `${cleanName.replace(/\s+/g, "_")}_Official_Brand_Guidelines_2026.pdf`,
+    pdfDownloadUrl: "#",
+    defaultAdminPassword: `${slug}-admin`,
+    defaultReviewerPassword: `${slug}-reviewer`,
+    defaultCreatorPassword: `${slug}-creator`,
+  };
+};
+
 export interface UserProfile {
   name: string;
   email: string;
@@ -56,7 +83,7 @@ export interface UserProfile {
   title: string;
 }
 
-export const BRAND_USERS: Record<BrandSlug, UserProfile[]> = {
+export const BRAND_USERS: Record<string, UserProfile[]> = {
   aureon: [
     { name: "Priya Sharma", email: "admin@aureon.internal", role: "admin", title: "Enterprise Brand Admin" },
     { name: "David Chen", email: "reviewer@aureon.internal", role: "reviewer", title: "Lead Content Reviewer" },
@@ -69,6 +96,19 @@ export const BRAND_USERS: Record<BrandSlug, UserProfile[]> = {
     { name: "Marcus Brody", email: "marcus.brody@solaria.internal", role: "creator", title: "Clinical Brand Specialist (Creator 1)" },
     { name: "Sophia Lin", email: "sophia.lin@solaria.internal", role: "creator", title: "Lifecycle Campaigner (Creator 2)" },
   ],
+};
+
+export const getBrandUsers = (slug: string, customList: UserProfile[] = []): UserProfile[] => {
+  const staticUsers = BRAND_USERS[slug] || [];
+  if (staticUsers.length + customList.length > 0) {
+    return [...staticUsers, ...customList];
+  }
+  const cleanName = slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  return [
+    { name: `${cleanName} Administrator`, email: `admin@${slug}.internal`, role: "admin", title: "Enterprise Brand Admin" },
+    { name: `${cleanName} Reviewer`, email: `reviewer@${slug}.internal`, role: "reviewer", title: "Compliance Lead" },
+    { name: `${cleanName} Creator`, email: `creator@${slug}.internal`, role: "creator", title: "Content Strategist" },
+  ];
 };
 
 export interface RolePermissions {
@@ -189,9 +229,9 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    if (savedBrand && BRANDS[savedBrand]) {
+    if (savedBrand) {
       setActiveBrand(savedBrand);
-      const allUsers = [...BRAND_USERS[savedBrand], ...loadedCustom];
+      const allUsers = getBrandUsers(savedBrand, loadedCustom);
       const found = allUsers.find((u) => u.email === savedEmail) || allUsers[0];
       setCurrentUser(found);
       localStorage.setItem("brandos_user_email", found.email);
@@ -242,7 +282,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
   const switchBrand = (slug: BrandSlug, role: UserRole = "admin") => {
     setActiveBrand(slug);
-    const userList = [...BRAND_USERS[slug], ...(customUsers[slug] || [])];
+    const userList = getBrandUsers(slug, customUsers[slug] || []);
     const match = userList.find((u) => u.role === role) || userList[0];
     setCurrentUser(match);
     setIsAuthenticated(true);
@@ -255,7 +295,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   };
 
   const switchRole = (role: UserRole) => {
-    const userList = [...BRAND_USERS[activeBrand], ...(customUsers[activeBrand] || [])];
+    const userList = getBrandUsers(activeBrand, customUsers[activeBrand] || []);
     const match = userList.find((u) => u.role === role) || userList[0];
     setCurrentUser(match);
     localStorage.setItem("brandos_user_role", match.role);
@@ -268,8 +308,8 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("brandos_user_email", user.email);
   };
 
-  const brandConfig = BRANDS[activeBrand];
-  const brandUsers = [...BRAND_USERS[activeBrand], ...(customUsers[activeBrand] || [])];
+  const brandConfig = getBrandConfig(activeBrand);
+  const brandUsers = getBrandUsers(activeBrand, customUsers[activeBrand] || []);
   const currentRole = currentUser.role;
 
   // Dynamic RBAC permissions calculated from active role permissions matrix

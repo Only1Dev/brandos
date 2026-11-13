@@ -217,8 +217,8 @@ async def create_organization(
     # Seed default Brand Brain core guidelines
     guideline = Guideline(
         organization_id=org.id,
-        name=f"{org.name} Official Brand Governance Guidelines",
-        version="1.0",
+        title=f"{org.name} Official Brand Governance Guidelines",
+        version=1,
         is_active=True,
     )
     db.add(guideline)
@@ -229,37 +229,49 @@ async def create_organization(
     rule1 = GuidelineRule(
         guideline_id=guideline.id,
         rule_code="BRAND-DOMAIN-001",
-        category="tone",
-        rule_text=f"All marketing collateral must strictly pertain to {org.name}'s authorized domain: {domain_desc}.",
-        severity="critical",
+        category="brand_voice",
+        title="Domain Boundary Control",
+        description=f"All marketing collateral must strictly pertain to {org.name}'s authorized domain: {domain_desc}.",
+        severity="error",
         is_active=True,
     )
     rule2 = GuidelineRule(
         guideline_id=guideline.id,
         rule_code="BRAND-PROMISE-001",
-        category="claim",
-        rule_text="Do not make unbacked 100% absolute guarantees or superlatives without certified experimental ground truth.",
+        category="factual",
+        title="Prohibition on Absolute Guarantees",
+        description="Do not make unbacked 100% absolute guarantees or superlatives without certified experimental ground truth.",
         severity="error",
         is_active=True,
     )
     rule3 = GuidelineRule(
         guideline_id=guideline.id,
         rule_code="BRAND-DLP-001",
-        category="security",
-        rule_text="Do not leak internal NDA classification markers, private staging credentials, or unredacted keys.",
-        severity="critical",
+        category="legal",
+        title="Data Loss Prevention (DLP)",
+        description="Do not leak internal NDA classification markers, private staging credentials, or unredacted keys.",
+        severity="error",
         is_active=True,
     )
     db.add_all([rule1, rule2, rule3])
 
+    # Seed initial ground-truth fact for this brand
+    fact = Fact(
+        organization_id=org.id,
+        category="general",
+        statement=f"{org.name} operates in the verified enterprise domain: {domain_desc}.",
+        source=f"Official {org.name} Corporate Charter (2026)",
+        is_active=True,
+    )
+    db.add(fact)
+
     # Seed an administrator user for the organization
     admin_user = User(
         organization_id=org.id,
+        auth_id=f"auth-{clean_slug}-{uuid.uuid4().hex[:8]}",
         email=f"admin@{clean_slug}.internal",
-        name=f"{body.name.strip()} Administrator",
+        full_name=f"{body.name.strip()} Administrator",
         role="admin",
-        hashed_password="hashed_demo_password",
-        is_active=True,
     )
     db.add(admin_user)
 

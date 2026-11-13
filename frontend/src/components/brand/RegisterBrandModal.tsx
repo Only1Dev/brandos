@@ -91,6 +91,7 @@ export function RegisterBrandModal() {
         localStorage.setItem(
           `brandos_theme_${res.slug}`,
           JSON.stringify({
+            name: brandName.trim(),
             primaryColor,
             accentColor: "#38BDF8",
             tagline: tagline.trim() || "Enterprise Autonomous Governance",

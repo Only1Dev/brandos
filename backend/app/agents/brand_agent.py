@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 from app.services.model_router import get_model_router, GROQ_MODEL_LARGE
@@ -51,10 +52,15 @@ Evaluate the following content thoroughly for:
    If the content consists of meaningless placeholder text, keyboard mash, or random characters (e.g. 'abcd', 'asdf', 'test123'), you MUST flag a CRITICAL violation citing rule_ref 'BRAND-SUBSTANCE-001' with title "Content Quality Standard: Meaningless Placeholder Copy".
 4. Confidential & Proprietary Information Leakage (CRITICAL DLP):
    If the content contains internal classification banners (e.g. "CONFIDENTIAL", "STRICTLY CONFIDENTIAL", "INTERNAL USE ONLY", "DO NOT DISTRIBUTE", "NDA PROTECTED"), private staging URLs, or exposed credentials, you MUST flag a CRITICAL violation citing rule_ref 'BRAND-CONFIDENTIAL-001' with title "Confidential & Proprietary Information Leakage".
-5. Tone and Voice violations (e.g., aggressive, overly defensive, informal/slang where forbidden, hype-driven)
-6. Absolute guarantees or prohibited promises (e.g. "guarantees 100% protection", "zero risk", "revolutionary")
-7. Unsupported superlatives (e.g. "India's #1", "the best in the market", "industry leader" without citation)
-8. Channel appropriateness (e.g., inappropriate length, tone mismatch for channel)
+5. Tone, Voice & Personality Taxonomy (15-Field Voice Fingerprint):
+   - Sentence Rhythm & Pacing: Ensure balanced cadence. Flag breathless run-on hype, excessive exclamation points, or disjointed choppy fragments.
+   - Humor & Personality Register: Enforce brand personality register ({brand_name} is authoritative, evidence-backed, and composed). Flag flippancy, sarcasm, cynicism, or unearned levity.
+   - Vocabulary Do's & Don'ts: Prohibit empty hype buzzwords ('game-changer', 'magic bullet', 'insane results', 'next-gen miracle', 'revolutionary'). Mandate precise industry terminology.
+   - Formality & Channel Fit: Ensure formality matches channel '{channel}'. Press releases, investor memos, and whitepapers require formal executive tone. Social copy must maintain professional dignity without informal slang or internet colloquialisms.
+   - Signature Stylistic Patterns: Assertions must lead with concrete quantified data rather than vague emotional appeals.
+6. Absolute guarantees or prohibited promises (e.g. "guarantees 100% protection", "zero risk", "flawless security")
+7. Unsupported superlatives (e.g. "India's #1", "the best in the market", "industry leader" without verifiable citation)
+8. Channel appropriateness (e.g., inappropriate length, structural mismatch for {channel})
 
 For every violation detected:
 - Cite the relevant rule_id (if matched from guidelines or 'BRAND-IDENTITY-001')

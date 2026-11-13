@@ -264,6 +264,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  deleteOrganization: (slugOrId: string) =>
+    request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}`, {
+      method: "DELETE",
+    }),
 
   // Audit
   getAuditLogs: (entityType?: string, action?: string, brand?: string) => {

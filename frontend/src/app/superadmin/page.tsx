@@ -19,6 +19,7 @@ import {
   Users,
   KeyRound,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 
 interface OrgStats {
@@ -94,6 +95,23 @@ export default function SuperAdminPage() {
       alert("Error: " + e.message);
     } finally {
       setIngesting(null);
+    }
+  };
+
+  const handleDeleteOrg = async (slug: string, name: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete the brand workspace "${name}" (${slug})? All associated guidelines, rules, and facts will be removed.`
+      )
+    ) {
+      return;
+    }
+    try {
+      await api.deleteOrganization(slug);
+      setMessage(`Brand workspace "${name}" successfully deleted.`);
+      await fetchOverview();
+    } catch (e: any) {
+      alert("Error deleting brand: " + e.message);
     }
   };
 
@@ -319,6 +337,17 @@ export default function SuperAdminPage() {
                       <RotateCw className={`h-3.5 w-3.5 ${ingesting === org.slug ? "animate-spin" : ""}`} />
                       <span>Sync</span>
                     </button>
+
+                    {!["aureon", "solaria"].includes(org.slug) && (
+                      <button
+                        onClick={() => handleDeleteOrg(org.slug, org.name)}
+                        className="px-3 py-2 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-semibold flex items-center gap-1 transition-colors"
+                        title="Delete this brand workspace"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Delete</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

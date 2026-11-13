@@ -285,3 +285,84 @@ async def create_organization(
         description=org.description,
         created_at=org.created_at.isoformat() if org.created_at else "",
     )
+
+
+@router.delete("/{slug_or_id}")
+async def delete_organization(
+    slug_or_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user),
+):
+    """
+    Deletes an enterprise organization and cascades its Brand Brain rules, facts, and content.
+    Protected default brands ('aureon', 'solaria') cannot be deleted.
+    """
+    clean_target = slug_or_id.strip().lower()
+    if clean_target in ("aureon", "solaria"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="System core brand workspaces ('aureon', 'solaria') are protected and cannot be deleted.",
+        )
+
+    from sqlalchemy import delete
+    from app.models.content import ContentVersion
+    from app.models.review import Review
+    from app.models.terminology import TerminologyRule
+    from app.models.audit import AuditEvent
+
+    org = None
+    try:
+        org_uuid = uuid.UUID(slug_or_id)
+        res = await db.execute(select(Organization).where(Organization.id == org_uuid))
+        org = res.scalar_one_or_none()
+    except ValueError:
+        pass
+
+    if not org:
+        res = await db.execute(select(Organization).where(Organization.slug == clean_target))
+        org = res.scalar_one_or_none()
+
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    if org.slug in ("aureon", "solaria"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="System core brand workspaces are protected.",
+        )
+
+    # 1. Guidelines & Rules
+    g_res = await db.execute(select(Guideline).where(Guideline.organization_id == org.id))
+    g_ids = [g.id for g in g_res.scalars().all()]
+    if g_ids:
+        await db.execute(delete(GuidelineRule).where(GuidelineRule.guideline_id.in_(g_ids)))
+        await db.execute(delete(Guideline).where(Guideline.id.in_(g_ids)))
+
+    # 2. Facts
+    await db.execute(delete(Fact).where(Fact.organization_id == org.id))
+
+    # 3. Terminology
+    await db.execute(delete(TerminologyRule).where(TerminologyRule.organization_id == org.id))
+
+    # 4. Content & Reviews
+    c_res = await db.execute(select(Content).where(Content.organization_id == org.id))
+    c_ids = [c.id for c in c_res.scalars().all()]
+    if c_ids:
+        r_res = await db.execute(select(Review).where(Review.content_id.in_(c_ids)))
+        r_ids = [r.id for r in r_res.scalars().all()]
+        if r_ids:
+            await db.execute(delete(Review).where(Review.id.in_(r_ids)))
+        await db.execute(delete(ContentVersion).where(ContentVersion.content_id.in_(c_ids)))
+        await db.execute(delete(Content).where(Content.id.in_(c_ids)))
+
+    # 5. Audit Events
+    await db.execute(delete(AuditEvent).where(AuditEvent.organization_id == org.id))
+
+    # 6. Users
+    await db.execute(delete(User).where(User.organization_id == org.id))
+
+    # 7. Organization
+    await db.execute(delete(Organization).where(Organization.id == org.id))
+    await db.commit()
+
+    return {"status": "success", "message": f"Brand workspace '{org.name}' ({org.slug}) deleted successfully"}

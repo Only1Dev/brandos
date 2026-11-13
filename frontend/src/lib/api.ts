@@ -246,6 +246,11 @@ export const api = {
     request<any>("/api/organizations/superadmin/overview"),
   getOrganizations: () =>
     request<any[]>("/api/organizations"),
+  createOrganization: (data: { name: string; slug?: string; description?: string; domain?: string; primary_color?: string }) =>
+    request<any>("/api/organizations", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
   // Audit
   getAuditLogs: (entityType?: string, action?: string, brand?: string) => {

@@ -29,7 +29,10 @@ router = APIRouter(prefix="/organizations", tags=["organizations"])
 
 class OrgCreate(BaseModel):
     name: str
+    slug: Optional[str] = None
     description: Optional[str] = None
+    domain: Optional[str] = None
+    primary_color: Optional[str] = "#4F46E5"
 
 
 class OrgResponse(BaseModel):
@@ -190,13 +193,79 @@ async def get_organization(
 async def create_organization(
     body: OrgCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
 ):
-    slug = body.name.lower().replace(" ", "-") + "-" + uuid.uuid4().hex[:6]
-    org = Organization(name=body.name, slug=slug, description=body.description)
+    import re
+    base_slug = body.slug.strip().lower() if body.slug else body.name.lower()
+    clean_slug = re.sub(r"[^a-z0-9]+", "-", base_slug).strip("-")
+    if not clean_slug:
+        clean_slug = "org-" + uuid.uuid4().hex[:6]
+
+    # Check for existing slug
+    existing = await db.execute(select(Organization).where(Organization.slug == clean_slug))
+    if existing.scalar_one_or_none():
+        clean_slug = f"{clean_slug}-{uuid.uuid4().hex[:4]}"
+
+    org = Organization(
+        name=body.name.strip(),
+        slug=clean_slug,
+        description=body.description or body.domain or f"Enterprise brand workspace for {body.name.strip()}",
+    )
     db.add(org)
+    await db.flush()
+
+    # Seed default Brand Brain core guidelines
+    guideline = Guideline(
+        organization_id=org.id,
+        name=f"{org.name} Official Brand Governance Guidelines",
+        version="1.0",
+        is_active=True,
+    )
+    db.add(guideline)
+    await db.flush()
+
+    # Seed initial rules for this organization
+    domain_desc = body.domain or body.description or org.name
+    rule1 = GuidelineRule(
+        guideline_id=guideline.id,
+        rule_code="BRAND-DOMAIN-001",
+        category="tone",
+        rule_text=f"All marketing collateral must strictly pertain to {org.name}'s authorized domain: {domain_desc}.",
+        severity="critical",
+        is_active=True,
+    )
+    rule2 = GuidelineRule(
+        guideline_id=guideline.id,
+        rule_code="BRAND-PROMISE-001",
+        category="claim",
+        rule_text="Do not make unbacked 100% absolute guarantees or superlatives without certified experimental ground truth.",
+        severity="error",
+        is_active=True,
+    )
+    rule3 = GuidelineRule(
+        guideline_id=guideline.id,
+        rule_code="BRAND-DLP-001",
+        category="security",
+        rule_text="Do not leak internal NDA classification markers, private staging credentials, or unredacted keys.",
+        severity="critical",
+        is_active=True,
+    )
+    db.add_all([rule1, rule2, rule3])
+
+    # Seed an administrator user for the organization
+    admin_user = User(
+        organization_id=org.id,
+        email=f"admin@{clean_slug}.internal",
+        name=f"{body.name.strip()} Administrator",
+        role="admin",
+        hashed_password="hashed_demo_password",
+        is_active=True,
+    )
+    db.add(admin_user)
+
     await db.commit()
     await db.refresh(org)
+
     return OrgResponse(
         id=str(org.id),
         name=org.name,

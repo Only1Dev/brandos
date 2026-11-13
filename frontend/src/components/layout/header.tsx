@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, Shield, Leaf, FileText, ChevronDown, Lock, Globe, Building2, LogOut, Compass } from "lucide-react";
+import { Plus, Shield, Leaf, FileText, ChevronDown, Lock, Globe, Building2, LogOut } from "lucide-react";
 import { useBrand } from "@/context/BrandContext";
 import { cn } from "@/lib/utils";
 
@@ -93,19 +93,6 @@ export function Header() {
               <FileText className="h-3.5 w-3.5 text-slate-500" />
               <span>Identity PDF</span>
             </a>
-
-            {/* Guided Tour Trigger Button */}
-            <button
-              type="button"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent("brandos:open-tour"));
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-300 bg-white hover:bg-indigo-50/50 text-slate-700 hover:text-indigo-700 text-xs font-medium transition-colors cursor-pointer"
-              title="Launch interactive platform walkthrough"
-            >
-              <Compass className="h-3.5 w-3.5 text-indigo-600" />
-              <span>Tour</span>
-            </button>
 
             {/* User Role Indicator Badge (Read-Only) */}
             <span

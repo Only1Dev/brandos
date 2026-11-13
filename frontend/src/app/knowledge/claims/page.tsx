@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Plus,
   FileCheck2,
@@ -8,6 +9,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
+  X,
   ShieldCheck,
   Search,
   Filter,
@@ -51,6 +53,43 @@ export default function ClaimsPage() {
   const [numericalUnit, setNumericalUnit] = useState("%");
   const [validUntil, setValidUntil] = useState("2026-12-31");
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
+  const [promotedToast, setPromotedToast] = useState<{ statement: string; category?: string } | null>(null);
+
+  // Web Audio API synthesized success chime
+  const playSuccessChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Note 1: E5 (659.25Hz)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(659.25, now);
+      gain1.gain.setValueAtTime(0.2, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.3);
+
+      // Note 2: B5 (987.77Hz)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(987.77, now + 0.1);
+      gain2.gain.setValueAtTime(0.25, now + 0.1);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.1);
+      osc2.stop(now + 0.55);
+    } catch (e) {
+      // Audio context blocked by browser gesture policy if user has not interacted
+    }
+  };
 
   const loadClaims = async () => {
     try {
@@ -82,6 +121,11 @@ export default function ClaimsPage() {
           ? `Verified! Grounded against Brand Brain (${Math.round((res.confidence || 0.98) * 100)}% match)`
           : `Disputed: Flagged for rule violation`
       );
+      if (res.status === "verified") {
+        playSuccessChime();
+        setPromotedToast({ statement: text });
+        setTimeout(() => setPromotedToast(null), 6500);
+      }
       await loadClaims();
     } catch (e: any) {
       alert("Verification failed: " + e.message);
@@ -92,10 +136,19 @@ export default function ClaimsPage() {
 
   const handleTransition = async (id: string, newStatus: string) => {
     try {
-      await api.transitionClaim(id, newStatus);
+      const targetClaim = claims.find((c) => c.id === id) || (diffClaim?.id === id ? diffClaim : null);
+      const res = await api.transitionClaim(id, newStatus);
       showNotification(`Claim status updated to "${newStatus.replace("_", " ").toUpperCase()}"`);
       if (diffClaim && diffClaim.id === id) {
         setDiffClaim((prev: any) => ({ ...prev, status: newStatus }));
+      }
+      if (newStatus === "verified") {
+        playSuccessChime();
+        setPromotedToast({
+          statement: targetClaim?.statement || res.statement || "Verified claim",
+          category: targetClaim?.category,
+        });
+        setTimeout(() => setPromotedToast(null), 6500);
       }
       await loadClaims();
     } catch (e: any) {
@@ -726,6 +779,50 @@ export default function ClaimsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom-Right Promoted Claim Toast Popup */}
+      {promotedToast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm sm:max-w-md w-full p-4 rounded-2xl bg-slate-900/95 text-white shadow-2xl border border-emerald-500/40 backdrop-blur-md animate-in slide-in-from-bottom-5 duration-200">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="h-9 w-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-xs text-white">
+                    Claim Promoted to Approved Facts!
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Fact Added
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                  "{promotedToast.statement}"
+                </p>
+                <div className="pt-1.5 flex items-center gap-3 text-[11px]">
+                  <Link
+                    href="/knowledge/facts"
+                    className="font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                  >
+                    <span>View in Brand Brain Facts</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPromotedToast(null)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+              title="Dismiss notification"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>
       )}

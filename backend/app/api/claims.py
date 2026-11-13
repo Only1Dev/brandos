@@ -340,8 +340,38 @@ async def transition_claim(
         )
 
     claim.status = new_status
+    added_to_facts = False
+    fact_id = None
     if new_status == "verified":
         claim.confidence = 0.98
+        # Automatically add certified claim to approved Brand Brain facts
+        existing_fact_res = await db.execute(
+            select(Fact).where(
+                Fact.organization_id == claim.organization_id,
+                Fact.statement == claim.claim_text,
+            )
+        )
+        existing_fact = existing_fact_res.scalars().first()
+        if not existing_fact:
+            new_fact = Fact(
+                organization_id=claim.organization_id,
+                category=claim.category or "statistic",
+                statement=claim.claim_text,
+                source=f"Certified from verified claim ledger ({datetime.utcnow().strftime('%b %Y')})",
+                numerical_value=claim.numerical_value,
+                numerical_unit=claim.numerical_unit,
+                numerical_tolerance=0.01 if claim.numerical_value is not None else None,
+                is_active=True,
+            )
+            db.add(new_fact)
+            await db.flush()
+            claim.matched_fact_id = new_fact.id
+            fact_id = str(new_fact.id)
+            added_to_facts = True
+        else:
+            claim.matched_fact_id = existing_fact.id
+            fact_id = str(existing_fact.id)
+            added_to_facts = True
     elif new_status == "disputed":
         claim.confidence = 0.40
 
@@ -350,6 +380,9 @@ async def transition_claim(
         "id": str(claim.id),
         "status": claim.status,
         "confidence": claim.confidence,
+        "statement": claim.claim_text,
+        "added_to_facts": added_to_facts,
+        "fact_id": fact_id,
     }
 
 

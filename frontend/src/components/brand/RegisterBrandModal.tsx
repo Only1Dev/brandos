@@ -98,6 +98,20 @@ export function RegisterBrandModal() {
             domain: domain.trim(),
           })
         );
+        try {
+          const raw = localStorage.getItem("brandos_custom_registered_orgs");
+          const orgList = raw ? JSON.parse(raw) : [];
+          if (!orgList.some((o: any) => o.slug === res.slug)) {
+            orgList.push({
+              id: res.id,
+              name: brandName.trim(),
+              slug: res.slug,
+              description: domain.trim(),
+              created_at: new Date().toISOString(),
+            });
+            localStorage.setItem("brandos_custom_registered_orgs", JSON.stringify(orgList));
+          }
+        } catch {}
       }
 
       setCreatedOrg(res);

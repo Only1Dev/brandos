@@ -38,12 +38,28 @@ class AssetResponse(BaseModel):
 @router.get("", response_model=List[AssetResponse])
 async def list_assets(
     asset_type: Optional[str] = None,
+    brand: Optional[str] = None,
+    brand_slug: Optional[str] = Header(None, alias="X-Brand-Slug"),
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
     query = select(Asset).where(Asset.is_active == True)
-    if user and user.organization_id and user.role != "superadmin":
+    target_slug = (brand or brand_slug).strip().lower() if (brand or brand_slug) else None
+    if target_slug:
+        org_res = await db.execute(select(Organization).where(Organization.slug == target_slug))
+        target_org = org_res.scalar_one_or_none()
+        if target_org:
+            query = query.where(Asset.organization_id == target_org.id)
+        else:
+            return []
+    elif user and user.organization_id and user.role != "superadmin":
         query = query.where(Asset.organization_id == user.organization_id)
+    else:
+        aureon_res = await db.execute(select(Organization).where(Organization.slug == "aureon"))
+        aureon_org = aureon_res.scalar_one_or_none()
+        if aureon_org:
+            query = query.where(Asset.organization_id == aureon_org.id)
+
     if asset_type:
         query = query.where(Asset.asset_type == asset_type)
     result = await db.execute(query)

@@ -69,8 +69,15 @@ async def list_reviews(
         target_org = org_res.scalar_one_or_none()
         if target_org:
             target_org_id = target_org.id
+        else:
+            return []
     elif user and user.organization_id and user.role != "superadmin":
         target_org_id = user.organization_id
+    else:
+        aureon_res = await db.execute(select(Organization).where(Organization.slug == "aureon"))
+        aureon = aureon_res.scalar_one_or_none()
+        if aureon:
+            target_org_id = aureon.id
 
     if target_org_id:
         query = query.where(Content.organization_id == target_org_id)

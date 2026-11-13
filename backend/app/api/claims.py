@@ -66,12 +66,10 @@ async def list_claims(
     org_res = await db.execute(select(Organization).where(Organization.slug == target_slug))
     org = org_res.scalars().first()
     if not org:
-        fallback_res = await db.execute(select(Organization))
-        org = fallback_res.scalars().first()
+        return []
 
     query = select(Claim)
-    if org:
-        query = query.where(Claim.organization_id == org.id)
+    query = query.where(Claim.organization_id == org.id)
     if status and status != "all":
         query = query.where(Claim.status == status)
 
@@ -228,8 +226,11 @@ async def create_claim(
     org_res = await db.execute(select(Organization).where(Organization.slug == target_slug))
     org = org_res.scalars().first()
     if not org:
-        fallback_res = await db.execute(select(Organization))
-        org = fallback_res.scalars().first()
+        # Fallback to aureon if target not found
+        aureon_res = await db.execute(select(Organization).where(Organization.slug == "aureon"))
+        org = aureon_res.scalars().first()
+        if not org:
+            raise HTTPException(status_code=404, detail="Organization not found")
 
     claim = Claim(
         organization_id=org.id if org else uuid.uuid4(),

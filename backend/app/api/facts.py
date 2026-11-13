@@ -74,8 +74,15 @@ async def list_facts(
         target_org = org_res.scalar_one_or_none()
         if target_org:
             target_org_id = target_org.id
+        else:
+            return []
     elif user and user.organization_id and user.role != "superadmin":
         target_org_id = user.organization_id
+    else:
+        aureon_res = await db.execute(select(Organization).where(Organization.slug == "aureon"))
+        aureon = aureon_res.scalar_one_or_none()
+        if aureon:
+            target_org_id = aureon.id
 
     if target_org_id:
         query = query.where(Fact.organization_id == target_org_id)
@@ -123,11 +130,16 @@ async def create_fact(
         target_org = org_res.scalar_one_or_none()
         if target_org:
             target_org_id = target_org.id
-    if not target_org_id and user and user.organization_id:
+        else:
+            raise HTTPException(status_code=404, detail=f"Brand organization '{brand_slug}' not found.")
+    elif user and user.organization_id:
         target_org_id = user.organization_id
-    if not target_org_id:
-        org_res = await db.execute(select(Organization).limit(1))
-        org = org_res.scalar_one_or_none()
+    else:
+        aureon_res = await db.execute(select(Organization).where(Organization.slug == "aureon"))
+        org = aureon_res.scalar_one_or_none()
+        if not org:
+            org_res = await db.execute(select(Organization).limit(1))
+            org = org_res.scalar_one_or_none()
         if not org:
             org = Organization(name="Default Workspace", slug="default-workspace")
             db.add(org)

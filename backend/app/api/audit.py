@@ -73,6 +73,11 @@ async def list_audit_events(
             return []
     elif user and user.organization_id and user.role != "superadmin":
         target_org_id = user.organization_id
+    else:
+        aureon_res = await db.execute(select(Organization).where(Organization.slug == "aureon"))
+        aureon = aureon_res.scalar_one_or_none()
+        if aureon:
+            target_org_id = aureon.id
 
     if target_org_id:
         query = query.where(AuditEvent.organization_id == target_org_id)

@@ -93,9 +93,15 @@ export default function LoginPage() {
     async function loadStats() {
       try {
         const orgList = await api.getOrganizations().catch(() => []);
+        let localOrgs: OrgItem[] = [];
+        try {
+          const raw = localStorage.getItem("brandos_custom_registered_orgs");
+          if (raw) localOrgs = JSON.parse(raw);
+        } catch {}
+        const mergedList = [...(orgList || []), ...localOrgs];
         const rawOrgs: OrgItem[] =
-          orgList && orgList.length > 0
-            ? orgList
+          mergedList && mergedList.length > 0
+            ? mergedList
             : [
                 {
                   slug: "aureon",

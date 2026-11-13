@@ -238,8 +238,13 @@ export const api = {
     request<any>(`/api/terminology/${id}`, { method: "DELETE" }),
 
   // Assets
-  getAssets: (type?: string) =>
-    request<any[]>(`/api/assets${type ? `?asset_type=${type}` : ""}`),
+  getAssets: (type?: string, brand?: string) => {
+    const params = new URLSearchParams();
+    if (type) params.append("asset_type", type);
+    if (brand) params.append("brand", brand);
+    const qs = params.toString();
+    return request<any[]>(`/api/assets${qs ? `?${qs}` : ""}`);
+  },
 
   // Analytics
   getDashboard: (brand?: string) =>

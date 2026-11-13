@@ -11,6 +11,7 @@ from typing import Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit import AuditEvent
+from app.models.user import User
 
 
 async def log_event(
@@ -51,16 +52,25 @@ class AuditService:
         cls,
         db: AsyncSession,
         user_id: Optional[uuid.UUID] = None,
+        organization_id: Optional[uuid.UUID] = None,
         action: str = "action",
         entity_type: str = "general",
         entity_id: Optional[uuid.UUID] = None,
         details: Optional[dict[str, Any]] = None,
     ) -> AuditEvent:
+        if not organization_id and user_id:
+            try:
+                user_res = await db.get(User, user_id)
+                if user_res:
+                    organization_id = user_res.organization_id
+            except Exception:
+                pass
         return await log_event(
             db=db,
             action=action,
             resource_type=entity_type,
             resource_id=str(entity_id) if entity_id else None,
             actor_id=user_id,
+            organization_id=organization_id,
             details=details,
         )

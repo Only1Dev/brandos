@@ -128,6 +128,14 @@ export default function SuperAdminPage() {
       setIsDeleting(true);
       setDeleteError("");
       await api.deleteOrganization(deleteModalOrg.slug);
+      try {
+        const raw = localStorage.getItem("brandos_custom_registered_orgs");
+        if (raw) {
+          const orgs = JSON.parse(raw).filter((o: any) => o.slug !== deleteModalOrg.slug);
+          localStorage.setItem("brandos_custom_registered_orgs", JSON.stringify(orgs));
+        }
+        localStorage.removeItem(`brandos_theme_${deleteModalOrg.slug}`);
+      } catch {}
       setMessage(`Brand workspace "${deleteModalOrg.name}" (${deleteModalOrg.slug}) has been permanently deleted.`);
       closeDeleteModal();
       await fetchOverview();

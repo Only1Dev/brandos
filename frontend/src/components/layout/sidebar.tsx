@@ -23,6 +23,7 @@ import {
   Brain,
   Building2,
   Lock,
+  Compass,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -214,6 +215,25 @@ export function Sidebar() {
             );
           })}
         </nav>
+      </div>
+
+      {/* Quick Interactive Tour Launcher */}
+      <div className="px-3 pt-2">
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent("brandos:open-tour"));
+          }}
+          className="w-full px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all flex items-center justify-between group cursor-pointer border border-slate-800 hover:border-slate-700 shadow-2xs"
+        >
+          <div className="flex items-center gap-2.5">
+            <Compass className="h-4 w-4 text-indigo-400 group-hover:rotate-45 transition-transform duration-300" />
+            <span>Interactive Tour</span>
+          </div>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+            5 Steps
+          </span>
+        </button>
       </div>
 
       {/* Authenticated Identity Footer (Read-Only Status) */}

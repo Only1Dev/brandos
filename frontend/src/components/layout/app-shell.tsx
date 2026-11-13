@@ -5,6 +5,7 @@ import { BrandProvider, useBrand } from "@/context/BrandContext";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { RegisterBrandModal } from "@/components/brand/RegisterBrandModal";
+import { TourOverlay } from "@/components/onboarding/TourOverlay";
 
 function AppShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,6 +33,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
         <main className="p-8 flex-1 overflow-y-auto">{children}</main>
       </div>
       <RegisterBrandModal />
+      <TourOverlay />
     </div>
   );
 }

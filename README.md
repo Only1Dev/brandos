@@ -45,13 +45,6 @@ BrandOS supports true multi-tenant workspace isolation with role-based access co
 
 ## 🧪 Judge's Interactive Verification Guide (Step-by-Step)
 
-> [!TIP]
-> **🌟 Fast-Path: Judge & Evaluator Quickstart Hub (Press 'J' Anywhere)**
-> For judges evaluating under time constraints, click the **"Judge Hub"** button in the top navigation or press **'J'** on your keyboard from any screen to access:
-> - **1-Click Test Scenarios**: Instant pre-loaded fixtures for Multimodal Video & Audio Audit, DLP Confidential Leakage, TruthMark™ Fact Grounding, Cross-Tenant Isolation, and Clean 100/100 Pass.
-> - **Zero-Friction Persona Switcher**: 1-click switching between Priya Sharma (Admin), David Chen (Reviewer), Aarav Patel (Creator), and the SuperAdmin Console.
-> - **Interactive 5-Step Guided Tour**: Click **"Tour"** in the header or sidebar to see a spotlight walkthrough of the platform architecture.
-
 Here is the recommended 5-minute walkthrough to verify all core autonomous capabilities of the prototype:
 
 ### Step 1: Test the Zero-Tolerance Pre-Publication Firewall (Blocked Copy)

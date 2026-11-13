@@ -264,6 +264,7 @@ export default function NewReviewPage() {
         <AgentPipelineVisualizer
           isAnalyzing={submitting}
           brandName={brandConfig.name}
+          contentType={contentType}
         />
       )}
 

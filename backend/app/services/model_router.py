@@ -275,7 +275,12 @@ class ModelRouter:
                                 },
                             ]
                         }
-                    ]
+                    ],
+                    "generationConfig": {
+                        "temperature": 0.1,
+                        "maxOutputTokens": 2048,
+                        "responseMimeType": "application/json",
+                    },
                 }
                 try:
                     res = await client.post(url, json=payload)
@@ -330,7 +335,12 @@ class ModelRouter:
                                 },
                             ]
                         }
-                    ]
+                    ],
+                    "generationConfig": {
+                        "temperature": 0.1,
+                        "maxOutputTokens": 2048,
+                        "responseMimeType": "application/json",
+                    },
                 }
                 try:
                     res = await client.post(url, json=payload)

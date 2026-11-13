@@ -392,6 +392,7 @@ export default function ReviewDetailPage() {
         <AgentPipelineVisualizer
           isAnalyzing={analyzing}
           brandName={content?.title || "Active Brand"}
+          contentType={content?.content_type}
         />
       )}
 

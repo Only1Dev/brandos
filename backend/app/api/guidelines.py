@@ -413,31 +413,38 @@ async def run_stress_test(
     brand_name = org.name if org else "Aureon Technologies"
     brand_domain = org.description if org and org.description else "Enterprise security intelligence"
 
-    # Attack prompt scenarios
-    scenarios = {
-        "off_domain": {
-            "aureon": "Announcing the Aureon BlendMaster Pro: 750W high-speed kitchen mixer grinder with 3 stainless steel jars for domestic food preparation.",
-            "solaria": "Solaria CyberSentry: Enterprise kernel-level anti-malware and zero-trust firewall for cloud datacenters.",
-        },
-        "hallucination": {
-            "aureon": "Aureon FraudGuard delivers guaranteed 99.999% uptime and zero-latency millisecond transaction routing across all global nodes.",
-            "solaria": "Solaria PureHydrate contains 500mg synthetic caffeine and artificial taurine boosters for intense synthetic workout energy.",
-        },
-        "tone_drift": {
-            "aureon": "Yo guys!! Check out this sick hack that totally breaks fraud rings! We are literally slaying it no cap, best tech ever fr fr!",
-            "solaria": "BUY NOW LIMITED TIME ONLY!! 80% OFF BLOWOUT SALE! ACT FAST BEFORE IT IS GONE FOREVER!! CHEAPEST DEALS IN TOWN!!",
-        },
-        "medical_claim": {
-            "solaria": "Solaria BioImmune is clinically certified by the FDA to permanently cure diabetes, eliminate cancer cells, and reverse heart disease in 7 days.",
-            "aureon": "Aureon AI algorithms are 100% unhackable and mathematically impossible for any human or quantum computer to ever penetrate or bypass.",
-        },
-    }
-
+    # Dynamic attack prompt scenarios tailored to brand domain
     test_copy = body.custom_prompt
     if not test_copy:
-        brand_key = "solaria" if "solaria" in body.brand_slug.lower() else "aureon"
-        attack_map = scenarios.get(body.attack_type, scenarios["off_domain"])
-        test_copy = attack_map.get(brand_key, attack_map.get("aureon"))
+        slug_lower = org.slug.lower() if org else "aureon"
+        if slug_lower == "aureon":
+            scenarios = {
+                "off_domain": "Announcing the Aureon BlendMaster Pro: 750W high-speed kitchen mixer grinder with 3 stainless steel jars for domestic food preparation.",
+                "hallucination": "Aureon FraudGuard delivers guaranteed 99.999% uptime and zero-latency millisecond transaction routing across all global nodes.",
+                "tone_drift": "Yo guys!! Check out this sick hack that totally breaks fraud rings! We are literally slaying it no cap, best tech ever fr fr!",
+                "medical_claim": "Aureon AI algorithms are 100% unhackable and mathematically impossible for any human or quantum computer to ever penetrate or bypass.",
+            }
+            test_copy = scenarios.get(body.attack_type, scenarios["off_domain"])
+        elif slug_lower == "solaria":
+            scenarios = {
+                "off_domain": "Solaria CyberSentry: Enterprise kernel-level anti-malware and zero-trust firewall for cloud datacenters.",
+                "hallucination": "Solaria PureHydrate contains 500mg synthetic caffeine and artificial taurine boosters for intense synthetic workout energy.",
+                "tone_drift": "BUY NOW LIMITED TIME ONLY!! 80% OFF BLOWOUT SALE! ACT FAST BEFORE IT IS GONE FOREVER!! CHEAPEST DEALS IN TOWN!!",
+                "medical_claim": "Solaria BioImmune is clinically certified by the FDA to permanently cure diabetes, eliminate cancer cells, and reverse heart disease in 7 days.",
+            }
+            test_copy = scenarios.get(body.attack_type, scenarios["off_domain"])
+        else:
+            # Dynamic generation for custom brand workspaces
+            if body.attack_type == "off_domain":
+                test_copy = f"Announcing the {brand_name} Quantum SuperCompute Blade: 256-core industrial cloud computing server with cryogenic liquid cooling for high-frequency algorithmic derivatives trading."
+            elif body.attack_type == "hallucination":
+                test_copy = f"{brand_name} products deliver an audited 99.999% laboratory guarantee and certified 100x efficiency improvement across all verified trials."
+            elif body.attack_type == "tone_drift":
+                test_copy = f"OMG guys!! You have to see what {brand_name} just dropped! We are literally slaying it no cap, insane blowout deals fr fr best ever!!"
+            elif body.attack_type == "medical_claim":
+                test_copy = f"{brand_name} is clinically guaranteed to eliminate 100% of risks, permanently prevent all defects, and carries full FDA medical immunity certification."
+            else:
+                test_copy = f"Official promotional announcement for {brand_name} with unbacked absolute guarantees and informal internet slang."
 
     # Load active rules, facts, terms
     from app.models.guideline import Guideline

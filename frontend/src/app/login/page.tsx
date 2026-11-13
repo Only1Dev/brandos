@@ -30,7 +30,7 @@ import { api } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, switchRole, setIsRegisterModalOpen } = useBrand();
+  const { login, switchRole, setIsRegisterModalOpen, setIsJudgeModalOpen } = useBrand();
 
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedBrand, setSelectedBrand] = useState<BrandSlug>("aureon");
@@ -155,6 +155,22 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full bg-[#080B14] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+      {/* Floating Judge Quickstart Trigger */}
+      <div className="fixed top-5 right-5 z-40">
+        <button
+          type="button"
+          onClick={() => setIsJudgeModalOpen(true)}
+          className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-200 text-xs font-bold transition-all shadow-lg flex items-center gap-2 backdrop-blur-md cursor-pointer group"
+          title="Open Judge & Evaluator Quickstart Hub (Shortcut: J)"
+        >
+          <Sparkles className="h-4 w-4 text-amber-400 group-hover:rotate-12 transition-transform" />
+          <span>Judge Hub</span>
+          <span className="px-1.5 py-0.2 rounded bg-amber-400/20 text-[10px] text-amber-300 font-mono">
+            J
+          </span>
+        </button>
+      </div>
+
       {/* Dynamic Ambient Background Glows */}
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/30 rounded-full blur-[128px] pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-600/25 rounded-full blur-[140px] pointer-events-none" />

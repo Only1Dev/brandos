@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
@@ -47,6 +47,119 @@ export default function NewReviewPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Live Pre-Flight Heuristics Engine
+  const wordCount = rawText.trim() ? rawText.trim().split(/\s+/).length : 0;
+  const charCount = rawText.length;
+
+  const preFlightFindings = useMemo(() => {
+    if (!rawText || !rawText.trim()) return [];
+    const findings: {
+      type: "dlp" | "guarantee" | "superlative" | "crosstenant";
+      severity: "critical" | "warning";
+      label: string;
+      matchedText: string;
+    }[] = [];
+
+    // 1. DLP Checks
+    const dlpMatch = rawText.match(/\b(CONFIDENTIAL|STRICTLY CONFIDENTIAL|INTERNAL USE ONLY|DO NOT DISTRIBUTE|NDA PROTECTED)\b/i);
+    if (dlpMatch) {
+      findings.push({
+        type: "dlp",
+        severity: "critical",
+        label: "Confidential / Internal Marking Detected",
+        matchedText: dlpMatch[0],
+      });
+    }
+
+    const keyMatch = rawText.match(/\b(sk_live_[a-zA-Z0-9_-]+|secret_key\s*=\s*[^\s]+)\b/i);
+    if (keyMatch) {
+      findings.push({
+        type: "dlp",
+        severity: "critical",
+        label: "Exposed API Key / Secret Credential",
+        matchedText: keyMatch[0],
+      });
+    }
+
+    // 2. Absolute Guarantees
+    const guaranteeMatch = rawText.match(/\b(100%\s*(protection|guarantee|elimination|detox|unbreakable)|zero\s*(risk|fraud|false-positives)|guaranteeing\s*0\s*fraud)\b/i);
+    if (guaranteeMatch) {
+      findings.push({
+        type: "guarantee",
+        severity: "warning",
+        label: "Prohibited Absolute Guarantee",
+        matchedText: guaranteeMatch[0],
+      });
+    }
+
+    // 3. Superlatives & Miracles
+    const supMatch = rawText.match(/\b(#1\s*(in|cyber|fraud|platform)|world's\s*only|miracle\s*cure|insane\s*results)\b/i);
+    if (supMatch) {
+      findings.push({
+        type: "superlative",
+        severity: "warning",
+        label: "Unbacked Superlative / Hype Term",
+        matchedText: supMatch[0],
+      });
+    }
+
+    // 4. Cross-Tenant Drift
+    if (activeBrand === "aureon") {
+      const bleed = rawText.match(/\b(solaria|purehydrate|cellular hydration|electrolyte absorption|bioimmune)\b/i);
+      if (bleed) {
+        findings.push({
+          type: "crosstenant",
+          severity: "critical",
+          label: "Cross-Tenant Domain Bleed (Solaria Content in Aureon)",
+          matchedText: bleed[0],
+        });
+      }
+    } else if (activeBrand === "solaria") {
+      const bleed = rawText.match(/\b(aureon|aureon shield|core banking|fraud detection|cyber defense)\b/i);
+      if (bleed) {
+        findings.push({
+          type: "crosstenant",
+          severity: "critical",
+          label: "Cross-Tenant Domain Bleed (Aureon Content in Solaria)",
+          matchedText: bleed[0],
+        });
+      }
+    }
+
+    return findings;
+  }, [rawText, activeBrand]);
+
+  const handleSanitizeDraft = () => {
+    let sanitized = rawText;
+    sanitized = sanitized.replace(/\b(CONFIDENTIAL & PROPRIETARY\s*—\s*INTERNAL USE ONLY\.\s*DO NOT DISTRIBUTE\.|CONFIDENTIAL|STRICTLY CONFIDENTIAL|INTERNAL USE ONLY|DO NOT DISTRIBUTE|NDA PROTECTED)\b[\s\n]*/gi, "");
+    sanitized = sanitized.replace(/sk_live_[a-zA-Z0-9_-]+/g, "sk_live_••••••••••••");
+    sanitized = sanitized.replace(/secret_key\s*=\s*[^\s]+/g, "secret_key=[REDACTED]");
+    sanitized = sanitized.replace(/world's only 100% unbreakable banking firewall, guaranteeing 0 fraud ever!/gi, "autonomous banking firewall, achieving up to 42.0% enterprise fraud reduction.");
+    sanitized = sanitized.replace(/guaranteeing 100% protection/gi, "delivering verified enterprise protection");
+    sanitized = sanitized.replace(/100% guaranteed protection/gi, "certified banking-grade protection");
+    sanitized = sanitized.replace(/India's #1 fraud protection platform/gi, "Aureon Shield fraud defense platform");
+    sanitized = sanitized.replace(/reducing enterprise fraud by 73%/gi, "reducing enterprise fraud by up to 42.0%");
+    sanitized = sanitized.replace(/miracle cure for dehydration that guarantees 100% detox and provides 10.0x electrolyte absorption/gi, "clinical-grade hydration formula providing 3.0x electrolyte absorption and 0% sugar");
+    setRawText(sanitized.trim());
+  };
+
+  const getChannelLimit = (ch: string) => {
+    switch (ch) {
+      case "twitter":
+        return { maxChars: 280, label: "X / Twitter limit: 280 chars" };
+      case "instagram":
+        return { maxChars: 2200, label: "Instagram limit: 2,200 chars (~125 words ideal)" };
+      case "linkedin":
+        return { maxChars: 3000, label: "LinkedIn limit: 3,000 chars (~150-300 words ideal)" };
+      case "youtube":
+        return { maxChars: 5000, label: "Video Commercial script format" };
+      case "tiktok":
+        return { maxChars: 2200, label: "TikTok motion script" };
+      default:
+        return { maxChars: 10000, label: "Standard copy format" };
+    }
+  };
 
   // Video Test Fixtures
   const loadVideoDemo = () => {
@@ -497,6 +610,82 @@ export default function NewReviewPage() {
               placeholder="Paste draft copy, advertisement text, press release, or social media caption..."
               className="w-full px-3 py-2.5 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono leading-relaxed"
             />
+
+            {/* Live Pre-Flight Guardrail Bar */}
+            <div className="mt-2.5 space-y-2">
+              {/* Channel Cadence & Character Counter */}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-slate-700">
+                    {wordCount} words
+                  </span>
+                  <span>•</span>
+                  <span className={charCount > getChannelLimit(channel).maxChars ? "font-bold text-red-600" : "text-slate-600"}>
+                    {charCount} / {getChannelLimit(channel).maxChars} chars
+                  </span>
+                  <span className="text-slate-400 font-normal">
+                    ({getChannelLimit(channel).label})
+                  </span>
+                </div>
+
+                {preFlightFindings.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleSanitizeDraft}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    <span>Auto-Sanitize Draft Copy</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Pre-Flight Real-Time Alerts */}
+              {preFlightFindings.length > 0 ? (
+                <div className="p-3 rounded-xl bg-amber-50/90 border border-amber-200 text-xs space-y-1.5 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                      <span>Pre-Flight Risk Detection ({preFlightFindings.length} issue{preFlightFindings.length > 1 ? "s" : ""} flagged):</span>
+                    </span>
+                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900">
+                      Heuristic Warning
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 text-[11px]">
+                    {preFlightFindings.map((f, i) => (
+                      <div key={i} className="flex items-start gap-1.5 text-amber-800">
+                        <span className={`px-1.5 py-0.2 rounded font-bold text-[9px] uppercase ${
+                          f.severity === "critical" ? "bg-red-100 text-red-700 border border-red-200" : "bg-amber-100 text-amber-800 border border-amber-200"
+                        }`}>
+                          {f.severity}
+                        </span>
+                        <span>
+                          <strong>{f.label}:</strong> <code className="bg-white/80 px-1 py-0.5 rounded border border-amber-200 font-mono text-[10px]">"{f.matchedText}"</code>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="text-[10px] text-amber-700 font-medium pt-1 border-t border-amber-200/60">
+                    💡 The BrandOS multi-agent firewall will block or require revisions for these phrases upon submission. Click "Auto-Sanitize Draft Copy" to clean them instantly.
+                  </div>
+                </div>
+              ) : rawText.trim().length > 30 ? (
+                <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-[11px] text-emerald-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>
+                      <strong>Pre-Flight Clear:</strong> No obvious confidential tokens, unbacked 100% guarantees, or cross-tenant markers detected.
+                    </span>
+                  </div>
+                  <span className="font-bold uppercase text-[9px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Ready for Firewall
+                  </span>
+                </div>
+              ) : null}
+            </div>
           </div>
         ) : (
           /* File Upload Mode */

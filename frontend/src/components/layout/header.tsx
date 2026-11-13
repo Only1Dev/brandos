@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, Shield, Leaf, FileText, ChevronDown, Lock, Globe, Building2, LogOut, Compass, Sparkles } from "lucide-react";
+import { Plus, Shield, Leaf, FileText, ChevronDown, Lock, Globe, Building2, LogOut, Compass } from "lucide-react";
 import { useBrand } from "@/context/BrandContext";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,6 @@ export function Header() {
     logout,
     setIsBrandModalOpen,
     setIsRegisterModalOpen,
-    setIsJudgeModalOpen,
     canEditBrandBrain,
   } = useBrand();
 
@@ -69,17 +68,6 @@ export function Header() {
               <span>Onboard New Brand</span>
             </button>
 
-            {/* SuperAdmin Judge Hub */}
-            <button
-              type="button"
-              onClick={() => setIsJudgeModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-900 text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer group"
-              title="Open Hackathon Judge & Evaluator Quickstart Hub (Shortcut: J)"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-600 group-hover:rotate-12 transition-transform" />
-              <span>Judge Hub</span>
-            </button>
-
             <button
               onClick={() => {
                 logout();
@@ -117,20 +105,6 @@ export function Header() {
             >
               <Compass className="h-3.5 w-3.5 text-indigo-600" />
               <span>Tour</span>
-            </button>
-
-            {/* Judge & Evaluator Quickstart Hub */}
-            <button
-              type="button"
-              onClick={() => setIsJudgeModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-900 text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer group"
-              title="Open Hackathon Judge & Evaluator Quickstart Hub (Shortcut: J)"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-600 group-hover:rotate-12 transition-transform" />
-              <span>Judge Hub</span>
-              <span className="hidden sm:inline-block px-1.5 py-0.2 rounded bg-amber-200/80 text-[10px] text-amber-950 font-mono">
-                J
-              </span>
             </button>
 
             {/* User Role Indicator Badge (Read-Only) */}

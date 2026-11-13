@@ -6,7 +6,6 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { RegisterBrandModal } from "@/components/brand/RegisterBrandModal";
 import { TourOverlay } from "@/components/onboarding/TourOverlay";
-import { JudgeQuickstartModal } from "@/components/demo/JudgeQuickstartModal";
 
 function AppShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,7 +17,6 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-slate-950 text-white">
         {children}
         <RegisterBrandModal />
-        <JudgeQuickstartModal />
       </div>
     );
   }
@@ -36,7 +34,6 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
       </div>
       <RegisterBrandModal />
       <TourOverlay />
-      <JudgeQuickstartModal />
     </div>
   );
 }

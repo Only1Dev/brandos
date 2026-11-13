@@ -128,8 +128,6 @@ interface BrandContextType {
   setIsBrandModalOpen: (open: boolean) => void;
   isRegisterModalOpen: boolean;
   setIsRegisterModalOpen: (open: boolean) => void;
-  isJudgeModalOpen: boolean;
-  setIsJudgeModalOpen: (open: boolean) => void;
   canEditBrandBrain: boolean;
   canApproveReviews: boolean;
   canSubmitReviews: boolean;
@@ -147,24 +145,8 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const [isJudgeModalOpen, setIsJudgeModalOpen] = useState(false);
   const [themeMode, setThemeModeState] = useState<ThemeMode>("light");
   const [rolePermissions, setRolePermissions] = useState<RolePermissions>(DEFAULT_ROLE_PERMISSIONS);
-
-  // Global keydown listener for 'J' to toggle Judge Quickstart
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.key === "j" || e.key === "J") &&
-        !["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName) &&
-        !(e.target as HTMLElement)?.isContentEditable
-      ) {
-        setIsJudgeModalOpen((prev) => !prev);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   // Initialize from localStorage
   useEffect(() => {
@@ -335,8 +317,6 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         setIsBrandModalOpen,
         isRegisterModalOpen,
         setIsRegisterModalOpen,
-        isJudgeModalOpen,
-        setIsJudgeModalOpen,
         canEditBrandBrain,
         canApproveReviews,
         canSubmitReviews,

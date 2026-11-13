@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
@@ -151,33 +151,6 @@ export default function NewReviewPage() {
       "Solaria PureHydrate is a miracle cure for dehydration that guarantees 100% detox and provides 10.0x electrolyte absorption."
     );
   };
-
-  // Auto-load test fixture from URL query param (e.g. ?fixture=video or ?fixture=dlp)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const fixture = params.get("fixture");
-    if (!fixture) return;
-
-    if (fixture === "video") {
-      loadVideoDemo();
-    } else if (fixture === "video-violation") {
-      loadVideoViolationDemo();
-    } else if (fixture === "dlp" || fixture === "confidential") {
-      loadConfidentialLeakage();
-    } else if (fixture === "discrepancy" || fixture === "claim") {
-      loadAureonDiscrepancy();
-    } else if (fixture === "compliant" || fixture === "clean") {
-      if (isSolaria) loadSolariaCompliant();
-      else loadAureonCompliant();
-    } else if (fixture === "crossbrand") {
-      loadCrossBrandCopy();
-    } else if (fixture === "outofdomain") {
-      loadOutOfDomain();
-    } else if (fixture === "solaria-violation") {
-      loadSolariaViolation();
-    }
-  }, [activeBrand, isSolaria]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

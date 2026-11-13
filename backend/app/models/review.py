@@ -74,6 +74,14 @@ class Review(Base):
         "rejected": ["pending"],
     }
 
+    @property
+    def overall_score(self) -> float | None:
+        return self.governance_score
+
+    @overall_score.setter
+    def overall_score(self, value: float | None) -> None:
+        self.governance_score = value
+
     def can_transition_to(self, new_status: str) -> bool:
         return new_status in self.VALID_TRANSITIONS.get(self.status, [])
 

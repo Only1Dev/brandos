@@ -135,8 +135,13 @@ async def list_content(
             inferred_channel = inferred_channel.title()
 
         snippet = None
-        if v and v.raw_text:
-            snippet = v.raw_text[:140] + ("..." if len(v.raw_text) > 140 else "")
+        v_text = getattr(v, "body_text", None) or getattr(v, "raw_text", None)
+        if v_text:
+            snippet = v_text[:140] + ("..." if len(v_text) > 140 else "")
+
+        score_val = getattr(r, "governance_score", None)
+        if score_val is None:
+            score_val = getattr(r, "overall_score", None)
 
         res.append(
             ContentResponse(
@@ -149,7 +154,7 @@ async def list_content(
                 review_id=str(r.id) if r else None,
                 review_status=r.status if r else "pending",
                 review_decision=r.decision if r else None,
-                review_score=float(r.overall_score) if (r and r.overall_score is not None) else None,
+                review_score=float(score_val) if score_val is not None else None,
                 raw_snippet=snippet,
             )
         )
@@ -182,7 +187,7 @@ async def get_content(
             {
                 "id": str(v.id),
                 "version_number": v.version_number,
-                "raw_text": v.raw_text,
+                "raw_text": getattr(v, "body_text", None) or getattr(v, "raw_text", None),
                 "file_url": v.file_url,
                 "created_at": v.created_at.isoformat() if v.created_at else "",
             }

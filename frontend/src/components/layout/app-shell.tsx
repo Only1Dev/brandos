@@ -1,13 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { BrandProvider } from "@/context/BrandContext";
+import { BrandProvider, useBrand } from "@/context/BrandContext";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { RegisterBrandModal } from "@/components/brand/RegisterBrandModal";
 
 function AppShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { themeMode } = useBrand();
   const isAuthPage = pathname === "/login" || pathname === "/";
 
   if (isAuthPage) {
@@ -20,7 +21,11 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div
+      className={`min-h-screen flex transition-colors duration-200 ${
+        themeMode === "dark" ? "dark bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
+      }`}
+    >
       <Sidebar />
       <div className="pl-64 flex-1 flex flex-col min-w-0">
         <Header />

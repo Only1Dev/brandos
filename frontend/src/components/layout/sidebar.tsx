@@ -59,12 +59,17 @@ const superAdminNavigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [knowledgeOpen, setKnowledgeOpen] = useState(true);
   const {
     activeBrand,
     brandConfig,
     currentRole,
     currentUser,
+    brandUsers,
+    switchBrand,
+    switchRole,
+    switchUser,
     canEditBrandBrain,
   } = useBrand();
 
@@ -100,19 +105,67 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* Workspace Organization Indicator (Locked Perimeter) */}
-        <div className="p-3 mx-3 my-3 bg-slate-800/60 rounded-xl border border-slate-700/50 shadow-xs">
-          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            {isSuperAdmin ? "System Scope" : "Active Workspace"}
+        {/* Workspace Organization Switcher Dropdown */}
+        <div className="relative group mx-3 my-3">
+          <div className="p-3 bg-slate-800/60 hover:bg-slate-800 rounded-xl border border-slate-700/50 hover:border-slate-600 shadow-xs transition-all cursor-pointer">
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>{isSuperAdmin ? "System Scope" : "Active Workspace"}</span>
+              <span className="text-[9px] text-indigo-400 group-hover:underline">Switch ▾</span>
+            </div>
+            <div className="w-full text-left font-semibold text-white text-xs truncate flex items-center gap-2 p-1">
+              <span className={cn(
+                "h-2 w-2 rounded-full shrink-0 animate-pulse",
+                isSuperAdmin ? "bg-purple-400" : isSolaria ? "bg-emerald-400" : "bg-indigo-400"
+              )} />
+              <span className="truncate">
+                {isSuperAdmin ? "All Brand Workspaces" : brandConfig.name}
+              </span>
+            </div>
           </div>
-          <div className="w-full text-left font-semibold text-white text-xs truncate flex items-center gap-2 p-1">
-            <span className={cn(
-              "h-2 w-2 rounded-full shrink-0 animate-pulse",
-              isSuperAdmin ? "bg-purple-400" : isSolaria ? "bg-emerald-400" : "bg-indigo-400"
-            )} />
-            <span className="truncate">
-              {isSuperAdmin ? "All Brand Workspaces" : brandConfig.name}
-            </span>
+
+          <div className="absolute left-0 top-full mt-1 w-full bg-slate-950 rounded-xl shadow-2xl border border-slate-700 py-1.5 hidden group-hover:block z-50 animate-in fade-in">
+            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+              Select Workspace
+            </div>
+            <button
+              type="button"
+              onClick={() => { switchBrand("solaria"); router.push("/dashboard"); }}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800 cursor-pointer ${
+                activeBrand === "solaria" && !isSuperAdmin ? "text-emerald-400 font-bold bg-emerald-950/40" : "text-slate-300"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Leaf className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate">Solaria Wellness</span>
+              </div>
+              {activeBrand === "solaria" && !isSuperAdmin && <span className="text-[10px] text-emerald-400">✓</span>}
+            </button>
+            <button
+              type="button"
+              onClick={() => { switchBrand("aureon"); router.push("/dashboard"); }}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800 cursor-pointer ${
+                activeBrand === "aureon" && !isSuperAdmin ? "text-indigo-400 font-bold bg-indigo-950/40" : "text-slate-300"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                <span className="truncate">Aureon Technologies</span>
+              </div>
+              {activeBrand === "aureon" && !isSuperAdmin && <span className="text-[10px] text-indigo-400">✓</span>}
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/superadmin")}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800 cursor-pointer border-t border-slate-800/80 ${
+                isSuperAdmin ? "text-purple-400 font-bold bg-purple-950/40" : "text-slate-300"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Globe className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+                <span className="truncate">SuperAdmin Console</span>
+              </div>
+              {isSuperAdmin && <span className="text-[10px] text-purple-400">✓</span>}
+            </button>
           </div>
         </div>
 
@@ -236,46 +289,92 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* Authenticated Identity Footer */}
-      <Link
-        href="/settings"
-        className="block p-3 m-3 bg-slate-950/80 hover:bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition-all space-y-1.5 cursor-pointer group"
-        title="Manage team roles & permissions in Settings"
-      >
-        <div className="text-[10px] font-semibold text-slate-400 group-hover:text-slate-300 uppercase tracking-wider flex items-center justify-between">
-          <span>Authenticated Identity</span>
-          <span className="text-[9px] text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">
-            Settings &rarr;
-          </span>
+      {/* Authenticated Identity Footer & Profile Switcher */}
+      <div className="relative group p-0 m-3">
+        <div className="p-3 bg-slate-950/80 hover:bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition-all space-y-1.5 cursor-pointer">
+          <div className="text-[10px] font-semibold text-slate-400 group-hover:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+            <span>Authenticated Identity</span>
+            <span className="text-[9px] text-indigo-400 font-bold group-hover:underline">
+              Switch Profile ▾
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between p-1 rounded-lg">
+            <div className="flex items-center gap-2.5 truncate">
+              <div className={cn(
+                "h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0",
+                isSuperAdmin
+                  ? "bg-purple-600"
+                  : currentRole === "admin"
+                  ? isSolaria ? "bg-emerald-600" : "bg-indigo-600"
+                  : currentRole === "reviewer"
+                  ? "bg-amber-600"
+                  : "bg-sky-600"
+              )}>
+                {isSuperAdmin ? "SA" : currentUser?.name?.slice(0, 2).toUpperCase() || "US"}
+              </div>
+              <div className="truncate">
+                <div className="text-xs font-semibold text-white leading-tight truncate">
+                  {isSuperAdmin ? "Chief Governance Officer" : currentUser?.name}
+                </div>
+                <div className="text-[10px] text-slate-400 capitalize leading-tight flex items-center gap-1 truncate">
+                  <span>{currentUser?.title || currentRole}</span>
+                  {!canEditBrandBrain && !isSuperAdmin && <Lock className="h-2.5 w-2.5 text-amber-400" />}
+                </div>
+              </div>
+            </div>
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" title="Active Authenticated Session" />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between p-1 rounded-lg">
-          <div className="flex items-center gap-2.5 truncate">
-            <div className={cn(
-              "h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0",
-              isSuperAdmin
-                ? "bg-purple-600"
-                : currentRole === "admin"
-                ? isSolaria ? "bg-emerald-600" : "bg-indigo-600"
-                : currentRole === "reviewer"
-                ? "bg-amber-600"
-                : "bg-sky-600"
-            )}>
-              {isSuperAdmin ? "SA" : currentUser?.name?.slice(0, 2).toUpperCase() || "US"}
-            </div>
-            <div className="truncate">
-              <div className="text-xs font-semibold text-white leading-tight truncate">
-                {isSuperAdmin ? "Chief Governance Officer" : currentUser?.name}
-              </div>
-              <div className="text-[10px] text-slate-400 capitalize leading-tight flex items-center gap-1 truncate">
-                <span>{currentUser?.title || currentRole}</span>
-                {!canEditBrandBrain && !isSuperAdmin && <Lock className="h-2.5 w-2.5 text-amber-400" />}
-              </div>
-            </div>
+        {/* Profile Roster Dropdown */}
+        <div className="absolute left-0 right-0 bottom-full mb-1 bg-slate-950 rounded-xl shadow-2xl border border-slate-700 py-2 hidden group-hover:block z-50 animate-in fade-in">
+          <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+            Switch Persona ({brandConfig.name})
           </div>
-          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" title="Active Authenticated Session" />
+          <div className="max-h-56 overflow-y-auto space-y-0.5 px-1 py-1">
+            {brandUsers.map((u) => {
+              const isSelected = u.email === currentUser.email;
+              return (
+                <button
+                  key={u.email}
+                  type="button"
+                  onClick={() => {
+                    switchUser(u);
+                    switchRole(u.role);
+                  }}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between hover:bg-slate-800 transition-colors cursor-pointer ${
+                    isSelected ? "bg-slate-800 font-bold text-white" : "text-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <div className={cn(
+                      "h-6 w-6 rounded-full flex items-center justify-center font-bold text-[10px] text-white shrink-0",
+                      u.role === "admin" ? "bg-indigo-600" : u.role === "reviewer" ? "bg-amber-600" : "bg-sky-600"
+                    )}>
+                      {u.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="truncate">
+                      <div className="font-semibold text-xs leading-tight truncate">{u.name}</div>
+                      <div className="text-[10px] text-slate-400 leading-tight truncate">{u.title}</div>
+                    </div>
+                  </div>
+                  {isSelected && <span className="text-[10px] text-emerald-400 font-bold shrink-0 ml-1">✓</span>}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-1 pt-1 border-t border-slate-800 px-3">
+            <Link
+              href="/settings"
+              className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold flex items-center justify-between py-1"
+            >
+              <span>Manage Role Matrix in Settings</span>
+              <span>&rarr;</span>
+            </Link>
+          </div>
         </div>
-      </Link>
+      </div>
     </aside>
   );
 }

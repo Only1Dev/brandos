@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, Shield, Leaf, FileText, ChevronDown, Lock, Globe, Building2, LogOut } from "lucide-react";
+import { Plus, Shield, Leaf, FileText, ChevronDown, Lock, Globe, Building2, LogOut, User, Check } from "lucide-react";
 import { useBrand } from "@/context/BrandContext";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,10 @@ export function Header() {
     brandConfig,
     currentRole,
     currentUser,
+    brandUsers,
+    switchBrand,
     switchRole,
+    switchUser,
     logout,
     setIsBrandModalOpen,
     setIsRegisterModalOpen,
@@ -29,19 +32,87 @@ export function Header() {
     <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
       {/* Brand & Firewall Status Indicator */}
       <div className="flex items-center gap-4">
-        {/* Workspace Brand Badge (Static Information) */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800">
-          <div className={cn(
-            "h-4 w-4 rounded-md flex items-center justify-center text-white",
-            isSuperAdmin
-              ? "bg-purple-700"
-              : isSolaria
-              ? "bg-emerald-600"
-              : "bg-indigo-600"
-          )}>
-            {isSuperAdmin ? <Globe className="h-3 w-3" /> : isSolaria ? <Leaf className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+        {/* Workspace Brand Dropdown Switcher */}
+        <div className="relative group">
+          <button
+            type="button"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-800 transition-all cursor-pointer shadow-2xs"
+            title="Click or hover to switch brand workspace"
+          >
+            <div className={cn(
+              "h-4 w-4 rounded-md flex items-center justify-center text-white shrink-0",
+              isSuperAdmin ? "bg-purple-700" : isSolaria ? "bg-emerald-600" : "bg-indigo-600"
+            )}>
+              {isSuperAdmin ? <Globe className="h-3 w-3" /> : isSolaria ? <Leaf className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+            </div>
+            <span>{isSuperAdmin ? "Master SuperAdmin Console" : brandConfig.name}</span>
+            <ChevronDown className="h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-transform" />
+          </button>
+
+          <div className="absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 hidden group-hover:block z-50 animate-in fade-in">
+            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+              Switch Brand Workspace
+            </div>
+            <button
+              type="button"
+              onClick={() => { switchBrand("solaria"); router.push("/dashboard"); }}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-emerald-50/60 cursor-pointer ${
+                activeBrand === "solaria" && !isSuperAdmin ? "bg-emerald-50 text-emerald-800 font-bold" : "text-slate-700"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="h-6 w-6 rounded-md bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                  <Leaf className="h-3.5 w-3.5" />
+                </span>
+                <div>
+                  <div className="font-semibold leading-tight">Solaria Wellness</div>
+                  <div className="text-[10px] text-slate-400 leading-tight">Clinical Adaptogenic Hydration</div>
+                </div>
+              </div>
+              {activeBrand === "solaria" && !isSuperAdmin && (
+                <span className="text-[10px] text-emerald-600 font-bold">✓ Active</span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => { switchBrand("aureon"); router.push("/dashboard"); }}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-indigo-50/60 cursor-pointer ${
+                activeBrand === "aureon" && !isSuperAdmin ? "bg-indigo-50 text-indigo-800 font-bold" : "text-slate-700"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="h-6 w-6 rounded-md bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                  <Shield className="h-3.5 w-3.5" />
+                </span>
+                <div>
+                  <div className="font-semibold leading-tight">Aureon Technologies</div>
+                  <div className="text-[10px] text-slate-400 leading-tight">Enterprise Security & Defense</div>
+                </div>
+              </div>
+              {activeBrand === "aureon" && !isSuperAdmin && (
+                <span className="text-[10px] text-indigo-600 font-bold">✓ Active</span>
+              )}
+            </button>
+            <div className="my-1 border-t border-slate-100" />
+            <button
+              type="button"
+              onClick={() => router.push("/superadmin")}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-purple-50/60 cursor-pointer ${
+                isSuperAdmin ? "bg-purple-50 text-purple-800 font-bold" : "text-slate-700"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="h-6 w-6 rounded-md bg-purple-700 text-white flex items-center justify-center shrink-0">
+                  <Globe className="h-3.5 w-3.5" />
+                </span>
+                <div>
+                  <div className="font-semibold leading-tight">Global Oversight</div>
+                  <div className="text-[10px] text-slate-400 leading-tight">SuperAdmin Multi-Tenant Console</div>
+                </div>
+              </div>
+              {isSuperAdmin && <span className="text-[10px] text-purple-600 font-bold">✓ Active</span>}
+            </button>
           </div>
-          <span>{isSuperAdmin ? "Master SuperAdmin Console" : brandConfig.name}</span>
         </div>
 
         {/* Firewall Active Pill */}
@@ -96,56 +167,119 @@ export function Header() {
               <span>Identity PDF</span>
             </a>
 
-            {/* User Role Quick Switcher Dropdown */}
+            {/* User Profile & Role Quick Switcher Dropdown */}
             <div className="relative group">
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all cursor-pointer shadow-2xs hover:opacity-90"
+                className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer shadow-2xs hover:opacity-95"
                 style={{
                   backgroundColor: currentRole === "admin" ? "#EEF2FF" : currentRole === "reviewer" ? "#FEF3C7" : "#F0F9FF",
                   borderColor: currentRole === "admin" ? "#C7D2FE" : currentRole === "reviewer" ? "#FDE68A" : "#BAE6FD",
                   color: currentRole === "admin" ? "#3730A3" : currentRole === "reviewer" ? "#92400E" : "#0369A1",
                 }}
-                title={`Active: ${currentUser?.name} (${currentRole.toUpperCase()}). Hover to switch role.`}
+                title={`Active: ${currentUser?.name} (${currentRole.toUpperCase()}). Click or hover to switch profile/role.`}
               >
-                <span className="capitalize">{currentRole}</span>
-                <ChevronDown className="h-3 w-3 opacity-60" />
+                <div
+                  className="h-5 w-5 rounded-full flex items-center justify-center font-bold text-[10px] text-white shrink-0 shadow-xs"
+                  style={{
+                    backgroundColor: currentRole === "admin" ? "#4F46E5" : currentRole === "reviewer" ? "#D97706" : "#0284C7"
+                  }}
+                >
+                  {currentUser?.name?.slice(0, 2).toUpperCase() || "US"}
+                </div>
+                <div className="text-left hidden sm:block">
+                  <span className="font-bold">{currentUser?.name}</span>
+                  <span className="text-[10px] opacity-75 capitalize ml-1.5">({currentRole})</span>
+                </div>
+                <ChevronDown className="h-3.5 w-3.5 opacity-60" />
               </button>
 
-              <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 hidden group-hover:block z-50 animate-in fade-in">
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                  Switch Active Role
+              <div className="absolute right-0 top-full mt-1.5 w-72 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 hidden group-hover:block z-50 animate-in fade-in">
+                {/* Active Profile Header */}
+                <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/70">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Authenticated Identity
+                  </div>
+                  <div className="font-bold text-slate-900 text-xs mt-0.5 truncate">{currentUser?.name}</div>
+                  <div className="text-[11px] text-slate-500 truncate">{currentUser?.email}</div>
+                  <div className="text-[10px] text-slate-600 font-medium truncate mt-0.5">{currentUser?.title}</div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => switchRole("admin")}
-                  className={`w-full text-left px-3 py-1.5 text-xs font-semibold flex items-center justify-between hover:bg-slate-50 cursor-pointer ${
-                    currentRole === "admin" ? "text-indigo-600 bg-indigo-50/50" : "text-slate-700"
-                  }`}
-                >
-                  <span>Admin</span>
-                  {currentRole === "admin" && <span className="text-[10px] text-emerald-600 font-bold">✓ Active</span>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchRole("reviewer")}
-                  className={`w-full text-left px-3 py-1.5 text-xs font-semibold flex items-center justify-between hover:bg-slate-50 cursor-pointer ${
-                    currentRole === "reviewer" ? "text-amber-600 bg-amber-50/50" : "text-slate-700"
-                  }`}
-                >
-                  <span>Reviewer</span>
-                  {currentRole === "reviewer" && <span className="text-[10px] text-emerald-600 font-bold">✓ Active</span>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchRole("creator")}
-                  className={`w-full text-left px-3 py-1.5 text-xs font-semibold flex items-center justify-between hover:bg-slate-50 cursor-pointer ${
-                    currentRole === "creator" ? "text-sky-600 bg-sky-50/50" : "text-slate-700"
-                  }`}
-                >
-                  <span>Content Creator</span>
-                  {currentRole === "creator" && <span className="text-[10px] text-emerald-600 font-bold">✓ Active</span>}
-                </button>
+
+                {/* Switch Profile (Team Roster) Section */}
+                <div className="px-3 pt-2.5 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Switch Profile ({brandConfig.name})
+                </div>
+                <div className="max-h-60 overflow-y-auto space-y-0.5 px-1.5">
+                  {brandUsers.map((u) => {
+                    const isSelected = u.email === currentUser.email;
+                    return (
+                      <button
+                        key={u.email}
+                        type="button"
+                        onClick={() => {
+                          switchUser(u);
+                          switchRole(u.role);
+                        }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer ${
+                          isSelected ? "bg-indigo-50/80 font-bold text-indigo-900" : "text-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <div className={cn(
+                            "h-6 w-6 rounded-full flex items-center justify-center font-bold text-[10px] text-white shrink-0",
+                            u.role === "admin" ? "bg-indigo-600" : u.role === "reviewer" ? "bg-amber-600" : "bg-sky-600"
+                          )}>
+                            {u.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="truncate">
+                            <div className="font-semibold text-xs leading-tight truncate">{u.name}</div>
+                            <div className="text-[10px] text-slate-400 leading-tight truncate">{u.title}</div>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <span className="text-[10px] text-emerald-600 font-bold shrink-0 ml-1">✓ Active</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Quick Role Switcher */}
+                <div className="mt-2 pt-2 border-t border-slate-100 px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Quick Role Switch
+                </div>
+                <div className="grid grid-cols-3 gap-1 px-2 pb-1">
+                  <button
+                    type="button"
+                    onClick={() => switchRole("admin")}
+                    className={cn(
+                      "px-2 py-1 text-[11px] font-bold rounded text-center transition-all cursor-pointer",
+                      currentRole === "admin" ? "bg-indigo-600 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    )}
+                  >
+                    Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchRole("reviewer")}
+                    className={cn(
+                      "px-2 py-1 text-[11px] font-bold rounded text-center transition-all cursor-pointer",
+                      currentRole === "reviewer" ? "bg-amber-600 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    )}
+                  >
+                    Reviewer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchRole("creator")}
+                    className={cn(
+                      "px-2 py-1 text-[11px] font-bold rounded text-center transition-all cursor-pointer",
+                      currentRole === "creator" ? "bg-sky-600 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    )}
+                  >
+                    Creator
+                  </button>
+                </div>
               </div>
             </div>
 

@@ -123,7 +123,11 @@ class DevilsAdvocateAgent:
                 title_lower = (finding.get("title") or "").lower()
                 rule_ref = (finding.get("rule_ref") or "").lower()
                 is_core_governance = (
-                    "misalignment" in title_lower
+                    finding.get("finding_type") == "fact"
+                    or "factual" in title_lower
+                    or "metric conflict" in title_lower
+                    or "fact-" in rule_ref
+                    or "misalignment" in title_lower
                     or "domain" in title_lower
                     or "brand identity" in title_lower
                     or "unapproved" in title_lower

@@ -51,25 +51,27 @@ class GovernanceEngine:
         low_count = sum(1 for f in findings if f.get("severity") in ("low", "info"))
 
         # Zero-Tolerance Direct Disqualification:
-        # If any finding flags genuine cross-tenant misalignment or out-of-domain breach,
+        # If any finding flags genuine cross-tenant misalignment, out-of-domain breach,
+        # or meaningless placeholder / gibberish text:
         # immediately set governance_score = 0 and decision = "BLOCKED"!
-        is_off_brand = any(
-            f.get("rule_ref") == "BRAND-IDENTITY-001"
-            or f.get("rule_ref") == "CROSS-TENANT-001"
+        is_direct_block = any(
+            f.get("rule_ref") in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001")
             or "domain misalignment" in (f.get("title") or "").lower()
             or "cross-tenant" in (f.get("title") or "").lower()
             or "out of domain" in (f.get("title") or "").lower()
             or "out-of-domain" in (f.get("title") or "").lower()
             or "unapproved third-party visual" in (f.get("title") or "").lower()
             or "missing brand identity" in (f.get("title") or "").lower()
+            or "placeholder copy" in (f.get("title") or "").lower()
+            or "meaningless placeholder" in (f.get("title") or "").lower()
             for f in findings
         )
 
-        if is_off_brand:
+        if is_direct_block:
             return {
                 "decision": "BLOCKED",
                 "governance_score": 0,
-                "summary": "DISQUALIFIED: Content is completely outside the active brand's identity and domain. Zero-tolerance policy applied (Score: 0/100).",
+                "summary": "DISQUALIFIED: Content violates zero-tolerance pre-publication standards (Domain misalignment or meaningless placeholder copy). Score: 0/100.",
                 "risk_summary": {
                     "critical": max(1, crit_count),
                     "high": high_count,
@@ -123,18 +125,20 @@ def compute_governance(findings: List[Finding]) -> GovernanceResult:
     warning_count = sum(1 for f in findings if f.severity in ("warning", "high", "medium"))
     info_count = sum(1 for f in findings if f.severity in ("info", "low"))
 
-    is_off_brand = any(
+    is_direct_block = any(
         "misalignment" in (f.title or "").lower()
         or "domain" in (f.title or "").lower()
         or "unapproved third-party" in (f.title or "").lower()
         or "missing brand identity" in (f.title or "").lower()
+        or "placeholder copy" in (f.title or "").lower()
+        or "meaningless placeholder" in (f.title or "").lower()
         for f in findings
     )
-    if is_off_brand:
+    if is_direct_block:
         return GovernanceResult(
             score=0.0,
             decision="BLOCKED",
-            summary="DISQUALIFIED: Content is outside brand domain identity.",
+            summary="DISQUALIFIED: Content violates zero-tolerance pre-publication standards.",
             total_findings=len(findings),
             error_count=error_count,
             warning_count=warning_count,

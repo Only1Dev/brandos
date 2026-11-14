@@ -435,19 +435,21 @@ async def get_review_details(
     term_score = 100
     resilience_score = 100
 
-    has_domain_violation = any(
+    has_direct_block = any(
         f.status not in ("accepted", "overridden") and (
-            f.rule_id in ("BRAND-IDENTITY-001", "CROSS-TENANT-001")
+            f.rule_id in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001")
             or "domain misalignment" in f.title.lower()
             or "cross-tenant" in f.title.lower()
             or "out of domain" in f.title.lower()
             or "out-of-domain" in f.title.lower()
             or "missing brand identity" in f.title.lower()
+            or "placeholder copy" in f.title.lower()
+            or "meaningless placeholder" in f.title.lower()
         )
         for f in review.findings
     )
 
-    if has_domain_violation:
+    if has_direct_block:
         domain_score = 0
         tone_score = 25
         fact_score = 20

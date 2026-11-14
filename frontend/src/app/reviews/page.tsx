@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   Filter,
@@ -29,6 +30,7 @@ import { formatDate, getStatusBadge } from "@/lib/utils";
 import { useBrand } from "@/context/BrandContext";
 
 export default function ReviewsListPage() {
+  const router = useRouter();
   const { activeBrand, brandConfig, canEditBrandBrain } = useBrand();
   const [reviews, setReviews] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -396,19 +398,27 @@ export default function ReviewsListPage() {
                       </div>
                     </td>
 
-                    <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="inline-flex items-center gap-2">
-                        <Link
-                          href={`/reviews/${rev.id}`}
-                          className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold text-xs transition-all shadow-2xs flex items-center gap-1 group"
+                    <td className="py-4 px-4 text-right">
+                      <div className="inline-flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/reviews/${rev.id}`);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold text-xs transition-all shadow-2xs flex items-center gap-1 group cursor-pointer"
                         >
                           <span>Deep Audit</span>
                           <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
+                        </button>
 
                         {canEditBrandBrain && (
                           <button
-                            onClick={() => handleDeleteReview(rev.id, rev.content_title)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteReview(rev.id, rev.content_title);
+                            }}
                             disabled={deletingId === rev.id}
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                             title="Purge review record"

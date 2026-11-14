@@ -546,6 +546,103 @@ def check_deterministic_guidelines(text: str, rules: list) -> List[dict]:
     return violations
 
 
+def check_domain_alignment(
+    text: str,
+    brand_name: str = "Aureon Technologies",
+    brand_domain: str = "Enterprise security and fraud detection intelligence",
+) -> List[dict]:
+    """
+    Deterministic domain alignment firewall.
+    Verifies that submitted copy does not assign alien, cross-tenant, or out-of-domain
+    identities to the active brand (e.g. asserting Solaria is a fashion/clothing/banking brand,
+    or asserting Aureon is a fashion/cosmetics/wellness brand).
+    """
+    if not text or len(text.strip()) == 0:
+        return []
+
+    clean_text = text.strip().lower()
+    b_name_lower = (brand_name or "").strip().lower()
+    b_domain_lower = (brand_domain or "").strip().lower()
+
+    # Conflicting sector term dictionaries
+    FASHION_TERMS = [
+        "fashion", "garment", "garments", "clothing", "apparel", "footwear",
+        "shoes", "couture", "haute couture", "runway", "dresses", "textile",
+        "streetwear", "wardrobe", "outfit", "attire"
+    ]
+    FINTECH_TERMS = [
+        "banking", "fintech", "fraud prevention", "transaction security",
+        "cyber defense", "credit card", "payment gateway", "crypto",
+        "cryptocurrency", "bitcoin", "ethereum", "blockchain"
+    ]
+    WELLNESS_TERMS = [
+        "wellness", "nutraceuticals", "cellular hydration", "purehydrate",
+        "adaptogenic", "supplements", "vitamins", "electrolytes", "skincare", "nutrition"
+    ]
+
+    is_wellness = "wellness" in b_name_lower or "wellness" in b_domain_lower or "hydration" in b_domain_lower or "nutrition" in b_domain_lower
+    is_fintech = "aureon" in b_name_lower or "tech" in b_domain_lower or "banking" in b_domain_lower or "fraud" in b_domain_lower or "security" in b_domain_lower
+
+    alien_terms = []
+    if is_wellness:
+        alien_terms = FASHION_TERMS + FINTECH_TERMS
+    elif is_fintech:
+        alien_terms = FASHION_TERMS + WELLNESS_TERMS
+    else:
+        if "fashion" not in b_domain_lower and "clothing" not in b_domain_lower:
+            alien_terms = FASHION_TERMS
+
+    # Extract primary brand token (e.g. "solaria" from "Solaria Wellness", "aureon" from "Aureon Technologies")
+    first_token = b_name_lower.split()[0] if b_name_lower else "brand"
+
+    findings = []
+    for term in alien_terms:
+        # Check if term exists as a word
+        if not re.search(rf"\b{re.escape(term)}\b", clean_text):
+            continue
+
+        patterns = [
+            rf"\b{re.escape(first_token)}\b.*\bis\b.*(\b{re.escape(term)}\b)",
+            rf"\b{re.escape(first_token)}\b.*(\b{re.escape(term)}\b).*\b(brand|company|line|label|store|collection|house|firm|retailer)\b",
+            rf"\b(we are|our)\b.*(\b{re.escape(term)}\b).*\b(brand|company|line|collection)\b",
+            rf"\b{re.escape(first_token)}\b\s+(is\s+)?(a\s+|an\s+)?{re.escape(term)}",
+        ]
+        matched_excerpt = None
+        for pat in patterns:
+            m = re.search(pat, clean_text)
+            if m:
+                matched_excerpt = text[m.start():m.end()]
+                break
+
+        if matched_excerpt:
+            findings.append({
+                "finding_type": "brand",
+                "severity": "critical",
+                "title": "Brand Identity & Domain Misalignment",
+                "description": f"Content falsely attributes {brand_name} to the '{term}' industry, directly violating active enterprise domain guidelines ({brand_domain}).",
+                "detected_text": matched_excerpt,
+                "explanation": f"{brand_name} operates strictly in {brand_domain}. Portraying {brand_name} as a '{term}' brand breaches zero-tolerance brand identity boundaries.",
+                "rule_ref": "BRAND-IDENTITY-001",
+                "confidence": 1.0,
+                "evidence": [
+                    {
+                        "evidence_type": "deterministic_policy",
+                        "source_ref": "BRAND-IDENTITY-001",
+                        "description": f"Deterministic brand identity perimeter firewall detected alien sector '{term}' attributed to {brand_name}.",
+                        "data": {"brand": brand_name, "alien_sector": term, "matched_text": matched_excerpt}
+                    }
+                ],
+                "suggestion": {
+                    "original_text": matched_excerpt,
+                    "suggested_text": f"{brand_name} is an enterprise leader in {brand_domain.split(',')[0]}.",
+                    "reasoning": f"Realigns copy with {brand_name}'s authentic core domain and approved brand positioning."
+                }
+            })
+            break
+
+    return findings
+
+
 class PolicyEngine:
     """Wrapper class providing policy precedence and evaluation methods."""
 
@@ -554,6 +651,14 @@ class PolicyEngine:
 
     def check_deterministic_guidelines(self, text: str, rules: list) -> List[dict]:
         return check_deterministic_guidelines(text, rules)
+
+    def check_domain_alignment(
+        self,
+        text: str,
+        brand_name: str = "Aureon Technologies",
+        brand_domain: str = "Enterprise security and fraud detection intelligence",
+    ) -> List[dict]:
+        return check_domain_alignment(text, brand_name, brand_domain)
 
     def check_substance_quality(
         self,

@@ -445,6 +445,7 @@ async def get_review_details(
             or "missing brand identity" in f.title.lower()
             or "placeholder copy" in f.title.lower()
             or "meaningless placeholder" in f.title.lower()
+            or any((e.source_id or "") in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001") for e in f.evidences)
         )
         for f in review.findings
     )

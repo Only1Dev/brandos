@@ -30,6 +30,11 @@ HF_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 HF_API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{HF_EMBEDDING_MODEL}"
 
 
+class KeyCooldownExhaustedError(Exception):
+    """Raised when all Groq keys are in cooldown so callers can immediately trigger Gemini fallback."""
+    pass
+
+
 class ModelRouter:
     """
     Central routing layer for all AI model calls.
@@ -63,7 +68,7 @@ class ModelRouter:
             # All keys on cooldown — if Gemini fallback is configured, skip sleep to failover immediately
             if self._gemini_key:
                 logger.info("All Groq keys on cooldown. Immediate failover to Gemini Flash without blocking.")
-                raise RateLimitError("All Groq keys on cooldown. Immediate failover to Gemini Flash.", response=None, body=None)
+                raise KeyCooldownExhaustedError("All Groq keys on cooldown. Immediate failover to Gemini Flash.")
 
             soonest = min(self._key_cooldowns, key=self._key_cooldowns.get)
             wait_time = max(0, min(5.0, self._key_cooldowns[soonest] - now))
@@ -108,9 +113,14 @@ class ModelRouter:
                     f"Groq rate limit on key {key_idx} (attempt {attempt+1}): {e}"
                 )
                 last_error = e
-                # Parse retry-after header if available
-                cooldown = 60.0
-                await self._rotate_key(key_idx, cooldown)
+                try:
+                    await self._rotate_key(key_idx, 60.0)
+                except KeyCooldownExhaustedError:
+                    if self._gemini_key:
+                        gem_res = await self.gemini_text_completion(messages, temperature)
+                        if gem_res:
+                            return gem_res
+                    raise
             except APIError as e:
                 logger.error(f"Groq API error on key {key_idx}: {e}")
                 last_error = e
@@ -119,8 +129,17 @@ class ModelRouter:
             except Exception as e:
                 logger.error(f"Unexpected error calling Groq: {e}")
                 last_error = e
+                if self._gemini_key:
+                    gem_res = await self.gemini_text_completion(messages, temperature)
+                    if gem_res:
+                        return gem_res
                 if attempt < max_retries - 1:
                     await asyncio.sleep(1)
+
+        if self._gemini_key:
+            gem_res = await self.gemini_text_completion(messages, temperature)
+            if gem_res:
+                return gem_res
 
         raise RuntimeError(f"All Groq completion attempts failed: {last_error}")
 
@@ -130,6 +149,9 @@ class ModelRouter:
         temperature: float = 0.2,
     ) -> str:
         """Fallback to Gemini Flash for large documents or when Groq is rate-limited."""
+        if not self._gemini_key:
+            return ""
+
         combined_text = ""
         for m in messages:
             role = m.get("role", "user")
@@ -139,8 +161,8 @@ class ModelRouter:
             else:
                 combined_text += f"USER CONTENT:\n{content}\n\n"
 
-        models = ["gemini-3.1-flash-lite", "gemini-3.8-flash", "gemini-2.5-flash"]
-        async with httpx.AsyncClient(timeout=45.0) as client:
+        models = ["gemini-flash-lite-latest", "gemini-3-flash-preview"]
+        async with httpx.AsyncClient(timeout=15.0) as client:
             for model_name in models:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self._gemini_key}"
                 payload = {
@@ -156,6 +178,8 @@ class ModelRouter:
                             parts = candidates[0]["content"].get("parts", [])
                             if parts:
                                 return parts[0].get("text", "").strip()
+                    else:
+                        logger.warning(f"Gemini {model_name} returned status {res.status_code}")
                 except Exception as e:
                     logger.warning(f"Gemini text fallback error with {model_name}: {e}")
         return ""
@@ -183,24 +207,24 @@ class ModelRouter:
                     max_tokens=max_tokens,
                 )
                 return response.choices[0].message.content or ""
-            except RateLimitError as e:
+            except (RateLimitError, KeyCooldownExhaustedError) as e:
                 logger.warning(f"Groq rate limit on key {key_idx}: {e}")
                 last_error = e
-                # Fallback directly to 20B if 120B hits daily rate limit
-                if model == GROQ_MODEL_LARGE:
-                    try:
-                        logger.info("Failing over from 120B to Groq 20B...")
-                        client = self._get_groq_client(key_idx)
-                        response = await client.chat.completions.create(
-                            model=GROQ_MODEL_SMALL,
-                            messages=messages,
-                            temperature=temperature,
-                            max_tokens=max_tokens,
-                        )
-                        return response.choices[0].message.content or ""
-                    except Exception as fb_err:
-                        logger.warning(f"Failover to 20B also failed: {fb_err}")
-                await self._rotate_key(key_idx, 60.0)
+                # Immediate failover to Gemini Flash when rate-limited
+                if self._gemini_key:
+                    logger.info("Groq rate limit encountered. Immediate failover to Gemini Flash...")
+                    gem_res = await self.gemini_text_completion(messages, temperature)
+                    if gem_res:
+                        return gem_res
+                try:
+                    await self._rotate_key(key_idx, 60.0)
+                except KeyCooldownExhaustedError:
+                    if self._gemini_key:
+                        logger.info("All Groq keys exhausted. Triggering immediate Gemini Flash fallback...")
+                        gem_res = await self.gemini_text_completion(messages, temperature)
+                        if gem_res:
+                            return gem_res
+                    raise
             except APIError as e:
                 logger.error(f"Groq API error on key {key_idx}: {e}")
                 last_error = e
@@ -208,18 +232,28 @@ class ModelRouter:
                 if "413" in str(e) or "too large" in str(e).lower():
                     logger.info("Request exceeds Groq token limit. Falling back to Gemini Flash (1M context)...")
                     return await self.gemini_text_completion(messages, temperature)
-                await self._rotate_key(key_idx, 10.0)
+                try:
+                    await self._rotate_key(key_idx, 10.0)
+                except KeyCooldownExhaustedError:
+                    if self._gemini_key:
+                        return await self.gemini_text_completion(messages, temperature)
             except Exception as e:
                 logger.error(f"Unexpected Groq error: {e}")
                 last_error = e
+                if self._gemini_key:
+                    logger.info("Falling back to Gemini Flash due to Groq exception...")
+                    gem_res = await self.gemini_text_completion(messages, temperature)
+                    if gem_res:
+                        return gem_res
                 if attempt < max_retries - 1:
                     await asyncio.sleep(1)
 
         # Fallback to Gemini if Groq fails
-        logger.info("Groq attempts exhausted. Falling back to Gemini Flash...")
-        fallback_res = await self.gemini_text_completion(messages, temperature)
-        if fallback_res:
-            return fallback_res
+        if self._gemini_key:
+            logger.info("Groq attempts exhausted. Falling back to Gemini Flash...")
+            fallback_res = await self.gemini_text_completion(messages, temperature)
+            if fallback_res:
+                return fallback_res
 
         raise RuntimeError(f"All Groq completion attempts and Gemini fallback failed: {last_error}")
 
@@ -260,7 +294,7 @@ class ModelRouter:
 
         image_data = base64.b64encode(image_bytes).decode("utf-8")
 
-        models = ["gemini-3.1-flash-lite", "gemini-3.8-flash"]
+        models = ["gemini-flash-lite-latest", "gemini-3-flash-preview"]
         last_error = None
 
         async with httpx.AsyncClient(timeout=35.0) as client:
@@ -315,7 +349,7 @@ class ModelRouter:
         import base64
         video_data = base64.b64encode(video_bytes).decode("utf-8")
 
-        models = ["gemini-3.8-flash", "gemini-3.7-flash"]
+        models = ["gemini-flash-lite-latest", "gemini-3-flash-preview"]
         last_error = None
 
         async with httpx.AsyncClient(timeout=30.0) as client:

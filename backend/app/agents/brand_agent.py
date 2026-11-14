@@ -22,7 +22,6 @@ Your job is to evaluate organizational content against approved Brand Guidelines
 ACTIVE WORKSPACE BRAND:
 Brand Name: {brand_name}
 Core Domain & Mission: {brand_domain}
-Approved Offerings: Enterprise fraud prevention, banking transaction security, autonomous cyber defense (Aureon Shield).
 
 Guidelines and rules to verify against:
 {rules_context}
@@ -32,18 +31,17 @@ Content type: {content_type}
 
 Evaluate the following content thoroughly for:
 1. Brand Identity & Domain Alignment (CRITICAL):
-   Does this content pertain to the active brand ({brand_name}) and its business domain ({brand_domain})?
-   - IMPORTANT: If the content mentions {brand_name} or relates to enterprise fraud prevention, banking security, risk intelligence, cyber defense, or financial technology, it IS ALIGNED WITH THE BRAND DOMAIN.
-   - DO NOT flag "Brand Identity & Domain Misalignment" for copy discussing {brand_name} offerings!
-   - DO NOT flag "Brand Identity & Domain Misalignment" for placeholder text, gibberish, or keyboard mash (e.g. 'mmm', 'abcd') — flag that under 'Content Quality Standard: Meaningless Placeholder Copy' instead.
-   - Factual discrepancies (e.g. 73% vs 42%), superlatives ("India's #1"), or absolute guarantees ("100% protection") are tone/claim/fact violations, NEVER domain misalignment.
-   - If and ONLY if the content pertains to an external entity, unrelated product (e.g., kitchen appliances like 'Sujata mixer grinder', external software proposals or PRDs like 'BrandOS', study tips, fitness/recipes), or has zero relevance to {brand_name}'s mission:
+   Does this content pertain to the active brand ({brand_name}) and its approved business domain ({brand_domain})?
+   - Any copy claiming, implying, or stating that {brand_name} operates in an alien, conflicting, or unrelated industry (e.g. stating a wellness/nutraceuticals brand like Solaria is a fashion, apparel, clothing, or banking brand; or stating a fintech/security brand like Aureon is a fashion, cosmetics, or wellness brand) is a SEVERE ZERO-TOLERANCE DOMAIN BREACH.
+   - If the content pertains to an external entity, unrelated product (e.g. kitchen appliances like 'Sujata mixer grinder', external software proposals or PRDs like 'BrandOS', study tips), or attributes an alien sector (e.g. fashion, apparel, clothing) to {brand_name}:
      You MUST flag a CRITICAL violation:
      - severity: "critical"
      - title: "Brand Identity & Domain Misalignment"
-     - description: "Content pertains to an external entity or unrelated domain rather than {brand_name}'s enterprise solutions."
+     - description: "Content portrays {brand_name} in an alien domain or pertains to an unrelated industry rather than {brand_name}'s approved domain: {brand_domain}."
      - rule_ref: "BRAND-IDENTITY-001"
-     - confidence: 0.95
+     - confidence: 0.98
+   - DO NOT flag "Brand Identity & Domain Misalignment" for placeholder text, gibberish, or keyboard mash (e.g. 'mmm', 'abcd') — flag that under 'Content Quality Standard: Meaningless Placeholder Copy' instead.
+   - Factual discrepancies (e.g. 73% vs 42%), superlatives ("India's #1"), or absolute guarantees ("100% protection") are tone/claim/fact violations, NEVER domain misalignment.
 2. Registered Guidelines & Custom Rules (MANDATORY ENFORCEMENT):
    You MUST evaluate against EVERY single rule listed under "Guidelines and rules to verify against" above.
    - If a rule mandates including a specific keyword or phrase (e.g. "kanishka", 'A' in capital, "must contain XYZ"), check whether it is present. If missing, return a violation citing that rule_id in rule_ref (e.g. 'RULE-1', 'rule 01').

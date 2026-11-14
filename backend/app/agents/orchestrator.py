@@ -84,6 +84,7 @@ class AnalysisOrchestrator:
             guideline_rule_findings = []
             substance_findings = []
             confidentiality_findings = []
+            domain_findings = []
             visual_findings = (await visual_task) if visual_task else []
         else:
             # 1. Parallel Agent Execution for text or multimodal copy
@@ -112,6 +113,13 @@ class AnalysisOrchestrator:
                 text=text,
                 channel=channel,
                 visual_metadata=visual_metadata,
+            )
+
+            # Enforce brand identity & domain perimeter deterministically
+            domain_findings = self.policy_engine.check_domain_alignment(
+                text=text,
+                brand_name=brand_name,
+                brand_domain=brand_domain,
             )
 
             # Enforce custom guideline rules deterministically (e.g. Rule 777 CAPS prohibition, mandatory keyword inclusion)
@@ -144,6 +152,18 @@ class AnalysisOrchestrator:
                 visual_findings = []
 
         # Combine raw findings
+        # Consolidate domain findings if deterministic policy already detected domain misalignment
+        has_domain_violation = any(
+            f.get("rule_ref") == "BRAND-IDENTITY-001" or "domain misalignment" in (f.get("title") or "").lower()
+            for f in domain_findings
+        )
+        if has_domain_violation:
+            brand_findings = [
+                f for f in brand_findings
+                if f.get("rule_ref") != "BRAND-IDENTITY-001"
+                and "domain misalignment" not in (f.get("title") or "").lower()
+            ]
+
         # When content is identified as placeholder/gibberish, consolidate substance findings to avoid duplicates
         is_substance_violation = any(
             f.get("rule_ref") == "BRAND-SUBSTANCE-001" or "placeholder" in (f.get("title") or "").lower()
@@ -161,6 +181,7 @@ class AnalysisOrchestrator:
             ]
 
         raw_combined = [
+            *domain_findings,
             *confidentiality_findings,
             *substance_findings,
             *guideline_rule_findings,

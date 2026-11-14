@@ -90,6 +90,7 @@ export default function SettingsPage() {
   const [baselineScore, setBaselineScore] = useState<number>(85);
   const [baselineDualApproval, setBaselineDualApproval] = useState<boolean>(true);
   const [thresholdsSaved, setThresholdsSaved] = useState(false);
+  const [rosterNotification, setRosterNotification] = useState<string | null>(null);
 
   // Load saved thresholds on brand change
   useEffect(() => {
@@ -622,16 +623,25 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => setIsInviteOpen(true)}
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <UserPlus className="h-3.5 w-3.5" />
-              <span>Invite Person</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {rosterNotification && (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold animate-in fade-in">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <span>{rosterNotification}</span>
+              </div>
+            )}
+
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setIsInviteOpen(true)}
+                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>Invite Person</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -672,6 +682,8 @@ export default function SettingsPage() {
                         onChange={(e) => {
                           const newRole = e.target.value as UserRole;
                           updateUserRole(u.email, newRole);
+                          setRosterNotification(`Updated ${u.name} to ${newRole.toUpperCase()}`);
+                          setTimeout(() => setRosterNotification(null), 3500);
                         }}
                         className="text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-300 bg-white text-slate-800 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                       >

@@ -279,11 +279,18 @@ export const api = {
     }),
   getOrgSettings: (slugOrId: string) =>
     request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}/settings`),
-  updateOrgSettings: (slugOrId: string, data: { role_permissions?: any; thresholds?: any; custom_settings?: any }) =>
+  updateOrgSettings: (slugOrId: string, data: { role_permissions?: any; thresholds?: any; custom_settings?: any; user_role_overrides?: Record<string, string> }) =>
     request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}/settings`, {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+  updateOrgUserRole: (slugOrId: string, email: string, role: string) =>
+    request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}/users/${encodeURIComponent(email)}/role`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    }),
+  getOrgRoster: (slugOrId: string) =>
+    request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}/roster`),
 
   // Audit
   getAuditLogs: (entityType?: string, action?: string, brand?: string) => {

@@ -28,6 +28,7 @@ export function BrandSelectorModal() {
     activeBrand,
     currentRole,
     currentUser,
+    brandUsers,
     switchRole,
     switchUser,
     logout,
@@ -36,7 +37,7 @@ export function BrandSelectorModal() {
   } = useBrand();
 
   const brandCfg = BRANDS[activeBrand];
-  const userList = BRAND_USERS[activeBrand];
+  const userList = brandUsers;
 
   const [selectedUser, setSelectedUser] = useState<UserProfile>(currentUser);
   const [password, setPassword] = useState(`${activeBrand}-${currentUser.role}`);

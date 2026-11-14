@@ -434,6 +434,7 @@ async def delete_organization(
 class OrgSettingsUpdate(BaseModel):
     role_permissions: Optional[dict] = None
     thresholds: Optional[dict] = None
+    user_role_overrides: Optional[dict] = None
     custom_settings: Optional[dict] = None
 
 
@@ -520,6 +521,29 @@ async def update_organization_settings(
         current_settings["role_permissions"] = body.role_permissions
     if body.thresholds is not None:
         current_settings["thresholds"] = body.thresholds
+    if body.user_role_overrides is not None:
+        current_settings["user_role_overrides"] = body.user_role_overrides
+        # Synchronize directly to users table in PostgreSQL
+        for raw_email, raw_role in body.user_role_overrides.items():
+            if not raw_email:
+                continue
+            email_clean = str(raw_email).strip().lower()
+            role_clean = str(raw_role).strip().lower()
+            u_stmt = select(User).where(func.lower(User.email) == email_clean)
+            u_res = await db.execute(u_stmt)
+            target_user = u_res.scalar_one_or_none()
+            if target_user:
+                target_user.role = role_clean
+                if not target_user.organization_id:
+                    target_user.organization_id = org.id
+            else:
+                new_user = User(
+                    email=email_clean,
+                    full_name=email_clean.split("@")[0].replace(".", " ").title(),
+                    role=role_clean,
+                    organization_id=org.id,
+                )
+                db.add(new_user)
     if body.custom_settings is not None:
         current_settings["custom"] = body.custom_settings
 
@@ -532,4 +556,133 @@ async def update_organization_settings(
         "organization_id": str(org.id),
         "slug": org.slug,
         "settings": current_settings,
+    }
+
+
+@router.put("/{slug_or_id}/users/{email:path}/role")
+async def update_single_user_role(
+    slug_or_id: str,
+    email: str,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Update a single user's role for an organization and persist to database.
+    """
+    clean_target = slug_or_id.strip().lower()
+    org = None
+    try:
+        org_uuid = uuid.UUID(slug_or_id)
+        res = await db.execute(select(Organization).where(Organization.id == org_uuid))
+        org = res.scalar_one_or_none()
+    except ValueError:
+        pass
+
+    if not org:
+        res = await db.execute(select(Organization).where(Organization.slug == clean_target))
+        org = res.scalar_one_or_none()
+
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    new_role = (body.get("role") or "").strip().lower()
+    if not new_role or new_role not in ["admin", "reviewer", "creator", "viewer", "superadmin"]:
+        raise HTTPException(status_code=400, detail="Invalid role specified")
+
+    email_clean = email.strip().lower()
+
+    current_settings = {}
+    if org.settings:
+        if isinstance(org.settings, str):
+            try:
+                current_settings = json.loads(org.settings)
+            except Exception:
+                current_settings = {}
+        elif isinstance(org.settings, dict):
+            current_settings = dict(org.settings)
+
+    if "user_role_overrides" not in current_settings or not isinstance(current_settings["user_role_overrides"], dict):
+        current_settings["user_role_overrides"] = {}
+    current_settings["user_role_overrides"][email_clean] = new_role
+    org.settings = json.dumps(current_settings)
+
+    u_stmt = select(User).where(func.lower(User.email) == email_clean)
+    u_res = await db.execute(u_stmt)
+    target_user = u_res.scalar_one_or_none()
+    if target_user:
+        target_user.role = new_role
+        if not target_user.organization_id:
+            target_user.organization_id = org.id
+    else:
+        new_user = User(
+            email=email_clean,
+            full_name=email_clean.split("@")[0].replace(".", " ").title(),
+            role=new_role,
+            organization_id=org.id,
+        )
+        db.add(new_user)
+
+    await db.commit()
+    return {
+        "status": "success",
+        "email": email_clean,
+        "role": new_role,
+        "organization_id": str(org.id),
+        "slug": org.slug,
+    }
+
+
+@router.get("/{slug_or_id}/roster")
+async def get_organization_roster(
+    slug_or_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get the active roster for an organization with live dynamic roles.
+    """
+    clean_target = slug_or_id.strip().lower()
+    org = None
+    try:
+        org_uuid = uuid.UUID(slug_or_id)
+        res = await db.execute(select(Organization).where(Organization.id == org_uuid))
+        org = res.scalar_one_or_none()
+    except ValueError:
+        pass
+
+    if not org:
+        res = await db.execute(select(Organization).where(Organization.slug == clean_target))
+        org = res.scalar_one_or_none()
+
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    current_settings = {}
+    if org.settings:
+        if isinstance(org.settings, str):
+            try:
+                current_settings = json.loads(org.settings)
+            except Exception:
+                current_settings = {}
+        elif isinstance(org.settings, dict):
+            current_settings = dict(org.settings)
+
+    overrides = current_settings.get("user_role_overrides", {})
+
+    u_stmt = select(User).where(User.organization_id == org.id)
+    u_res = await db.execute(u_stmt)
+    db_users = u_res.scalars().all()
+
+    return {
+        "organization_id": str(org.id),
+        "slug": org.slug,
+        "user_role_overrides": overrides,
+        "users": [
+            {
+                "id": str(u.id),
+                "email": u.email,
+                "name": u.full_name or u.email.split("@")[0].replace(".", " ").title(),
+                "role": overrides.get(u.email.lower(), u.role),
+            }
+            for u in db_users
+        ],
     }

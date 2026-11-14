@@ -99,6 +99,15 @@ export const BRAND_USERS: Record<string, UserProfile[]> = {
   ],
 };
 
+export function formatDynamicTitle(title: string, role: UserRole): string {
+  if (!title) return title;
+  const roleDisplay = role === "admin" ? "Admin" : role === "reviewer" ? "Reviewer" : "Creator";
+  if (/\((Creator \d+|Creator|Reviewer|Admin)\)/i.test(title)) {
+    return title.replace(/\((Creator \d+|Creator|Reviewer|Admin)\)/i, `(${roleDisplay})`);
+  }
+  return title;
+}
+
 export const getBrandUsers = (
   slug: string,
   customList: UserProfile[] = [],
@@ -116,7 +125,14 @@ export const getBrandUsers = (
       { name: `${cleanName} Creator`, email: `creator@${slug}.internal`, role: "creator", title: "Content Strategist" },
     ];
   }
-  return base.map(u => (overrides[u.email] ? { ...u, role: overrides[u.email] } : u));
+  return base.map(u => {
+    const effectiveRole = overrides[u.email] || u.role;
+    return {
+      ...u,
+      role: effectiveRole,
+      title: formatDynamicTitle(u.title, effectiveRole),
+    };
+  });
 };
 
 export interface RolePermissions {
@@ -161,6 +177,7 @@ interface BrandContextType {
   currentRole: UserRole;
   currentUser: UserProfile;
   brandUsers: UserProfile[];
+  roleOverrides: Record<string, UserRole>;
   isAuthenticated: boolean;
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
@@ -266,6 +283,23 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
             setRolePermissions(data.settings.role_permissions);
             localStorage.setItem(`brandos_role_permissions_${savedBrand}`, JSON.stringify(data.settings.role_permissions));
           }
+          if (data?.settings?.user_role_overrides) {
+            const serverOverrides = data.settings.user_role_overrides;
+            setRoleOverrides((prev) => {
+              const merged = { ...prev, ...serverOverrides };
+              localStorage.setItem(`brandos_user_role_overrides_${savedBrand}`, JSON.stringify(merged));
+              return merged;
+            });
+            if (found && serverOverrides[found.email]) {
+              const newRole = serverOverrides[found.email] as UserRole;
+              setCurrentUser((prev) => ({
+                ...prev,
+                role: newRole,
+                title: formatDynamicTitle(prev.title, newRole),
+              }));
+              localStorage.setItem("brandos_user_role", newRole);
+            }
+          }
         })
         .catch(() => {});
     }
@@ -288,18 +322,25 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUserRole = (email: string, newRole: UserRole) => {
-    setRoleOverrides((prev) => {
-      const updated = { ...prev, [email]: newRole };
-      localStorage.setItem(`brandos_user_role_overrides_${activeBrand}`, JSON.stringify(updated));
-      return updated;
-    });
+    const updated = { ...roleOverrides, [email]: newRole };
+    setRoleOverrides(updated);
+    localStorage.setItem(`brandos_user_role_overrides_${activeBrand}`, JSON.stringify(updated));
+
     if (currentUser.email === email) {
       setCurrentUser((prev) => {
-        const updated = { ...prev, role: newRole };
+        const updatedUser = {
+          ...prev,
+          role: newRole,
+          title: formatDynamicTitle(prev.title, newRole),
+        };
         localStorage.setItem("brandos_user_role", newRole);
-        return updated;
+        return updatedUser;
       });
     }
+
+    // Persist to PostgreSQL database directly
+    api.updateOrgSettings(activeBrand, { user_role_overrides: updated }).catch(() => {});
+    api.updateOrgUserRole(activeBrand, email, newRole).catch(() => {});
   };
 
   const addTeamMember = (member: UserProfile) => {
@@ -312,8 +353,21 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
   const login = (slug: BrandSlug, user: UserProfile) => {
     setActiveBrand(slug);
-    const effectiveRole = roleOverrides[user.email] || user.role;
-    const effectiveUser = { ...user, role: effectiveRole };
+    let effectiveOverrides: Record<string, UserRole> = { ...roleOverrides };
+    try {
+      const stored = localStorage.getItem(`brandos_user_role_overrides_${slug}`);
+      if (stored) {
+        effectiveOverrides = { ...effectiveOverrides, ...JSON.parse(stored) };
+      }
+    } catch {}
+
+    const effectiveRole = effectiveOverrides[user.email] || user.role;
+    const effectiveUser: UserProfile = {
+      ...user,
+      role: effectiveRole,
+      title: formatDynamicTitle(user.title, effectiveRole),
+    };
+
     setCurrentUser(effectiveUser);
     setIsAuthenticated(true);
     localStorage.setItem("brandos_active_brand", slug);
@@ -353,6 +407,14 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
           setRolePermissions(data.settings.role_permissions);
           localStorage.setItem(`brandos_role_permissions_${slug}`, JSON.stringify(data.settings.role_permissions));
         }
+        if (data?.settings?.user_role_overrides) {
+          const serverOverrides = data.settings.user_role_overrides;
+          setRoleOverrides((prev) => {
+            const merged = { ...prev, ...serverOverrides };
+            localStorage.setItem(`brandos_user_role_overrides_${slug}`, JSON.stringify(merged));
+            return merged;
+          });
+        }
       })
       .catch(() => {});
 
@@ -378,7 +440,11 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
   const switchUser = (user: UserProfile) => {
     const effectiveRole = roleOverrides[user.email] || user.role;
-    const effectiveUser = { ...user, role: effectiveRole };
+    const effectiveUser: UserProfile = {
+      ...user,
+      role: effectiveRole,
+      title: formatDynamicTitle(user.title, effectiveRole),
+    };
     setCurrentUser(effectiveUser);
     localStorage.setItem("brandos_user_role", effectiveRole);
     localStorage.setItem("brandos_user_email", user.email);
@@ -424,6 +490,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         currentRole,
         currentUser,
         brandUsers,
+        roleOverrides,
         isAuthenticated,
         themeMode,
         setThemeMode,

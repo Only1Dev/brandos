@@ -32,7 +32,7 @@ import { api } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, switchRole, setIsRegisterModalOpen } = useBrand();
+  const { login, switchRole, setIsRegisterModalOpen, roleOverrides } = useBrand();
 
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedBrand, setSelectedBrand] = useState<BrandSlug>("aureon");
@@ -44,6 +44,30 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [brandOverridesMap, setBrandOverridesMap] = useState<Record<string, Record<string, UserRole>>>({});
+
+  // Helper to get dynamic users for a brand with live DB overrides applied
+  const getDynamicBrandUsers = (slug: string) => {
+    let localOverrides: Record<string, UserRole> = {};
+    try {
+      const raw = localStorage.getItem(`brandos_user_role_overrides_${slug}`);
+      if (raw) localOverrides = JSON.parse(raw);
+    } catch {}
+
+    let customUsers: UserProfile[] = [];
+    try {
+      const rawCustom = localStorage.getItem(`brandos_custom_users_${slug}`);
+      if (rawCustom) customUsers = JSON.parse(rawCustom);
+    } catch {}
+
+    const combinedOverrides = {
+      ...localOverrides,
+      ...(brandOverridesMap[slug] || {}),
+      ...(selectedBrand === slug ? roleOverrides : {}),
+    };
+
+    return getBrandUsers(slug, customUsers, combinedOverrides);
+  };
 
   // SuperAdmin login state
   const [isSuperAdminMode, setIsSuperAdminMode] = useState(false);
@@ -198,6 +222,47 @@ export default function LoginPage() {
     loadStats();
   }, []);
 
+  // Sync live role overrides from DB and localStorage on mount
+  useEffect(() => {
+    const knownBrands = ["aureon", "solaria"];
+    knownBrands.forEach((slug) => {
+      let localOv: Record<string, UserRole> = {};
+      try {
+        const raw = localStorage.getItem(`brandos_user_role_overrides_${slug}`);
+        if (raw) localOv = JSON.parse(raw);
+      } catch {}
+      if (Object.keys(localOv).length > 0) {
+        setBrandOverridesMap((prev) => ({
+          ...prev,
+          [slug]: { ...(prev[slug] || {}), ...localOv },
+        }));
+      }
+
+      api.getOrgSettings(slug)
+        .then((data) => {
+          if (data?.settings?.user_role_overrides) {
+            const serverOverrides = data.settings.user_role_overrides as Record<string, UserRole>;
+            setBrandOverridesMap((prev) => ({
+              ...prev,
+              [slug]: { ...(prev[slug] || {}), ...serverOverrides },
+            }));
+            localStorage.setItem(`brandos_user_role_overrides_${slug}`, JSON.stringify(serverOverrides));
+          }
+        })
+        .catch(() => {});
+    });
+  }, []);
+
+  // Ensure selectedUser stays in sync if brandOverridesMap updates
+  useEffect(() => {
+    const users = getDynamicBrandUsers(selectedBrand);
+    const updated = users.find((u) => u.email === selectedUser.email);
+    if (updated && (updated.role !== selectedUser.role || updated.title !== selectedUser.title)) {
+      setSelectedUser(updated);
+      setPassword(`${selectedBrand}-${updated.role}`);
+    }
+  }, [brandOverridesMap, selectedBrand]);
+
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -215,7 +280,7 @@ export default function LoginPage() {
   // Handle Brand Selection in Step 1
   const handleSelectBrand = (slug: BrandSlug) => {
     setSelectedBrand(slug);
-    const users = getBrandUsers(slug);
+    const users = getDynamicBrandUsers(slug);
     const defaultUser = users[0];
     setSelectedUser(defaultUser);
     setPassword(`${slug}-${defaultUser.role}`);
@@ -266,7 +331,7 @@ export default function LoginPage() {
   };
 
   const brandCfg = getBrandConfig(selectedBrand);
-  const brandUsers = getBrandUsers(selectedBrand);
+  const brandUsers = getDynamicBrandUsers(selectedBrand);
 
   return (
     <div className="relative min-h-screen w-full bg-[#080B14] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
@@ -336,7 +401,7 @@ export default function LoginPage() {
                   rules_count: org.rules_count ?? (isAureon ? 114 : isSolaria ? 98 : 3),
                   facts_count: org.facts_count ?? (isAureon ? 3 : isSolaria ? 2 : 0),
                 };
-                const personasCount = getBrandUsers(org.slug).length;
+                const personasCount = getDynamicBrandUsers(org.slug).length;
 
                 return (
                   <div

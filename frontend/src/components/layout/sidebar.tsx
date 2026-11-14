@@ -341,7 +341,6 @@ export function Sidebar() {
                   type="button"
                   onClick={() => {
                     switchUser(u);
-                    switchRole(u.role);
                   }}
                   className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between hover:bg-slate-800 transition-colors cursor-pointer ${
                     isSelected ? "bg-slate-800 font-bold text-white" : "text-slate-300"

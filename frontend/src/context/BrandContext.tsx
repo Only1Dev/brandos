@@ -431,11 +431,14 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   };
 
   const switchRole = (role: UserRole) => {
-    const userList = getBrandUsers(activeBrand, customUsers[activeBrand] || [], roleOverrides);
-    const match = userList.find((u) => u.role === role) || userList[0];
-    setCurrentUser(match);
-    localStorage.setItem("brandos_user_role", match.role);
-    localStorage.setItem("brandos_user_email", match.email);
+    // Dynamically update the active persona's role
+    if (currentUser?.email) {
+      updateUserRole(currentUser.email, role);
+    } else {
+      const userList = getBrandUsers(activeBrand, customUsers[activeBrand] || [], roleOverrides);
+      const match = userList.find((u) => u.role === role) || userList[0];
+      switchUser(match);
+    }
   };
 
   const switchUser = (user: UserProfile) => {
@@ -452,7 +455,21 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
   const brandConfig = getBrandConfig(activeBrand);
   const brandUsers = getBrandUsers(activeBrand, customUsers[activeBrand] || [], roleOverrides);
-  const currentRole = currentUser.role;
+
+  // Synchronize effective role & title dynamically from roleOverrides
+  const effectiveRole: UserRole = (currentUser?.email && roleOverrides[currentUser.email])
+    ? roleOverrides[currentUser.email]
+    : (currentUser?.role || "creator");
+
+  const effectiveTitle = formatDynamicTitle(currentUser?.title || "Team Member", effectiveRole);
+
+  const effectiveCurrentUser: UserProfile = {
+    ...currentUser,
+    role: effectiveRole,
+    title: effectiveTitle,
+  };
+
+  const currentRole = effectiveRole;
 
   // Dynamic RBAC permissions calculated from active role permissions matrix
   const isAdmin = currentRole === "admin" || currentRole === "superadmin";
@@ -488,7 +505,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         activeBrand,
         brandConfig,
         currentRole,
-        currentUser,
+        currentUser: effectiveCurrentUser,
         brandUsers,
         roleOverrides,
         isAuthenticated,

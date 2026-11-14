@@ -218,7 +218,6 @@ export function Header() {
                         type="button"
                         onClick={() => {
                           switchUser(u);
-                          switchRole(u.role);
                         }}
                         className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer ${
                           isSelected ? "bg-indigo-50/80 font-bold text-indigo-900" : "text-slate-700"

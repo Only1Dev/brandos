@@ -25,6 +25,7 @@ import {
   BrandSlug,
   BRAND_USERS,
   UserProfile,
+  UserRole,
   getBrandConfig,
   getBrandUsers,
 } from "@/context/BrandContext";

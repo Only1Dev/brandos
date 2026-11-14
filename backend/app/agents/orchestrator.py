@@ -142,16 +142,19 @@ class AnalysisOrchestrator:
                 visual_findings = []
 
         # Combine raw findings
-        # When content is identified as placeholder/gibberish, filter out redundant domain misalignment findings
+        # When content is identified as placeholder/gibberish, consolidate substance findings to avoid duplicates
         is_substance_violation = any(
             f.get("rule_ref") == "BRAND-SUBSTANCE-001" or "placeholder" in (f.get("title") or "").lower()
             for f in substance_findings
         )
         if is_substance_violation:
-            # Drop domain misalignment findings to prevent inappropriate metric suggestions (e.g. 42% on gibberish)
+            # Drop redundant LLM brand findings for placeholder/substance or domain misalignment
             brand_findings = [
                 f for f in brand_findings
-                if f.get("rule_ref") != "BRAND-IDENTITY-001" and "domain misalignment" not in (f.get("title") or "").lower()
+                if f.get("rule_ref") != "BRAND-IDENTITY-001"
+                and "domain misalignment" not in (f.get("title") or "").lower()
+                and "placeholder" not in (f.get("title") or "").lower()
+                and "meaningless" not in (f.get("title") or "").lower()
             ]
 
         combined_findings = [

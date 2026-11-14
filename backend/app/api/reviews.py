@@ -168,7 +168,7 @@ async def run_analysis(
     c_res = await db.execute(select(Content).where(Content.id == review.content_id))
     content = c_res.scalar_one_or_none()
 
-    text_to_analyze = version.raw_text or ""
+    text_to_analyze = getattr(version, "body_text", None) or getattr(version, "raw_text", None) or ""
     image_bytes = None
     image_mime = "image/png"
     if version.file_url:

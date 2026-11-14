@@ -4,6 +4,7 @@
 
 [![Live Web Application](https://img.shields.io/badge/Live%20App-brandos--jet.vercel.app-6366f1?style=for-the-badge&logo=vercel)](https://brandos-jet.vercel.app)
 [![Backend API](https://img.shields.io/badge/API%20Docs-brandos--xwh1.onrender.com-10b981?style=for-the-badge&logo=fastapi)](https://brandos-xwh1.onrender.com/docs)
+[![Repository](https://img.shields.io/badge/GitHub-Only1Dev%2Fbrandos-181717?style=for-the-badge&logo=github)](https://github.com/Only1Dev/brandos)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
 ---
@@ -12,198 +13,188 @@
 
 Modern enterprises deploy AI and distributed human teams to produce content across dozens of channels. Existing tools only check spelling, grammar, or run post-publishing audits after brand damage has already occurred.
 
-**BrandOS** is the first **autonomous pre-publication governance firewall**. It intercepts text, social copy, proposals, PDFs, and visual assets **before** release, evaluating them across a 5-axis governance compliance vector:
+**BrandOS** is the first **autonomous pre-publication governance firewall**. It intercepts text, social copy, proposals, PDFs, visual assets, and videos **before** release, evaluating them across a 5-axis governance compliance vector:
 
 1. **Domain & Entity Alignment** (Zero-tolerance perimeter defense against off-brand infiltration or cross-tenant drift)
 2. **Factual Ground Truth** (TruthMark topic-isolated metric and claim verification against approved knowledge base)
 3. **Brand Voice & Tone** (Authoritative, non-sensational, superlative-free tone enforcement)
 4. **Lexicon & Terminology Control** (Forbidden terms, deprecated idioms, and mandatory keyword inclusion)
-5. **Visual & Accessibility Compliance** (Logo integrity, clear space, and WCAG AA contrast ratio)
+5. **Visual & Multimodal Governance** (Gemini Vision + Audio video analysis, logo integrity, and WCAG AA contrast ratio)
+
+---
+
+## 🚀 The Three Round-2 Commitments Delivered
+
+At Round 2, Team We Code Coders committed to delivering three major enterprise capabilities for Round 3. All three are fully built, deployed, and verifiable on the live production prototype:
+
+| Committed Improvement | What Was Delivered | Verification Link |
+|---|---|---|
+| **1. Video Upload & Multimodal Analysis** | Full video upload pipeline supporting MP4/WebM. Gemini Vision & multimodal analysis transcribe speech, sample keyframes, check on-screen text, verify visual brand consistency, and detect factual misrepresentations in video content. | Test with `samples/video/brand_campaign_sample.mp4` on `/reviews/new` |
+| **2. Content Inventory Management** | Dedicated Content Hub (`/content`) that centralizes, indexes, searches, filters, and manages all enterprise brand copy, campaigns, images, and videos in one searchable repository with metadata, channels, governance scores, and review history. | Navigate to `/content` in sidebar |
+| **3. AI Improvements & Adaptive Auto-Remediation** | Elevated 1-click Auto-Remediation engine powered by reviewer feedback and historical audit reports. Suggests precise drop-in replacements for tone, prohibited superlatives, and metric misalignments based on human decisions in the audit trail. | Open any blocked/warning review and click **✨ Auto-Remediate** |
 
 ---
 
 ## 🌐 Live Prototype & Interactive Access
 
-| Component | URL | Status |
-|-----------|-----|--------|
-| **Production Frontend** | [https://brandos-jet.vercel.app](https://brandos-jet.vercel.app) | 🟢 Live |
-| **Production Backend API** | [https://brandos-xwh1.onrender.com](https://brandos-xwh1.onrender.com) | 🟢 Live |
-| **Interactive OpenAPI / Swagger** | [https://brandos-xwh1.onrender.com/docs](https://brandos-xwh1.onrender.com/docs) | 🟢 Live |
+| Component | Production URL | Status |
+|-----------|----------------|--------|
+| **Production Web Application** | **[https://brandos-jet.vercel.app](https://brandos-jet.vercel.app)** | 🟢 Deployed & Live |
+| **Backend API Engine** | **[https://brandos-xwh1.onrender.com](https://brandos-xwh1.onrender.com)** | 🟢 Deployed & Live |
+| **Interactive API Documentation** | **[https://brandos-xwh1.onrender.com/docs](https://brandos-xwh1.onrender.com/docs)** | 🟢 Swagger / OpenAPI |
+| **Source Code Repository** | **[https://github.com/Only1Dev/brandos](https://github.com/Only1Dev/brandos)** | 🟢 Public Repository |
 
 ### Enterprise Workspaces & Demo Personas
 
 BrandOS supports true multi-tenant workspace isolation with role-based access control (RBAC):
 
-| Persona | Role | Default Password / Key | Capabilities |
-|---------|------|------------------------|--------------|
-| **Priya Sharma** | **Enterprise Brand Admin** | Click *Auto-Fill Default Key* (`aureon-admin`) | Full Governance: Admin Override & Approve, Edit/Add Facts, Add Dynamic Rules, Delete Content, View Audit Trail |
-| **David Chen** | **Lead Content Reviewer (Manager)** | `aureon-reviewer` | Review content, request revisions, trigger Auto-Remediation, save reviewer directives. **Blocked by Firewall** from approving critical non-compliant copy |
-| **Aarav Patel** | **Creator / FinTech Copywriter** | `aureon-creator` | Submit copy drafts, upload PDFs/images, trigger auto-remediation |
-| **Master SuperAdmin** | **Chief Governance Officer** | Click *Master SuperAdmin Portal* tab | Global multi-tenant oversight across both Aureon Technologies & Solaria Wellness |
+| Workspace | Persona | Role | Quick Access Key | Capabilities |
+|---|---|---|---|---|
+| **Aureon Technologies** (FinTech & Security) | **Priya Sharma** | **Enterprise Brand Admin** | `aureon-admin` *(or click Auto-Fill)* | Full Governance: Admin Override & Approve, Edit Facts, Add Dynamic Rules, Delete Content, View Audit Trail |
+| **Aureon Technologies** | **David Chen** | **Lead Content Reviewer** | `aureon-reviewer` | Review content, request revisions, trigger Auto-Remediation. **Blocked by Firewall** from approving critical non-compliant copy |
+| **Aureon Technologies** | **Aarav Patel** | **Creator / Copywriter** | `aureon-creator` | Submit copy drafts, upload PDFs/images/videos, trigger auto-remediation |
+| **Solaria Wellness** (Nutraceuticals) | **Dr. Elena Vance** | **Brand Admin** | `solaria-admin` *(or click Auto-Fill)* | Complete isolated knowledge base: clinical facts, organic ingredient guidelines, botanical terminology |
+| **Global Oversight** | **Master SuperAdmin** | **Chief Governance Officer** | Click *Master SuperAdmin Console* | Multi-tenant governance: approve self-registered brands, delete firms with type-CONFIRM verification, view cross-firm health |
 
 ---
 
-## 🧪 Judge's Interactive Verification Guide (Step-by-Step)
+## 🧪 3-Minute Evaluation Guide for Judges
 
-Here is the recommended 5-minute walkthrough to verify all core autonomous capabilities of the prototype:
+We have placed pre-made test files in the [`samples/`](./samples/) directory to make verification effortless:
 
-### Step 1: Test the Zero-Tolerance Pre-Publication Firewall (Blocked Copy)
-1. Navigate to [https://brandos-jet.vercel.app](https://brandos-jet.vercel.app).
-2. Click **+ New Content Review** in the top navigation.
-3. **Test 1A — Meaningless Placeholder Copy / Gibberish Detection:**
-   - Channel: `Instagram`
-   - Content Title: `Quick draft`
-   - Body Text: `abcd`
-   - Click **Run Governance Analysis**.
-   - **Expected Result:** The firewall blocks publication (`Score: 0/100`). Detected finding: `BRAND-SUBSTANCE-001: Content Quality Standard: Meaningless Placeholder Copy` with `critical` severity.
-4. **Test 1B — Category & Domain Infiltration:**
-   - Click **+ New Content Review**.
-   - Body Text: `Announcing the Aureon BlendMaster Pro: 750W high-speed kitchen mixer grinder with 3 stainless steel jars for domestic food preparation.`
-   - Click **Run Governance Analysis**.
-   - **Expected Result:** Flagged with `BRAND-IDENTITY-001: Brand Identity & Domain Misalignment` (Critical). Publication blocked.
-5. **Test 1C — Factual Metric Conflict:**
-   - Body Text: `Aureon Shield platform achieves an audited 95% average reduction in transaction fraud.`
-   - Click **Run Governance Analysis**.
-   - **Expected Result:** Flagged with `Factual Metric Conflict (FACT-FRAUD42)`. Content claims 95% whereas approved ground truth in Brand Brain is 42%.
+### Step 1: Zero-Tolerance Pre-Publication Firewall (Blocked Copy)
+1. Go to **[https://brandos-jet.vercel.app](https://brandos-jet.vercel.app)** and select **Aureon Technologies**.
+2. Click **+ New Review** in the top navigation.
+3. Open `samples/text/02_offbrand_domain_infiltration.txt` (or paste: *"Announcing the Aureon BlendMaster Pro: 750W high-speed kitchen mixer grinder with 3 stainless steel jars"*).
+4. Click **Run Governance Analysis**.
+5. **Verdict:** Firewall immediately blocks publication (`Score: 0/100`). Finding: `BRAND-IDENTITY-001: Brand Identity & Domain Misalignment` (Critical).
 
----
+### Step 2: TruthMark™ Fact Grounding & Numerical Claim Verification
+1. Click **+ New Review**.
+2. Open `samples/text/03_unverified_metric_hallucination.txt` (claims: *"Aureon Shield platform achieves an audited 95% average reduction in transaction fraud"*).
+3. Click **Run Governance Analysis**.
+4. **Verdict:** Flagged with `Factual Metric Conflict (FACT-FRAUD42)`. Ground truth in Aureon's Brand Brain is **42%**, catching the 95% exaggeration before public release.
 
-### Step 2: Test Role-Based Publishing Control & Admin Override
-1. Open any **Blocked** review (from Step 1).
-2. Switch identity to **David Chen (Manager)** via the bottom-left identity switcher.
-   - Note the **Approval Blocked by Firewall** button.
-   - Clicking it triggers an alert: *"Firewall Active: Cannot approve publication for content blocked by BrandOS firewall."*
-3. Switch identity to **Priya Sharma (Admin)**.
-   - Note the **Admin Override & Approve** button appears.
-   - Admins can securely override with a documented rationale that is permanently logged to the immutable ledger.
+### Step 3: Round 2 Commitment #1 — Multimodal Video Governance
+1. Click **+ New Review** and select the **Video** tab.
+2. Drag and drop `samples/video/brand_campaign_sample.mp4` (or any short MP4/WebM video).
+3. Click **Run Governance Analysis**.
+4. Watch the live multimodal ingestion and analysis stream: keyframes are extracted, speech is transcribed, and Gemini analyzes on-screen brand elements and messaging consistency.
 
----
+### Step 4: Round 2 Commitment #2 — Content Inventory Management
+1. In the left navigation, click **Content** (`/content`).
+2. Search, filter by channel, status (Approved / Blocked / Under Review), and inspect historical submissions.
+3. Click any row to preview full review findings or launch remediation.
 
-### Step 3: Test Dynamic Custom Guideline Rules
-1. In the sidebar, navigate to **AI Brand Brain $\rightarrow$ Guidelines & Rules** (`/knowledge/guidelines`).
-2. Click **+ Add Rule** (available for Admins).
-3. Enter:
-   - **Rule Code:** `RULE-SOC2`
-   - **Category:** `Terminology`
-   - **Severity:** `Error`
-   - **Governance Directive / Statement:** `every text must contain the keyword "SOC2"`
-4. Click **Save Rule**. Notice it immediately registers dynamically.
-5. Go to **New Content Review** and submit a draft without `"SOC2"`:
-   - Draft: `Aureon Shield delivers enterprise transaction security.`
-   - **Expected Result:** Immediately flagged with `Guideline Rule Violation: Missing Required Keyword 'SOC2' (Rule RULE-SOC2)`.
-6. Add `"SOC2"` to the text and re-submit:
-   - Draft: `Aureon Shield delivers enterprise SOC2 compliant transaction security.`
-   - **Expected Result:** Guideline rule passes!
+### Step 5: Round 2 Commitment #3 — Adaptive Auto-Remediation
+1. Open any review with tone or superlative findings.
+2. Click the **✨ Auto-Remediate** button in the action bar.
+3. The engine uses reviewer feedback and audit history to rewrite non-compliant phrasing into publication-ready copy.
 
----
-
-### Step 4: Test Topic-Isolated Fact Verification (Multi-Percentage Facts)
-1. In the sidebar, navigate to **AI Brand Brain $\rightarrow$ Approved Facts** (`/knowledge/facts`).
-2. Notice Aureon has multiple distinct percentage facts:
-   - `42% average reduction in transaction fraud` (Category: Performance)
-   - `10% right swipe rate` (Category: Performance)
-3. Go to **New Content Review** and submit:
-   - Draft: `Aureon Shield has a right swipe rate of 10%.`
-4. **Expected Result:** TruthMark isolates topics at sentence level. It **does not** falsely compare swipe rate against fraud reduction. Score is `100/100` (COMPLIANT).
-
----
-
-### Step 5: Test 1-Click AI Auto-Remediation
-1. Open any review with tone or superlative findings (e.g. claims like *"India's #1 fraud platform with 100% protection"*).
-2. Click the **✨ Auto-Remediate** button in the top action bar.
-3. **Expected Result:** BrandOS synthesizes all agent suggestions, replaces prohibited superlatives with compliant phrasing, aligns metrics to verified facts, and generates a clean publication-ready draft.
-
----
-
-### Step 6: Test Adversarial Stress Lab
-1. In the sidebar, navigate to **Guidelines & Rules** (`/knowledge/guidelines`).
-2. Scroll to the **Adversarial Brand Drift & Stress Lab** interactive banner.
-3. Click any attack preset:
-   - *Category Infiltration* (e.g. mixer grinder)
-   - *Factual Hallucination Injection* (unbacked 90% claims)
-   - *Tone Dilution & Brand Erosion* (clickbait slang)
-   - *Unauthorized Regulatory Claim* (guaranteed zero risk)
-4. Click **Launch Adversarial Stress Test** to observe how the multi-agent pipeline dismantles the attack payload in real time.
-
----
-
-### Step 7: Inspect Immutable Audit Trail & Provenance
-1. In the sidebar, navigate to **Audit Trail** (`/audit`).
-2. Every action (content creation, review run, auto-remediation, admin override, rule creation, fact update) is recorded on the tamper-evident compliance log connecting `Content` $\rightarrow$ `Finding` $\rightarrow$ `Rule/Evidence` $\rightarrow$ `AI Recommendation` $\rightarrow$ `Human Decision`.
+### Step 6: SuperAdmin Governance & Type-CONFIRM Deletion
+1. Click **Log Out** $\rightarrow$ Click **SuperAdmin Master Console** at the bottom of the login modal.
+2. View cross-enterprise tenant health and pending brand approvals.
+3. Test enterprise deletion security: clicking Delete opens an unstop-style confirmation modal requiring typing `CONFIRM` to prevent accidental firm destruction.
 
 ---
 
 ## 🏛️ Autonomous Multi-Agent Architecture
 
 ```
-                                  [ Submitted Copy / Asset ]
-                                               │
-                                 ┌─────────────┴─────────────┐
-                                 ▼                           ▼
-                        [ Text & Claims ]             [ Visual Asset ]
-                                 │                           │
-         ┌───────────────────────┼───────────────────────┐   │
-         ▼                       ▼                       ▼   ▼
-  ┌──────────────┐       ┌──────────────┐       ┌─────────────────┐
-  │ Brand Agent  │       │  Fact Agent  │       │  Visual Agent   │
-  │ (Groq Llama) │       │ (TruthMark)  │       │  (Gemini Multi) │
-  └──────┬───────┘       └──────┬───────┘       └────────┬────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 ▼
-                     ┌───────────────────────┐
-                     │ Devil's Advocate Agent│  (Challenging False Positives)
-                     └───────────┬───────────┘
-                                 │
-                                 ▼
-                     ┌───────────────────────┐
-                     │   Governance Engine   │  (5-Axis Risk Vector & Firewall Verdict)
-                     └───────────┬───────────┘
-                                 │
-                  ┌──────────────┴──────────────┐
-                  ▼                             ▼
-         [ APPROVED (PASS) ]           [ BLOCKED (FIREWALL) ]
-                  │                             │
-                  ▼                             ▼
-        Governance Certificate            Auto-Remediation &
-                                          Admin Override Workflow
+                                  [ Submitted Copy / Asset / Video ]
+                                                  │
+                                  ┌───────────────┴───────────────┐
+                                  ▼                               ▼
+                         [ Text & Claims ]                [ Video / Image ]
+                                  │                               │
+          ┌───────────────────────┼───────────────────────┐       │
+          ▼                       ▼                       ▼       ▼
+   ┌──────────────┐       ┌──────────────┐       ┌─────────────────┐
+   │ Brand Agent  │       │  Fact Agent  │       │ Visual & Video  │
+   │ (Groq Llama) │       │ (TruthMark)  │       │ (Gemini Multi)  │
+   └──────┬───────┘       └──────┬───────┘       └────────┬────────┘
+          │                       │                       │
+          └───────────────────────┼───────────────────────┘
+                                  ▼
+                      ┌───────────────────────┐
+                      │ Devil's Advocate Agent│  (Filters False Positives)
+                      └───────────┬───────────┘
+                                  │
+                                  ▼
+                      ┌───────────────────────┐
+                      │   Governance Engine   │  (5-Axis Risk Vector & Firewall Verdict)
+                      └───────────┬───────────┘
+                                  │
+                   ┌──────────────┴──────────────┐
+                   ▼                             ▼
+          [ APPROVED (PASS) ]           [ BLOCKED (FIREWALL) ]
+                   │                             │
+                   ▼                             ▼
+         Governance Certificate            Auto-Remediation &
+                                           Admin Override Workflow
 ```
 
 ### Specialized Agents:
-1. **Brand Agent (`Llama 3.3 70B via Groq`):** Evaluates voice, identity alignment, domain boundary protection, and mandatory inclusions.
-2. **Fact Agent (`TruthMark Engine`):** Sentence-level topic-isolated factual validation against registered ground truth.
-3. **Devil's Advocate Agent:** Adversarially stress-tests potential findings against context and channel nuance to eliminate false positive friction for creators.
-4. **Visual & Multimodal Agent (`Gemini 1.5 Pro`):** Validates logo fidelity, clear space buffers, and WCAG AA contrast.
-5. **Accessibility & Terminology Engine:** High-performance deterministic pattern matching for banned/deprecated lexicons and formatting constraints.
+1. **Brand Voice Agent (`Llama 3.3 70B via Groq`):** Evaluates voice fingerprint, tone alignment, domain boundaries, and required keywords.
+2. **Fact Grounding Agent (`TruthMark™ Engine`):** Sentence-level topic-isolated factual validation against registered ground truth.
+3. **Devil's Advocate Agent:** Adversarially stress-tests potential findings against channel context to eliminate false-positive friction.
+4. **Visual & Multimodal Agent (`Gemini 1.5 Pro`):** Keyframe extraction, video speech transcription, logo fidelity, and WCAG AA contrast.
+5. **Deterministic Policy Engine:** Regex and token-level enforcement of prohibited lexicons, compliance rules, and formatting constraints.
 
 ---
 
-## 💻 Local Development Setup (Optional)
+## 💻 Local Quickstart (Clone & Run)
+
+Follow these steps to run BrandOS locally in under 3 minutes:
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 18+ & `pnpm`
+- Python 3.11+ (or Python 3.13)
+- Node.js 18+ & npm (or pnpm)
+- Git
 
-### 1. Backend Setup
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Only1Dev/brandos.git
+cd brandos
+```
+
+### 2. Backend Setup
 ```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate   # Windows
-# source .venv/bin/activate  # macOS / Linux
+
+# Windows:
+.venv\Scripts\activate
+# macOS / Linux:
+# source .venv/bin/activate
+
 pip install -r requirements.txt
+cp .env.example .env  # Or update with your Gemini / Groq / Supabase keys
 uvicorn app.main:app --reload --port 8000
 ```
+Backend will be live at `http://127.0.0.1:8000` with Swagger docs at `http://127.0.0.1:8000/docs`.
 
-### 2. Frontend Setup
+### 3. Frontend Setup
 ```bash
-cd frontend
-pnpm install
-pnpm dev
+cd ../frontend
+npm install
+npm run dev
 ```
-Open `http://localhost:3000` in your browser.
+Open **`http://localhost:3000`** in your browser.
 
 ---
 
-## 📄 License
+## 🗺️ Product Roadmap & Future Milestones
 
-BrandOS is licensed under the [MIT License](LICENSE).
+- **Q1 2027 — Enterprise DAM & CMS Integrations:** Direct plugins for Figma, Adobe Experience Manager, Contentful, and Canva for in-design firewall warnings.
+- **Q2 2027 — Autonomous Publishing Webhooks:** Connect approved reviews to Twitter/X API, LinkedIn Pages API, and HubSpot for continuous automated distribution.
+- **Q3 2027 — Enterprise SSO & SCIM:** Okta, Azure AD, and Google Workspace SAML 2.0 integration for enterprise team provisioning.
+
+---
+
+## 📄 Team & Event Submission Details
+
+- **Project Name:** BrandOS Enterprise
+- **Team Name:** Team We Code Coders
+- **Event:** AI Hackathon 2026 — Round 3 Final Submission
+- **License:** MIT License

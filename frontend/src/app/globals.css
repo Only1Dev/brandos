@@ -23,37 +23,59 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Dark Theme Global Rules */
 .dark body {
   background-color: #090d16;
   color: #f8fafc;
 }
 
+/* Backgrounds & Containers */
 .dark .bg-white {
   background-color: #0f172a !important;
   color: #f1f5f9;
-}
-
-.dark .border-slate-200 {
-  border-color: #1e293b !important;
-}
-
-.dark .border-slate-100 {
-  border-color: #1e293b !important;
 }
 
 .dark .bg-slate-50 {
   background-color: #111827 !important;
 }
 
+.dark .bg-slate-100 {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* Borders */
+.dark .border-slate-100 {
+  border-color: #1e293b !important;
+}
+
+.dark .border-slate-200 {
+  border-color: #1e293b !important;
+}
+
+.dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b !important;
+}
+
+/* Typography & Contrast */
 .dark .text-slate-900 {
   color: #f8fafc !important;
 }
 
 .dark .text-slate-800 {
-  color: #e2e8f0 !important;
+  color: #f1f5f9 !important;
 }
 
 .dark .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-slate-600 {
   color: #cbd5e1 !important;
 }
 
@@ -61,10 +83,135 @@ body {
   color: #94a3b8 !important;
 }
 
-.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #1e293b !important;
+.dark .text-slate-400 {
+  color: #64748b !important;
 }
 
-.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #1e293b !important;
+/* Form Controls: Inputs, Textareas, Selects */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
+.dark textarea,
+.dark select {
+  background-color: #0b1120 !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  background-color: #0b1120 !important;
+  color: #ffffff !important;
+  border-color: #6366f1 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+.dark select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Hover States */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: #1e293b !important;
+}
+
+.dark .hover\:bg-slate-200:hover {
+  background-color: #334155 !important;
+}
+
+/* Deep Dark-Tone Text Overrides for High Contrast in Dark Mode */
+.dark .text-indigo-950,
+.dark .text-indigo-900 {
+  color: #c7d2fe !important;
+}
+
+.dark .text-indigo-800,
+.dark .text-indigo-700 {
+  color: #a5b4fc !important;
+}
+
+.dark .text-emerald-950,
+.dark .text-emerald-900 {
+  color: #a7f3d0 !important;
+}
+
+.dark .text-emerald-800,
+.dark .text-emerald-700 {
+  color: #6ee7b7 !important;
+}
+
+.dark .text-amber-950,
+.dark .text-amber-900 {
+  color: #fde68a !important;
+}
+
+.dark .text-amber-800,
+.dark .text-amber-700 {
+  color: #fcd34d !important;
+}
+
+.dark .text-rose-950,
+.dark .text-rose-900,
+.dark .text-red-950,
+.dark .text-red-900 {
+  color: #fecdd3 !important;
+}
+
+.dark .text-rose-800,
+.dark .text-rose-700,
+.dark .text-red-800,
+.dark .text-red-700 {
+  color: #fda4af !important;
+}
+
+/* Modals & Dialogs in Dark Mode */
+.dark .fixed .bg-white {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+.dark .bg-emerald-50 {
+  background-color: rgba(6, 78, 59, 0.35) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(5, 150, 105, 0.4) !important;
+}
+
+.dark .bg-amber-50 {
+  background-color: rgba(120, 53, 15, 0.35) !important;
+  color: #fcd34d !important;
+  border-color: rgba(217, 119, 6, 0.4) !important;
+}
+
+.dark .bg-rose-50,
+.dark .bg-red-50 {
+  background-color: rgba(136, 19, 55, 0.35) !important;
+  color: #fda4af !important;
+  border-color: rgba(225, 29, 72, 0.4) !important;
+}
+
+.dark .bg-indigo-50 {
+  background-color: rgba(49, 46, 129, 0.35) !important;
+  color: #a5b4fc !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+.dark .bg-blue-50,
+.dark .bg-sky-50 {
+  background-color: rgba(12, 74, 110, 0.35) !important;
+  color: #7dd3fc !important;
+  border-color: rgba(14, 165, 233, 0.4) !important;
+}
+
+.dark .bg-purple-50 {
+  background-color: rgba(88, 28, 135, 0.35) !important;
+  color: #d8b4fe !important;
+  border-color: rgba(168, 85, 247, 0.4) !important;
 }

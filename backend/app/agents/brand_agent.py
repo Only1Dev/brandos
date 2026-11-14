@@ -35,6 +35,7 @@ Evaluate the following content thoroughly for:
    Does this content pertain to the active brand ({brand_name}) and its business domain ({brand_domain})?
    - IMPORTANT: If the content mentions {brand_name} or relates to enterprise fraud prevention, banking security, risk intelligence, cyber defense, or financial technology, it IS ALIGNED WITH THE BRAND DOMAIN.
    - DO NOT flag "Brand Identity & Domain Misalignment" for copy discussing {brand_name} offerings!
+   - DO NOT flag "Brand Identity & Domain Misalignment" for placeholder text, gibberish, or keyboard mash (e.g. 'mmm', 'abcd') — flag that under 'Content Quality Standard: Meaningless Placeholder Copy' instead.
    - Factual discrepancies (e.g. 73% vs 42%), superlatives ("India's #1"), or absolute guarantees ("100% protection") are tone/claim/fact violations, NEVER domain misalignment.
    - If and ONLY if the content pertains to an external entity, unrelated product (e.g., kitchen appliances like 'Sujata mixer grinder', external software proposals or PRDs like 'BrandOS', study tips, fitness/recipes), or has zero relevance to {brand_name}'s mission:
      You MUST flag a CRITICAL violation:
@@ -49,7 +50,11 @@ Evaluate the following content thoroughly for:
    - If a rule prohibits writing in caps (e.g. Rule 777: "Never ever write anything in caps"), check for ALL CAPS text, uppercase shouting, or capitalized words, and return a violation citing that rule_id (e.g. '777').
    - If a rule specifies banned terms, tone constraints, or requirements, cite the exact rule_id in rule_ref.
 3. Content Substance & Anti-Gibberish Standards (CRITICAL):
-   If the content consists of meaningless placeholder text, keyboard mash, or random characters (e.g. 'abcd', 'asdf', 'test123'), you MUST flag a CRITICAL violation citing rule_ref 'BRAND-SUBSTANCE-001' with title "Content Quality Standard: Meaningless Placeholder Copy". (Note: If the content is an uploaded creative indicator like '[Video creative uploaded: ...]', '[Image creative uploaded: ...]', or '[File uploaded: ...]', do NOT flag it as placeholder copy).
+   If the content consists of meaningless placeholder text, keyboard mash, random characters, single short meaningless tokens (e.g. 'mmm', 'abcd', 'asdf', 'test123', 'qwerty'), or words without linguistic substance:
+   - You MUST flag a CRITICAL violation citing rule_ref 'BRAND-SUBSTANCE-001' with title "Content Quality Standard: Meaningless Placeholder Copy".
+   - DO NOT flag "Brand Identity & Domain Misalignment" for meaningless placeholder copy, keyboard mash, or random character strings! Domain misalignment is strictly for legitimate external products/entities (e.g. kitchen appliances, recipes, external software proposals).
+   - In the replacement suggestion for placeholder text or gibberish, DO NOT invent unbacked metrics or specific statistical claims (such as "42% fraud loss reduction"). Simply suggest a standard, high-level brand statement preserving the intended communication topic (e.g. "Discover how Aureon Technologies safeguards enterprise transactions with autonomous threat defense.").
+   (Note: If the content is an uploaded creative indicator like '[Video creative uploaded: ...]', '[Image creative uploaded: ...]', or '[File uploaded: ...]', do NOT flag it as placeholder copy).
 4. Confidential & Proprietary Information Leakage (CRITICAL DLP):
    If the content contains internal classification banners (e.g. "CONFIDENTIAL", "STRICTLY CONFIDENTIAL", "INTERNAL USE ONLY", "DO NOT DISTRIBUTE", "NDA PROTECTED"), private staging URLs, or exposed credentials, you MUST flag a CRITICAL violation citing rule_ref 'BRAND-CONFIDENTIAL-001' with title "Confidential & Proprietary Information Leakage".
 5. Tone, Voice & Personality Taxonomy (15-Field Voice Fingerprint):

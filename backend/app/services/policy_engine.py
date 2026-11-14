@@ -346,7 +346,8 @@ def check_substance_quality(text: str) -> List[dict]:
     PLACEHOLDER_WORDS = {
         "abcd", "abc", "asdf", "test", "testing", "aaa", "xyz", "qwerty", "1234",
         "sample", "placeholder", "lorem", "ipsum", "lorem ipsum", "temp", "draft",
-        "test content", "sample text", "foobar", "foo bar", "asdfgh", "zxcv", "qwer"
+        "test content", "sample text", "foobar", "foo bar", "asdfgh", "zxcv", "qwer",
+        "mmm", "mmmm", "hmmm", "hmm", "bla", "blah", "blah blah", "zzz"
     }
 
     is_placeholder = False

@@ -290,6 +290,7 @@ export default function NewReviewPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return; // Prevent double click
     setError(null);
 
     if (!title.trim()) {

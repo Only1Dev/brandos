@@ -69,6 +69,7 @@ export function RegisterBrandModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevent double click
     setErrorMsg("");
 
     if (!brandName.trim()) {

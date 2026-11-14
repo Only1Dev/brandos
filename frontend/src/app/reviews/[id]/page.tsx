@@ -115,6 +115,7 @@ export default function ReviewDetailPage() {
   }, [id]);
 
   const handleRunAnalysis = async () => {
+    if (analyzing) return;
     try {
       setAnalyzing(true);
       await api.analyzeReview(id);
@@ -127,6 +128,7 @@ export default function ReviewDetailPage() {
   };
 
   const handleAcceptSuggestion = async (findingId: string) => {
+    if (actionLoading) return;
     try {
       setActionLoading(true);
       const res = await api.acceptSuggestion(findingId);
@@ -149,7 +151,7 @@ export default function ReviewDetailPage() {
   };
 
   const handleOverride = async () => {
-    if (!overrideFindingId || !overrideReason) return;
+    if (actionLoading || !overrideFindingId || !overrideReason) return;
     try {
       setActionLoading(true);
       await api.overrideFinding(overrideFindingId, overrideReason);
@@ -164,6 +166,7 @@ export default function ReviewDetailPage() {
   };
 
   const handleApprove = async () => {
+    if (actionLoading) return;
     try {
       setActionLoading(true);
       await api.approveReview(id);
@@ -176,7 +179,7 @@ export default function ReviewDetailPage() {
   };
 
   const handleRejectSubmit = async () => {
-    if (!rejectReason.trim()) return;
+    if (actionLoading || !rejectReason.trim()) return;
     try {
       setActionLoading(true);
       await api.rejectReview(id, rejectReason);

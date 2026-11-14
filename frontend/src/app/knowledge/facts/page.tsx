@@ -38,10 +38,13 @@ export default function FactsPage() {
     setEditValidUntil(f.valid_until ? f.valid_until.slice(0, 10) : "2026-12-31");
   };
 
+  const [submittingFact, setSubmittingFact] = useState(false);
+
   const handleUpdateFact = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingFact) return;
+    if (submittingFact || !editingFact) return;
     try {
+      setSubmittingFact(true);
       await api.updateFact(editingFact.id, {
         statement: editStatement,
         category: editCategory,
@@ -54,6 +57,8 @@ export default function FactsPage() {
       await loadFacts();
     } catch (e: any) {
       alert("Error updating fact: " + e.message);
+    } finally {
+      setSubmittingFact(false);
     }
   };
 
@@ -75,7 +80,9 @@ export default function FactsPage() {
 
   const handleCreateFact = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingFact) return;
     try {
+      setSubmittingFact(true);
       await api.createFact({
         statement,
         category,
@@ -91,6 +98,8 @@ export default function FactsPage() {
       await loadFacts();
     } catch (e: any) {
       alert("Error: " + e.message);
+    } finally {
+      setSubmittingFact(false);
     }
   };
 

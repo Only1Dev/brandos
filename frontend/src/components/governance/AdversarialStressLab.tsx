@@ -134,6 +134,7 @@ export function AdversarialStressLab({
   ];
 
   const handleRunAttack = async (attackId?: string) => {
+    if (loading) return; // Prevent double click
     const attackToRun = attackId || selectedAttack;
     const currentAttackObj = attacks.find((a) => a.id === attackToRun);
     const textToSend = customPrompt.trim() || currentAttackObj?.sample || "";

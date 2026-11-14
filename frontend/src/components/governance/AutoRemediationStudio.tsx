@@ -64,7 +64,7 @@ export function AutoRemediationStudio({
   }, [isOpen, reviewId]);
 
   const handleApply = async () => {
-    if (!remediationData?.remediated_text) return;
+    if (applying || !remediationData?.remediated_text) return; // Prevent double click
     try {
       setApplying(true);
       await api.applyRemediation(reviewId, remediationData.remediated_text);

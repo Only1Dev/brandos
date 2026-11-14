@@ -113,6 +113,7 @@ export default function ClaimsPage() {
   };
 
   const handleVerifyTruthMark = async (id: string, text: string) => {
+    if (verifyingId) return; // Prevent double click
     try {
       setVerifyingId(id);
       const targetClaim = claims.find((c) => c.id === id) || (diffClaim?.id === id ? diffClaim : null);

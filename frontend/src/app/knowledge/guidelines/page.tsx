@@ -80,9 +80,13 @@ export default function GuidelinesPage() {
     }
   };
 
+  const [creatingRule, setCreatingRule] = useState(false);
+
   const handleCreateRule = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (creatingRule) return;
     try {
+      setCreatingRule(true);
       await api.createRule({
         name,
         category,
@@ -100,6 +104,8 @@ export default function GuidelinesPage() {
       await loadRules();
     } catch (e: any) {
       alert("Error creating rule: " + e.message);
+    } finally {
+      setCreatingRule(false);
     }
   };
 

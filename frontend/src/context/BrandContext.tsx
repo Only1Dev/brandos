@@ -98,17 +98,24 @@ export const BRAND_USERS: Record<string, UserProfile[]> = {
   ],
 };
 
-export const getBrandUsers = (slug: string, customList: UserProfile[] = []): UserProfile[] => {
+export const getBrandUsers = (
+  slug: string,
+  customList: UserProfile[] = [],
+  overrides: Record<string, UserRole> = {}
+): UserProfile[] => {
   const staticUsers = BRAND_USERS[slug] || [];
+  let base: UserProfile[];
   if (staticUsers.length + customList.length > 0) {
-    return [...staticUsers, ...customList];
+    base = [...staticUsers, ...customList];
+  } else {
+    const cleanName = slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    base = [
+      { name: `${cleanName} Administrator`, email: `admin@${slug}.internal`, role: "admin", title: "Enterprise Brand Admin" },
+      { name: `${cleanName} Reviewer`, email: `reviewer@${slug}.internal`, role: "reviewer", title: "Compliance Lead" },
+      { name: `${cleanName} Creator`, email: `creator@${slug}.internal`, role: "creator", title: "Content Strategist" },
+    ];
   }
-  const cleanName = slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-  return [
-    { name: `${cleanName} Administrator`, email: `admin@${slug}.internal`, role: "admin", title: "Enterprise Brand Admin" },
-    { name: `${cleanName} Reviewer`, email: `reviewer@${slug}.internal`, role: "reviewer", title: "Compliance Lead" },
-    { name: `${cleanName} Creator`, email: `creator@${slug}.internal`, role: "creator", title: "Content Strategist" },
-  ];
+  return base.map(u => (overrides[u.email] ? { ...u, role: overrides[u.email] } : u));
 };
 
 export interface RolePermissions {
@@ -159,6 +166,7 @@ interface BrandContextType {
   rolePermissions: RolePermissions;
   updateRolePermissions: (perms: RolePermissions) => void;
   addTeamMember: (member: UserProfile) => void;
+  updateUserRole: (email: string, role: UserRole) => void;
   login: (slug: BrandSlug, user: UserProfile) => void;
   logout: () => void;
   switchBrand: (slug: BrandSlug, role?: UserRole) => void;
@@ -171,6 +179,7 @@ interface BrandContextType {
   canEditBrandBrain: boolean;
   canApproveReviews: boolean;
   canSubmitReviews: boolean;
+  canAutoRemediate: boolean;
 }
 
 const BrandContext = createContext<BrandContextType | undefined>(undefined);
@@ -182,6 +191,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     aureon: [],
     solaria: [],
   });
+  const [roleOverrides, setRoleOverrides] = useState<Record<string, UserRole>>({});
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -196,6 +206,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     const savedTheme = (localStorage.getItem("brandos_theme_mode") as ThemeMode) || "light";
     const savedPerms = localStorage.getItem(`brandos_role_permissions_${savedBrand}`);
     const savedCustomUsers = localStorage.getItem(`brandos_custom_users_${savedBrand}`);
+    const savedOverrides = localStorage.getItem(`brandos_user_role_overrides_${savedBrand}`);
 
     // Set Theme
     setThemeModeState(savedTheme);
@@ -219,6 +230,16 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    let loadedOverrides: Record<string, UserRole> = {};
+    if (savedOverrides) {
+      try {
+        loadedOverrides = JSON.parse(savedOverrides);
+        setRoleOverrides(loadedOverrides);
+      } catch {
+        // ignore
+      }
+    }
+
     let loadedCustom: UserProfile[] = [];
     if (savedCustomUsers) {
       try {
@@ -231,7 +252,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
     if (savedBrand) {
       setActiveBrand(savedBrand);
-      const allUsers = getBrandUsers(savedBrand, loadedCustom);
+      const allUsers = getBrandUsers(savedBrand, loadedCustom, loadedOverrides);
       const found = allUsers.find((u) => u.email === savedEmail) || allUsers[0];
       setCurrentUser(found);
       localStorage.setItem("brandos_user_email", found.email);
@@ -254,6 +275,21 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(`brandos_role_permissions_${activeBrand}`, JSON.stringify(newPerms));
   };
 
+  const updateUserRole = (email: string, newRole: UserRole) => {
+    setRoleOverrides((prev) => {
+      const updated = { ...prev, [email]: newRole };
+      localStorage.setItem(`brandos_user_role_overrides_${activeBrand}`, JSON.stringify(updated));
+      return updated;
+    });
+    if (currentUser.email === email) {
+      setCurrentUser((prev) => {
+        const updated = { ...prev, role: newRole };
+        localStorage.setItem("brandos_user_role", newRole);
+        return updated;
+      });
+    }
+  };
+
   const addTeamMember = (member: UserProfile) => {
     setCustomUsers((prev) => {
       const updated = [...(prev[activeBrand] || []), member];
@@ -264,11 +300,13 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
   const login = (slug: BrandSlug, user: UserProfile) => {
     setActiveBrand(slug);
-    setCurrentUser(user);
+    const effectiveRole = roleOverrides[user.email] || user.role;
+    const effectiveUser = { ...user, role: effectiveRole };
+    setCurrentUser(effectiveUser);
     setIsAuthenticated(true);
     localStorage.setItem("brandos_active_brand", slug);
-    localStorage.setItem("brandos_user_email", user.email);
-    localStorage.setItem("brandos_user_role", user.role);
+    localStorage.setItem("brandos_user_email", effectiveUser.email);
+    localStorage.setItem("brandos_user_role", effectiveUser.role);
     localStorage.setItem("brandos_is_authenticated", "true");
     localStorage.setItem("brandos_has_chosen_brand", "true");
     setIsBrandModalOpen(false);
@@ -282,7 +320,22 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
   const switchBrand = (slug: BrandSlug, role: UserRole = "admin") => {
     setActiveBrand(slug);
-    const userList = getBrandUsers(slug, customUsers[slug] || []);
+    let brandOverrides: Record<string, UserRole> = {};
+    try {
+      const raw = localStorage.getItem(`brandos_user_role_overrides_${slug}`);
+      if (raw) brandOverrides = JSON.parse(raw);
+    } catch {}
+    setRoleOverrides(brandOverrides);
+
+    try {
+      const rawPerms = localStorage.getItem(`brandos_role_permissions_${slug}`);
+      if (rawPerms) setRolePermissions(JSON.parse(rawPerms));
+      else setRolePermissions(DEFAULT_ROLE_PERMISSIONS);
+    } catch {
+      setRolePermissions(DEFAULT_ROLE_PERMISSIONS);
+    }
+
+    const userList = getBrandUsers(slug, customUsers[slug] || [], brandOverrides);
     const match = userList.find((u) => u.role === role) || userList[0];
     setCurrentUser(match);
     setIsAuthenticated(true);
@@ -295,7 +348,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   };
 
   const switchRole = (role: UserRole) => {
-    const userList = getBrandUsers(activeBrand, customUsers[activeBrand] || []);
+    const userList = getBrandUsers(activeBrand, customUsers[activeBrand] || [], roleOverrides);
     const match = userList.find((u) => u.role === role) || userList[0];
     setCurrentUser(match);
     localStorage.setItem("brandos_user_role", match.role);
@@ -303,13 +356,15 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   };
 
   const switchUser = (user: UserProfile) => {
-    setCurrentUser(user);
-    localStorage.setItem("brandos_user_role", user.role);
+    const effectiveRole = roleOverrides[user.email] || user.role;
+    const effectiveUser = { ...user, role: effectiveRole };
+    setCurrentUser(effectiveUser);
+    localStorage.setItem("brandos_user_role", effectiveRole);
     localStorage.setItem("brandos_user_email", user.email);
   };
 
   const brandConfig = getBrandConfig(activeBrand);
-  const brandUsers = getBrandUsers(activeBrand, customUsers[activeBrand] || []);
+  const brandUsers = getBrandUsers(activeBrand, customUsers[activeBrand] || [], roleOverrides);
   const currentRole = currentUser.role;
 
   // Dynamic RBAC permissions calculated from active role permissions matrix
@@ -319,20 +374,26 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   const canEditBrandBrain = isAdmin
     ? true
     : isReviewer
-    ? rolePermissions.reviewer.editBrandBrain
-    : rolePermissions.creator.editBrandBrain;
+    ? Boolean(rolePermissions.reviewer?.editBrandBrain)
+    : Boolean(rolePermissions.creator?.editBrandBrain);
 
   const canApproveReviews = isAdmin
     ? true
     : isReviewer
-    ? rolePermissions.reviewer.directPublish
-    : rolePermissions.creator.directPublish;
+    ? Boolean(rolePermissions.reviewer?.directPublish)
+    : Boolean(rolePermissions.creator?.directPublish);
 
   const canSubmitReviews = isAdmin
     ? true
     : isReviewer
-    ? rolePermissions.reviewer.submitDrafts
-    : rolePermissions.creator.submitDrafts;
+    ? Boolean(rolePermissions.reviewer?.submitDrafts)
+    : Boolean(rolePermissions.creator?.submitDrafts);
+
+  const canAutoRemediate = isAdmin
+    ? true
+    : isReviewer
+    ? Boolean(rolePermissions.reviewer?.autoRemediate)
+    : Boolean(rolePermissions.creator?.autoRemediate);
 
   return (
     <BrandContext.Provider
@@ -348,6 +409,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         rolePermissions,
         updateRolePermissions,
         addTeamMember,
+        updateUserRole,
         login,
         logout,
         switchBrand,
@@ -360,6 +422,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         canEditBrandBrain,
         canApproveReviews,
         canSubmitReviews,
+        canAutoRemediate,
       }}
     >
       {children}

@@ -63,6 +63,10 @@ export default function SettingsPage() {
     rolePermissions,
     updateRolePermissions,
     addTeamMember,
+    updateUserRole,
+    switchRole,
+    switchUser,
+    canAutoRemediate,
   } = useBrand();
 
   const isSuperAdmin = currentRole === "superadmin";
@@ -290,6 +294,78 @@ export default function SettingsPage() {
               </p>
             </div>
           </button>
+        </div>
+      </div>
+
+      {/* Live Active Persona & Role Simulator */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl border border-indigo-900/60 shadow-lg p-6 text-white space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-indigo-800/40">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-300" />
+              <h2 className="text-sm font-bold tracking-wide">
+                Live Active Persona &amp; Role Simulator
+              </h2>
+            </div>
+            <p className="text-xs text-indigo-200 mt-0.5">
+              Switch your active persona in real-time to immediately experience BrandOS under Admin, Reviewer, or Content Creator permissions.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-indigo-300">Active Profile:</span>
+            <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              {currentUser.name} ({currentRole.toUpperCase()})
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {brandUsers.map((u) => {
+            const isActive = u.email === currentUser.email;
+            return (
+              <button
+                key={u.email}
+                type="button"
+                onClick={() => {
+                  switchUser(u);
+                  switchRole(u.role);
+                }}
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
+                  isActive
+                    ? "bg-indigo-600/40 border-indigo-400 ring-2 ring-indigo-400/40 shadow-md"
+                    : "bg-slate-800/60 border-slate-700/80 hover:bg-slate-800 hover:border-slate-600"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-white truncate">{u.name}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      u.role === "admin"
+                        ? "bg-indigo-500/30 text-indigo-200 border border-indigo-400/40"
+                        : u.role === "reviewer"
+                        ? "bg-amber-500/30 text-amber-200 border border-amber-400/40"
+                        : "bg-sky-500/30 text-sky-200 border border-sky-400/40"
+                    }`}
+                  >
+                    {u.role}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-300 truncate">{u.title}</div>
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
+                  {isActive ? (
+                    <span className="font-bold text-emerald-400 flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Currently Active
+                    </span>
+                  ) : (
+                    <span className="text-indigo-300 hover:text-white font-medium flex items-center gap-1">
+                      Switch to this persona &rarr;
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -633,31 +709,73 @@ export default function SettingsPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {brandUsers.map((u, i) => (
-            <div
-              key={`${u.email}-${i}`}
-              className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-xs text-slate-900">{u.name}</span>
-                <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                    u.role === "admin"
-                      ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                      : u.role === "reviewer"
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                      : "bg-slate-200 text-slate-700"
-                  }`}
-                >
-                  {u.role}
-                </span>
+          {brandUsers.map((u, i) => {
+            const isActive = u.email === currentUser.email;
+            return (
+              <div
+                key={`${u.email}-${i}`}
+                className={`p-3.5 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
+                  isActive
+                    ? "border-indigo-500 bg-indigo-50/40 ring-1 ring-indigo-500/30"
+                    : "border-slate-200 bg-slate-50/50"
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-slate-900 truncate">{u.name}</span>
+                    {isActive && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-500 truncate">{u.email}</div>
+                  <div className="text-[10px] text-slate-400 font-medium truncate pt-1">
+                    {u.title}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/80 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Role:
+                    </span>
+                    {isAdmin ? (
+                      <select
+                        value={u.role}
+                        onChange={(e) => {
+                          const newRole = e.target.value as UserRole;
+                          updateUserRole(u.email, newRole);
+                        }}
+                        className="text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-300 bg-white text-slate-800 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                      >
+                        <option value="admin">ADMIN</option>
+                        <option value="reviewer">REVIEWER</option>
+                        <option value="creator">CREATOR</option>
+                      </select>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-200 text-slate-700">
+                        {u.role}
+                      </span>
+                    )}
+                  </div>
+
+                  {!isActive && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchUser(u);
+                        switchRole(u.role);
+                      }}
+                      className="w-full py-1 text-center rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[11px] transition-all cursor-pointer"
+                    >
+                      Assume Identity
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="text-[11px] text-slate-500 truncate">{u.email}</div>
-              <div className="text-[10px] text-slate-400 font-medium truncate pt-1 border-t border-slate-200/60">
-                {u.title}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

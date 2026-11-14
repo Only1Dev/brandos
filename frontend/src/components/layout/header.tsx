@@ -14,6 +14,7 @@ export function Header() {
     brandConfig,
     currentRole,
     currentUser,
+    switchRole,
     logout,
     setIsBrandModalOpen,
     setIsRegisterModalOpen,
@@ -94,19 +95,58 @@ export function Header() {
               <span>Identity PDF</span>
             </a>
 
-            {/* User Role Indicator Badge (Read-Only) */}
-            <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border"
-              style={{
-                backgroundColor: currentRole === "admin" ? "#EEF2FF" : currentRole === "reviewer" ? "#FEF3C7" : "#F0F9FF",
-                borderColor: currentRole === "admin" ? "#C7D2FE" : currentRole === "reviewer" ? "#FDE68A" : "#BAE6FD",
-                color: currentRole === "admin" ? "#3730A3" : currentRole === "reviewer" ? "#92400E" : "#0369A1",
-              }}
-              title={`Authenticated as: ${currentUser?.name} (${currentRole.toUpperCase()})`}
-            >
-              <span className="capitalize">{currentRole}</span>
-              {!canEditBrandBrain && <Lock className="h-2.5 w-2.5 opacity-60" />}
-            </span>
+            {/* User Role Quick Switcher Dropdown */}
+            <div className="relative group">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all cursor-pointer shadow-2xs hover:opacity-90"
+                style={{
+                  backgroundColor: currentRole === "admin" ? "#EEF2FF" : currentRole === "reviewer" ? "#FEF3C7" : "#F0F9FF",
+                  borderColor: currentRole === "admin" ? "#C7D2FE" : currentRole === "reviewer" ? "#FDE68A" : "#BAE6FD",
+                  color: currentRole === "admin" ? "#3730A3" : currentRole === "reviewer" ? "#92400E" : "#0369A1",
+                }}
+                title={`Active: ${currentUser?.name} (${currentRole.toUpperCase()}). Hover to switch role.`}
+              >
+                <span className="capitalize">{currentRole}</span>
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </button>
+
+              <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 hidden group-hover:block z-50 animate-in fade-in">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                  Switch Active Role
+                </div>
+                <button
+                  type="button"
+                  onClick={() => switchRole("admin")}
+                  className={`w-full text-left px-3 py-1.5 text-xs font-semibold flex items-center justify-between hover:bg-slate-50 cursor-pointer ${
+                    currentRole === "admin" ? "text-indigo-600 bg-indigo-50/50" : "text-slate-700"
+                  }`}
+                >
+                  <span>Admin</span>
+                  {currentRole === "admin" && <span className="text-[10px] text-emerald-600 font-bold">✓ Active</span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchRole("reviewer")}
+                  className={`w-full text-left px-3 py-1.5 text-xs font-semibold flex items-center justify-between hover:bg-slate-50 cursor-pointer ${
+                    currentRole === "reviewer" ? "text-amber-600 bg-amber-50/50" : "text-slate-700"
+                  }`}
+                >
+                  <span>Reviewer</span>
+                  {currentRole === "reviewer" && <span className="text-[10px] text-emerald-600 font-bold">✓ Active</span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchRole("creator")}
+                  className={`w-full text-left px-3 py-1.5 text-xs font-semibold flex items-center justify-between hover:bg-slate-50 cursor-pointer ${
+                    currentRole === "creator" ? "text-sky-600 bg-sky-50/50" : "text-slate-700"
+                  }`}
+                >
+                  <span>Content Creator</span>
+                  {currentRole === "creator" && <span className="text-[10px] text-emerald-600 font-bold">✓ Active</span>}
+                </button>
+              </div>
+            </div>
 
             {/* New Review CTA */}
             <Link

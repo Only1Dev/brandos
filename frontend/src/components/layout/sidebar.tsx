@@ -236,10 +236,17 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* Authenticated Identity Footer (Read-Only Status) */}
-      <div className="p-3 m-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1.5">
-        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-          Authenticated Identity
+      {/* Authenticated Identity Footer */}
+      <Link
+        href="/settings"
+        className="block p-3 m-3 bg-slate-950/80 hover:bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition-all space-y-1.5 cursor-pointer group"
+        title="Manage team roles & permissions in Settings"
+      >
+        <div className="text-[10px] font-semibold text-slate-400 group-hover:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+          <span>Authenticated Identity</span>
+          <span className="text-[9px] text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+            Settings &rarr;
+          </span>
         </div>
 
         <div className="flex items-center justify-between p-1 rounded-lg">
@@ -268,7 +275,7 @@ export function Sidebar() {
           </div>
           <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" title="Active Authenticated Session" />
         </div>
-      </div>
+      </Link>
     </aside>
   );
 }

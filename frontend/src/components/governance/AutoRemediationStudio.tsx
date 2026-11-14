@@ -13,8 +13,10 @@ import {
   Split,
   FileText,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useBrand } from "@/context/BrandContext";
 
 interface AutoRemediationStudioProps {
   reviewId: string;
@@ -29,6 +31,7 @@ export function AutoRemediationStudio({
   onClose,
   onRemediationApplied,
 }: AutoRemediationStudioProps) {
+  const { canAutoRemediate, currentRole } = useBrand();
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [remediationData, setRemediationData] = useState<{
@@ -42,6 +45,7 @@ export function AutoRemediationStudio({
   const [error, setError] = useState<string | null>(null);
 
   const fetchRemediation = async () => {
+    if (!canAutoRemediate) return;
     try {
       setLoading(true);
       setError(null);
@@ -56,12 +60,41 @@ export function AutoRemediationStudio({
 
   // Trigger fetch when modal opens or reviewId changes
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && canAutoRemediate) {
       setLoading(true);
       setError(null);
       fetchRemediation();
     }
-  }, [isOpen, reviewId]);
+  }, [isOpen, reviewId, canAutoRemediate]);
+
+  if (isOpen && !canAutoRemediate) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+              <Lock className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Auto-Remediation Restricted</h3>
+              <p className="text-xs text-slate-500">RBAC Governance Policy Locked</p>
+            </div>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 leading-relaxed">
+            Your active role (<strong>{currentRole.toUpperCase()}</strong>) has been restricted from executing AI Auto-Remediation by Brand Administration in Settings.
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleApply = async () => {
     if (applying || !remediationData?.remediated_text) return; // Prevent double click

@@ -28,7 +28,7 @@ import { formatDate } from "@/lib/utils";
 import { useBrand } from "@/context/BrandContext";
 
 export default function ContentPage() {
-  const { activeBrand, brandConfig, canEditBrandBrain, currentRole } = useBrand();
+  const { activeBrand, brandConfig, canEditBrandBrain, canSubmitReviews, currentRole } = useBrand();
   const [contentList, setContentList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -204,13 +204,23 @@ export default function ContentPage() {
           </p>
         </div>
 
-        <Link
-          href="/reviews/new"
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 self-start sm:self-auto cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          <span>New Review Draft</span>
-        </Link>
+        {canSubmitReviews ? (
+          <Link
+            href="/reviews/new"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 self-start sm:self-auto cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>New Review Draft</span>
+          </Link>
+        ) : (
+          <span
+            title={`Draft submission is disabled for ${currentRole}s by Brand Admin in Settings`}
+            className="px-4 py-2 bg-slate-100 border border-slate-200 text-slate-400 rounded-xl text-xs font-semibold flex items-center gap-2 self-start sm:self-auto cursor-not-allowed opacity-80"
+          >
+            <Lock className="h-4 w-4 text-slate-400" />
+            <span>Drafting Restricted</span>
+          </span>
+        )}
       </div>
 
       {/* Role notice if not admin */}

@@ -24,6 +24,7 @@ import {
   MessageSquare,
   Layers,
   Award,
+  Lock,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate, getStatusBadge } from "@/lib/utils";
@@ -31,7 +32,7 @@ import { useBrand } from "@/context/BrandContext";
 
 export default function ReviewsListPage() {
   const router = useRouter();
-  const { activeBrand, brandConfig, canEditBrandBrain } = useBrand();
+  const { activeBrand, brandConfig, canEditBrandBrain, canSubmitReviews, currentRole } = useBrand();
   const [reviews, setReviews] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [channelFilter, setChannelFilter] = useState<string>("all");
@@ -120,13 +121,23 @@ export default function ReviewsListPage() {
           </p>
         </div>
 
-        <Link
-          href="/reviews/new"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="h-4 w-4" />
-          <span>New Review Draft</span>
-        </Link>
+        {canSubmitReviews ? (
+          <Link
+            href="/reviews/new"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer self-start sm:self-auto"
+          >
+            <Plus className="h-4 w-4" />
+            <span>New Review Draft</span>
+          </Link>
+        ) : (
+          <span
+            title={`Draft submission is disabled for ${currentRole}s by Brand Admin in Settings`}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 border border-slate-200 text-slate-400 rounded-xl text-xs font-semibold cursor-not-allowed opacity-80 self-start sm:self-auto"
+          >
+            <Lock className="h-4 w-4 text-slate-400" />
+            <span>Drafting Restricted</span>
+          </span>
+        )}
       </div>
 
       {/* Firewall Performance Stream KPI Bar */}

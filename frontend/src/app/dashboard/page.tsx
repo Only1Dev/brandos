@@ -37,7 +37,7 @@ import { formatDate, getStatusBadge } from "@/lib/utils";
 import { useBrand } from "@/context/BrandContext";
 
 export default function DashboardPage() {
-  const { activeBrand, brandConfig, currentUser, currentRole } = useBrand();
+  const { activeBrand, brandConfig, currentUser, currentRole, canSubmitReviews } = useBrand();
   const isSolaria = activeBrand === "solaria";
 
   const [metrics, setMetrics] = useState<any>(null);
@@ -174,13 +174,23 @@ export default function DashboardPage() {
 
           {/* Quick Action CTAs */}
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <Link
-              href="/reviews/new"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-[1.02]"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span>+ New Content Review</span>
-            </Link>
+            {canSubmitReviews ? (
+              <Link
+                href="/reviews/new"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-[1.02]"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span>+ New Content Review</span>
+              </Link>
+            ) : (
+              <span
+                title={`Draft submission is disabled for ${currentRole}s by Brand Admin in Settings`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 text-slate-400 font-semibold text-xs border border-white/10 cursor-not-allowed opacity-80"
+              >
+                <Lock className="h-4 w-4 text-slate-400" />
+                <span>Drafting Restricted</span>
+              </span>
+            )}
 
             <Link
               href="/knowledge/guidelines"
@@ -738,13 +748,15 @@ export default function DashboardPage() {
                 Submit your first marketing copy or creative asset to see real-time multi-agent firewall evaluation in action.
               </p>
             </div>
-            <Link
-              href="/reviews/new"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-xs hover:bg-indigo-700 transition-colors"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Launch First Review</span>
-            </Link>
+            {canSubmitReviews && (
+              <Link
+                href="/reviews/new"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-xs hover:bg-indigo-700 transition-colors"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Launch First Review</span>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-slate-100">

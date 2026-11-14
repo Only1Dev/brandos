@@ -30,7 +30,7 @@ import { AgentPipelineVisualizer } from "@/components/governance/AgentPipelineVi
 
 export default function NewReviewPage() {
   const router = useRouter();
-  const { activeBrand, brandConfig, currentRole } = useBrand();
+  const { activeBrand, brandConfig, currentRole, canSubmitReviews } = useBrand();
 
   const isSolaria = activeBrand === "solaria";
 
@@ -290,6 +290,10 @@ export default function NewReviewPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSubmitReviews) {
+      setError(`Submission restricted for ${currentRole}s by organizational RBAC policy.`);
+      return;
+    }
     if (submitting) return; // Prevent double click
     setError(null);
 
@@ -348,6 +352,38 @@ export default function NewReviewPage() {
       setSubmitting(false);
     }
   };
+
+  if (!canSubmitReviews) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 px-4">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8 text-center space-y-4">
+          <div className="h-16 w-16 mx-auto rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700">
+            <Lock className="h-8 w-8" />
+          </div>
+          <h2 className="text-xl font-extrabold text-slate-900">
+            Draft Submission Restricted
+          </h2>
+          <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+            Content drafting and submission has been restricted for your role (<strong>{currentRole.toUpperCase()}</strong>) by Brand Administration policy in Settings.
+          </p>
+          <div className="pt-4 flex items-center justify-center gap-3">
+            <button
+              onClick={() => router.push("/reviews")}
+              className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-all cursor-pointer"
+            >
+              Back to Reviews
+            </button>
+            <Link
+              href="/settings"
+              className="px-4 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-all"
+            >
+              View Settings RBAC
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

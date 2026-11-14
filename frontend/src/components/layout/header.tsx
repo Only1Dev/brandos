@@ -19,6 +19,7 @@ export function Header() {
     setIsBrandModalOpen,
     setIsRegisterModalOpen,
     canEditBrandBrain,
+    canSubmitReviews,
   } = useBrand();
 
   const isSuperAdmin = pathname.startsWith("/superadmin") || currentRole === "superadmin";
@@ -149,16 +150,26 @@ export function Header() {
             </div>
 
             {/* New Review CTA */}
-            <Link
-              href="/reviews/new"
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-white text-xs font-semibold shadow-sm transition-colors",
-                isSolaria ? "bg-emerald-600 hover:bg-emerald-700" : "bg-indigo-600 hover:bg-indigo-700"
-              )}
-            >
-              <Plus className="h-4 w-4" />
-              <span>New Review</span>
-            </Link>
+            {canSubmitReviews ? (
+              <Link
+                href="/reviews/new"
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-white text-xs font-semibold shadow-sm transition-colors",
+                  isSolaria ? "bg-emerald-600 hover:bg-emerald-700" : "bg-indigo-600 hover:bg-indigo-700"
+                )}
+              >
+                <Plus className="h-4 w-4" />
+                <span>New Review</span>
+              </Link>
+            ) : (
+              <span
+                title={`Draft submission is disabled for ${currentRole}s by Brand Admin in Settings`}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-400 text-xs font-semibold cursor-not-allowed opacity-80"
+              >
+                <Lock className="h-3.5 w-3.5 text-slate-400" />
+                <span>Drafting Restricted</span>
+              </span>
+            )}
 
             {/* Log Out CTA */}
             <button

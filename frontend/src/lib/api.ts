@@ -277,6 +277,13 @@ export const api = {
     request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}`, {
       method: "DELETE",
     }),
+  getOrgSettings: (slugOrId: string) =>
+    request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}/settings`),
+  updateOrgSettings: (slugOrId: string, data: { role_permissions?: any; thresholds?: any; custom_settings?: any }) =>
+    request<any>(`/api/organizations/${encodeURIComponent(slugOrId)}/settings`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
 
   // Audit
   getAuditLogs: (entityType?: string, action?: string, brand?: string) => {

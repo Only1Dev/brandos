@@ -6,6 +6,7 @@ PRD Section 39: Hallucination protection ("UNSUPPORTED" rather than "FALSE").
 
 from __future__ import annotations
 
+import difflib
 import json
 import logging
 import re
@@ -15,6 +16,30 @@ from typing import Any, Dict, List, Optional
 from app.services.model_router import get_model_router, GROQ_MODEL_LARGE
 
 logger = logging.getLogger(__name__)
+
+
+def word_matches_topic(content_word: str, topic_word: str) -> bool:
+    """
+    Robust stemmed and fuzzy topic keyword matching.
+    Handles singular/plural ('sweetener' vs 'sweeteners'), variations ('absorption' vs 'absorptive'),
+    and common typos ('sweetner' vs 'sweetener') while maintaining strict topic isolation.
+    """
+    cw = content_word.lower().strip()
+    tw = topic_word.lower().strip()
+    if not cw or not tw:
+        return False
+    if cw == tw:
+        return True
+    if len(cw) >= 4 and len(tw) >= 4:
+        if cw in tw or tw in cw:
+            return True
+        # Shared stem prefix
+        if cw[:4] == tw[:4]:
+            return True
+        # Fuzzy match for typos / spelling variants
+        if difflib.SequenceMatcher(None, cw, tw).ratio() >= 0.72:
+            return True
+    return False
 
 
 FACT_AGENT_SYSTEM_PROMPT = """You are the Fact Verification Agent for BrandOS, an enterprise content governance platform.
@@ -80,12 +105,11 @@ class FactAgent:
             return []
 
         BRAND_STOP_WORDS = {
-            "aureon", "shield", "solaria", "purehydrate", "technologies", "wellness",
             "the", "and", "has", "for", "with", "from", "that", "this", "our", "are", 
             "was", "been", "platform", "delivers", "achieves", "contains", "audited", 
             "verified", "company", "official", "average", "rate", "level", "levels", 
             "data", "benchmark", "report", "standard", "annual", "basis", "state",
-            "pure", "hydrate", "brand", "brandos", "core", "product", "system"
+            "brand", "brandos", "core", "product", "system", "technology", "technologies"
         }
 
         # 1. Deterministic Clause-Level Topic Pre-scan (Strict Topic Isolation)
@@ -136,6 +160,8 @@ class FactAgent:
             if not num_matches:
                 continue
 
+            clause_words = re.findall(r"\b[a-zA-Z]{3,}\b", c_lower)
+
             for found_num_str, found_unit in num_matches:
                 if not found_num_str:
                     continue
@@ -146,7 +172,7 @@ class FactAgent:
 
                 claimed_str = f"{found_num_str}{found_unit}" if found_unit else found_num_str
 
-                # Score facts based on topic keyword overlap in this specific clause
+                # Score facts based on topic keyword overlap in this specific clause using stemmed/fuzzy matching
                 scored_facts = []
                 for ft in fact_topics:
                     num_val = ft["num_val"]
@@ -160,10 +186,15 @@ class FactAgent:
                         continue
 
                     # Check topic relevance in this exact clause
-                    matched_topic_words = [w for w in ft["topic_words"] if w in c_lower]
+                    matched_topic_words = []
+                    for tw in ft["topic_words"]:
+                        for cw in clause_words:
+                            if word_matches_topic(cw, tw):
+                                matched_topic_words.append((cw, tw))
+                                break
                     score = len(matched_topic_words)
-                    min_matches = 2 if len(ft["topic_words"]) >= 2 else 1
-                    if score >= min_matches:
+                    # If at least 1 distinctive topic keyword matches (e.g. 'sweetner', 'sugar', 'absorption', 'fraud'), clause is topic-relevant
+                    if score >= 1:
                         scored_facts.append((score, ft))
 
                 if not scored_facts:
@@ -339,9 +370,15 @@ class FactAgent:
                         end_w = min(len(text), d_idx + len(detected) + 100)
                         window_text = text[start_w:end_w].lower()
 
-                    matched_words = [w for w in matched_fact_obj["topic_words"] if w in window_text]
-                    min_req = 2 if len(matched_fact_obj["topic_words"]) >= 2 else 1
-                    if len(matched_words) < min_req:
+                    window_words = re.findall(r"\b[a-zA-Z]{3,}\b", window_text)
+                    matched_words = []
+                    for tw in matched_fact_obj["topic_words"]:
+                        for cw in window_words:
+                            if word_matches_topic(cw, tw):
+                                matched_words.append((cw, tw))
+                                break
+
+                    if len(matched_words) < 1:
                         # False cross-topic comparison! Drop this finding immediately.
                         continue
 

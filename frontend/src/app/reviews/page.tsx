@@ -411,17 +411,14 @@ export default function ReviewsListPage() {
 
                     <td className="py-4 px-4 text-right">
                       <div className="inline-flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/reviews/${rev.id}`);
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold text-xs transition-all shadow-2xs flex items-center gap-1 group cursor-pointer"
+                        <Link
+                          href={`/reviews/${rev.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold text-xs transition-all shadow-2xs flex items-center gap-1 group cursor-pointer inline-flex"
                         >
                           <span>Deep Audit</span>
                           <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </button>
+                        </Link>
 
                         {canEditBrandBrain && (
                           <button

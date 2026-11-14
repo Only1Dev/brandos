@@ -60,9 +60,13 @@ class ModelRouter:
                     logger.info(f"Rotated to Groq key index {candidate}")
                     return candidate
 
-            # All keys on cooldown — find the one that expires soonest
+            # All keys on cooldown — if Gemini fallback is configured, skip sleep to failover immediately
+            if self._gemini_key:
+                logger.info("All Groq keys on cooldown. Immediate failover to Gemini Flash without blocking.")
+                raise RateLimitError("All Groq keys on cooldown. Immediate failover to Gemini Flash.", response=None, body=None)
+
             soonest = min(self._key_cooldowns, key=self._key_cooldowns.get)
-            wait_time = max(0, self._key_cooldowns[soonest] - now)
+            wait_time = max(0, min(5.0, self._key_cooldowns[soonest] - now))
             logger.warning(f"All Groq keys on cooldown. Waiting {wait_time:.1f}s")
             await asyncio.sleep(wait_time)
             self._current_key_index = soonest

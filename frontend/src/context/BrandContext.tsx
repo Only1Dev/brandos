@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { api } from "@/lib/api";
 
 export type BrandSlug = "aureon" | "solaria" | string;
 export type UserRole = "admin" | "reviewer" | "creator" | "superadmin";
@@ -257,6 +258,16 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(found);
       localStorage.setItem("brandos_user_email", found.email);
       localStorage.setItem("brandos_user_role", found.role);
+
+      // Fetch live organization settings from database to synchronize across all users
+      api.getOrgSettings(savedBrand)
+        .then((data) => {
+          if (data?.settings?.role_permissions) {
+            setRolePermissions(data.settings.role_permissions);
+            localStorage.setItem(`brandos_role_permissions_${savedBrand}`, JSON.stringify(data.settings.role_permissions));
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -273,6 +284,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   const updateRolePermissions = (newPerms: RolePermissions) => {
     setRolePermissions(newPerms);
     localStorage.setItem(`brandos_role_permissions_${activeBrand}`, JSON.stringify(newPerms));
+    api.updateOrgSettings(activeBrand, { role_permissions: newPerms }).catch(() => {});
   };
 
   const updateUserRole = (email: string, newRole: UserRole) => {
@@ -334,6 +346,15 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     } catch {
       setRolePermissions(DEFAULT_ROLE_PERMISSIONS);
     }
+
+    api.getOrgSettings(slug)
+      .then((data) => {
+        if (data?.settings?.role_permissions) {
+          setRolePermissions(data.settings.role_permissions);
+          localStorage.setItem(`brandos_role_permissions_${slug}`, JSON.stringify(data.settings.role_permissions));
+        }
+      })
+      .catch(() => {});
 
     const userList = getBrandUsers(slug, customUsers[slug] || [], brandOverrides);
     const match = userList.find((u) => u.role === role) || userList[0];

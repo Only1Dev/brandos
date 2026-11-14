@@ -123,6 +123,8 @@ class AnalysisOrchestrator:
             # Enforce content quality standard (blocks placeholder text, gibberish like 'abcd')
             substance_findings = self.policy_engine.check_substance_quality(
                 text=text,
+                brand_name=brand_name,
+                brand_domain=brand_domain,
             )
 
             # Enforce Data Loss Prevention (DLP) & Confidential Material Shield
@@ -151,13 +153,14 @@ class AnalysisOrchestrator:
             # Drop redundant LLM brand findings for placeholder/substance or domain misalignment
             brand_findings = [
                 f for f in brand_findings
-                if f.get("rule_ref") != "BRAND-IDENTITY-001"
+                if f.get("rule_ref") not in ("BRAND-IDENTITY-001", "BRAND-SUBSTANCE-001")
                 and "domain misalignment" not in (f.get("title") or "").lower()
                 and "placeholder" not in (f.get("title") or "").lower()
                 and "meaningless" not in (f.get("title") or "").lower()
+                and "substance" not in (f.get("title") or "").lower()
             ]
 
-        combined_findings = [
+        raw_combined = [
             *confidentiality_findings,
             *substance_findings,
             *guideline_rule_findings,
@@ -167,6 +170,30 @@ class AnalysisOrchestrator:
             *visual_findings,
             *a11y_findings,
         ]
+
+        # General deduplication: prevent duplicate findings targeting the exact same rule and text excerpt
+        combined_findings = []
+        seen_keys = set()
+        for f in raw_combined:
+            ref = f.get("rule_ref") or f.get("title", "")
+            det = (f.get("detected_text") or "").strip().lower()
+            key = (ref, det)
+            if key not in seen_keys:
+                seen_keys.add(key)
+                combined_findings.append(f)
+            else:
+                # If seen before but current one has a better/non-empty suggestion, upgrade it
+                curr_sugg = (f.get("suggestion") or {}).get("suggested_text", "")
+                for idx, uf in enumerate(combined_findings):
+                    uf_key = (
+                        uf.get("rule_ref") or uf.get("title", ""),
+                        (uf.get("detected_text") or "").strip().lower()
+                    )
+                    if uf_key == key:
+                        prev_sugg = (uf.get("suggestion") or {}).get("suggested_text", "")
+                        if not prev_sugg and curr_sugg:
+                            combined_findings[idx] = f
+                        break
 
         logger.info(f"Agents returned {len(combined_findings)} raw findings. Running Devil's Advocate...")
 

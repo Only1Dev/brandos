@@ -5,8 +5,9 @@ PRD FR-01: Organization Workspace & Tenant Isolation.
 
 from __future__ import annotations
 
+import json
 import uuid
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -428,3 +429,107 @@ async def delete_organization(
     await db.commit()
 
     return {"status": "success", "message": f"Brand workspace '{org.name}' ({org.slug}) deleted successfully"}
+
+
+class OrgSettingsUpdate(BaseModel):
+    role_permissions: Optional[dict] = None
+    thresholds: Optional[dict] = None
+    custom_settings: Optional[dict] = None
+
+
+@router.get("/{slug_or_id}/settings")
+async def get_organization_settings(
+    slug_or_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get organization configuration, role permissions matrix, and governance thresholds.
+    """
+    clean_target = slug_or_id.strip().lower()
+    org = None
+    try:
+        org_uuid = uuid.UUID(slug_or_id)
+        res = await db.execute(select(Organization).where(Organization.id == org_uuid))
+        org = res.scalar_one_or_none()
+    except ValueError:
+        pass
+
+    if not org:
+        res = await db.execute(select(Organization).where(Organization.slug == clean_target))
+        org = res.scalar_one_or_none()
+
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    settings_data = {}
+    if org.settings:
+        if isinstance(org.settings, str):
+            try:
+                settings_data = json.loads(org.settings)
+            except Exception:
+                settings_data = {}
+        elif isinstance(org.settings, dict):
+            settings_data = org.settings
+
+    return {
+        "organization_id": str(org.id),
+        "slug": org.slug,
+        "name": org.name,
+        "settings": settings_data,
+    }
+
+
+@router.put("/{slug_or_id}/settings")
+async def update_organization_settings(
+    slug_or_id: str,
+    body: OrgSettingsUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user),
+):
+    """
+    Update organization configuration, role permissions matrix, and governance thresholds.
+    Persisted directly to the database so all active users and sessions share identical permissions.
+    """
+    clean_target = slug_or_id.strip().lower()
+    org = None
+    try:
+        org_uuid = uuid.UUID(slug_or_id)
+        res = await db.execute(select(Organization).where(Organization.id == org_uuid))
+        org = res.scalar_one_or_none()
+    except ValueError:
+        pass
+
+    if not org:
+        res = await db.execute(select(Organization).where(Organization.slug == clean_target))
+        org = res.scalar_one_or_none()
+
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    current_settings = {}
+    if org.settings:
+        if isinstance(org.settings, str):
+            try:
+                current_settings = json.loads(org.settings)
+            except Exception:
+                current_settings = {}
+        elif isinstance(org.settings, dict):
+            current_settings = dict(org.settings)
+
+    if body.role_permissions is not None:
+        current_settings["role_permissions"] = body.role_permissions
+    if body.thresholds is not None:
+        current_settings["thresholds"] = body.thresholds
+    if body.custom_settings is not None:
+        current_settings["custom"] = body.custom_settings
+
+    org.settings = json.dumps(current_settings)
+    await db.commit()
+    await db.refresh(org)
+
+    return {
+        "status": "success",
+        "organization_id": str(org.id),
+        "slug": org.slug,
+        "settings": current_settings,
+    }

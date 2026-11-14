@@ -899,11 +899,13 @@ export default function ReviewDetailPage() {
 
                         {f.suggestions.map((s: any) => (
                           <div key={s.id} className="space-y-2">
-                            <div className="text-xs font-mono p-2 bg-white rounded border border-indigo-200 text-indigo-950 font-medium">
-                              &ldquo;{s.replacement_text}&rdquo;
-                            </div>
-                            <div className="text-[11px] text-slate-600 italic">
-                              Reasoning: {s.suggestion_text}
+                            {s.replacement_text && s.replacement_text.trim() !== "" && (
+                              <div className="text-xs font-mono p-2 bg-white dark:bg-slate-900 rounded border border-indigo-200 dark:border-indigo-900/50 text-indigo-950 dark:text-indigo-200 font-medium">
+                                &ldquo;{s.replacement_text}&rdquo;
+                              </div>
+                            )}
+                            <div className="text-[11px] text-slate-600 dark:text-slate-400 italic">
+                              Reasoning: {s.suggestion_text || "Align copy with verified brand standards."}
                             </div>
                             {!isAccepted && (
                               <div className="flex items-center gap-2 pt-1">

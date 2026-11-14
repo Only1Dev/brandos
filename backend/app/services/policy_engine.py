@@ -325,10 +325,14 @@ def check_confidentiality_dlp(text: str) -> List[dict]:
     return violations
 
 
-def check_substance_quality(text: str) -> List[dict]:
+def check_substance_quality(
+    text: str,
+    brand_name: str = "Aureon Technologies",
+    brand_domain: str = "Enterprise security and fraud detection intelligence",
+) -> List[dict]:
     """
     Zero-tolerance publication firewall against placeholder copy, keyboard mash,
-    and meaningless text (e.g. 'abcd', 'asdf', 'test123').
+    and meaningless text (e.g. 'abcd', 'asdf', 'test123', 'blah').
     """
     violations = []
     cleaned = text.strip()
@@ -365,7 +369,13 @@ def check_substance_quality(text: str) -> List[dict]:
         is_placeholder = True
         reason = f"Submitted copy '{cleaned}' has insufficient length and substantive vocabulary for enterprise publication."
 
-    default_brand_suggestion = f"Discover how {cleaned.capitalize() if cleaned.istitle() else 'our team'} delivers trusted enterprise solutions."
+    if "solaria" in brand_name.lower():
+        brand_suggestion = f"Discover how {brand_name} delivers clinical-grade adaptogenic hydration and natural nutrition."
+    elif "aureon" in brand_name.lower():
+        brand_suggestion = f"Discover how {brand_name} safeguards enterprise transactions with autonomous threat defense."
+    else:
+        brand_suggestion = f"Discover how {brand_name} delivers verified, secure, and compliant solutions."
+
     if is_placeholder:
         violations.append({
             "finding_type": "brand",
@@ -384,7 +394,7 @@ def check_substance_quality(text: str) -> List[dict]:
             }],
             "suggestion": {
                 "original_text": cleaned,
-                "suggested_text": "Discover how Aureon Technologies safeguards enterprise transactions with autonomous threat defense.",
+                "suggested_text": brand_suggestion,
                 "reasoning": "Replace placeholder draft with complete, brand-aligned publication copy."
             }
         })
@@ -545,8 +555,13 @@ class PolicyEngine:
     def check_deterministic_guidelines(self, text: str, rules: list) -> List[dict]:
         return check_deterministic_guidelines(text, rules)
 
-    def check_substance_quality(self, text: str) -> List[dict]:
-        return check_substance_quality(text)
+    def check_substance_quality(
+        self,
+        text: str,
+        brand_name: str = "Aureon Technologies",
+        brand_domain: str = "Enterprise security and fraud detection intelligence",
+    ) -> List[dict]:
+        return check_substance_quality(text, brand_name, brand_domain)
 
     def check_confidentiality_dlp(self, text: str) -> List[dict]:
         return check_confidentiality_dlp(text)

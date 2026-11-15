@@ -122,7 +122,9 @@ export const getBrandUsers = (
     ];
   }
   return base.map(u => {
-    const effectiveRole = overrides[u.email] || u.role;
+    // Primary org admin cannot be downgraded from admin
+    const isPrimaryAdmin = u.email.startsWith("admin@") || u.role === "admin";
+    const effectiveRole: UserRole = isPrimaryAdmin ? "admin" : (overrides[u.email] || u.role);
     return {
       ...u,
       role: effectiveRole,
@@ -453,7 +455,10 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   const brandUsers = getBrandUsers(activeBrand, customUsers[activeBrand] || [], roleOverrides);
 
   // Synchronize effective role & title dynamically from roleOverrides
-  const effectiveRole: UserRole = (currentUser?.email && roleOverrides[currentUser.email])
+  const isPrimaryAdmin = currentUser?.email?.startsWith("admin@") || currentUser?.role === "admin";
+  const effectiveRole: UserRole = isPrimaryAdmin
+    ? "admin"
+    : (currentUser?.email && roleOverrides[currentUser.email])
     ? roleOverrides[currentUser.email]
     : (currentUser?.role || "creator");
 

@@ -676,7 +676,7 @@ export default function SettingsPage() {
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                       Role:
                     </span>
-                    {isAdmin ? (
+                    {isAdmin && !u.email.startsWith("admin@") ? (
                       <select
                         value={u.role}
                         onChange={(e) => {
@@ -692,8 +692,8 @@ export default function SettingsPage() {
                         <option value="creator">CREATOR</option>
                       </select>
                     ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-200 text-slate-700">
-                        {u.role}
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        {u.role} {u.email.startsWith("admin@") ? "(Owner)" : ""}
                       </span>
                     )}
                   </div>

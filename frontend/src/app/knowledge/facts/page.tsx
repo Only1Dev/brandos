@@ -120,7 +120,7 @@ export default function FactsPage() {
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Approved Organizational Facts</h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              {facts.length} Verified Facts
+              {facts.length} {facts.length === 1 ? "Verified Fact" : "Verified Facts"}
             </span>
           </div>
           <p className="text-sm text-slate-500 mt-1">

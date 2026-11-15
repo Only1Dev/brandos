@@ -667,7 +667,7 @@ export default function ReviewDetailPage() {
                 </div>
                 <div className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-xs flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <span>{findings.length === 0 ? "Clean" : "Info"}</span>
+                  <span>{findings.length === 0 ? "0 Info (Clean)" : `${findings.filter((f: any) => f.severity === "info" || f.severity === "low").length} Info`}</span>
                 </div>
               </div>
             </div>

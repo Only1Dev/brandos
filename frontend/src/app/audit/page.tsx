@@ -150,7 +150,7 @@ export default function AuditTrailPage() {
                           )}
                           {log.details.findings !== undefined && (
                             <span className="text-[10px] text-slate-500 font-medium">
-                              ({log.details.findings} findings)
+                              ({log.details.findings} {log.details.findings === 1 ? "finding" : "findings"})
                             </span>
                           )}
                           {log.details.replacement && (

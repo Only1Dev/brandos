@@ -70,7 +70,7 @@ export const getBrandConfig = (slug: string): BrandConfig => {
     primaryColor: savedTheme?.primaryColor || "#6366F1",
     accentColor: savedTheme?.accentColor || "#38BDF8",
     pdfFilename: `${cleanName.replace(/\s+/g, "_")}_Official_Brand_Guidelines_2026.pdf`,
-    pdfDownloadUrl: "#",
+    pdfDownloadUrl: "/Aureon_Official_Brand_Guidelines_2026.pdf",
     defaultAdminPassword: `${slug}-admin`,
     defaultReviewerPassword: `${slug}-reviewer`,
     defaultCreatorPassword: `${slug}-creator`,

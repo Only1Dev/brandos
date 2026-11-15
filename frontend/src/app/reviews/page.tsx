@@ -170,11 +170,11 @@ export default function ReviewsListPage() {
 
         <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Audit SLA Guarantee
+            Pending Sign-off
           </div>
-          <div className="text-2xl font-extrabold text-indigo-600 mt-1">Zero-Leakage</div>
-          <div className="text-[11px] text-indigo-600 font-semibold mt-1">
-            Cryptographic TruthMark™ Seal
+          <div className="text-2xl font-extrabold text-amber-600 mt-1">{reviewRequiredCount}</div>
+          <div className="text-[11px] text-amber-600 font-semibold mt-1">
+            Awaiting human reviewer
           </div>
         </div>
       </div>

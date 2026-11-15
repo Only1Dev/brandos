@@ -566,7 +566,7 @@ export default function NewReviewPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Q3 Growth Campaign — Product Launch Ad"
+              placeholder="e.g. Q3 Growth Campaign - Product Launch Ad"
               className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
             />
           </div>

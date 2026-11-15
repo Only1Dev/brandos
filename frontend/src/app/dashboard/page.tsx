@@ -143,25 +143,17 @@ export default function DashboardPage() {
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-white/10 text-slate-300 border border-white/10">
-                {brandConfig.name}
-              </span>
-
               <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30 capitalize">
                 Role: {currentRole}
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Hey {currentUser?.name || "Governance Lead"}{" "}
-              <span className="text-slate-400 font-normal text-xl sm:text-2xl">
-                ({currentUser?.title || "Enterprise Brand Admin"})
-              </span>
-              , welcome back! 👋
+              Hey {currentUser?.name || "Governance Lead"}, welcome back! 👋
             </h1>
 
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Your <strong>{brandConfig.name}</strong> Pre-Publication Governance Firewall is active and monitoring all internal and external content creation streams. Zero-tolerance policy gates protect your brand voice, TruthMark™ factual claims, and visual assets before public syndication.
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Pre-publication governance firewall active. Monitoring brand voice, TruthMark™ claims, and visual compliance before syndication.
             </p>
           </div>
 

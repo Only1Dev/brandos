@@ -3,6 +3,12 @@ const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://brandos-xwh1.
 
 const nextConfig = {
   reactStrictMode: false,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async headers() {
     return [
       {

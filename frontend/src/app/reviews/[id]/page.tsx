@@ -37,7 +37,7 @@ import { GovernanceCertificateModal } from "@/components/governance/GovernanceCe
 export default function ReviewDetailPage() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
-  const { canApproveReviews, canAutoRemediate, currentRole } = useBrand();
+  const { canApproveReviews, canAutoRemediate, currentRole, brandConfig } = useBrand();
 
   const [review, setReview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -1033,7 +1033,7 @@ export default function ReviewDetailPage() {
         isOpen={showCertificateModal}
         onClose={() => setShowCertificateModal(false)}
         review={review}
-        brandName={brandConfig.name}
+        brandName={brandConfig?.name || review?.organization?.name || "Aureon Technologies"}
       />
     </div>
   );

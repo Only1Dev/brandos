@@ -68,7 +68,6 @@ export function Sidebar() {
     currentUser,
     brandUsers,
     switchBrand,
-    switchRole,
     switchUser,
     canEditBrandBrain,
   } = useBrand();

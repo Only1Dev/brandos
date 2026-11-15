@@ -16,7 +16,6 @@ export function Header() {
     currentUser,
     brandUsers,
     switchBrand,
-    switchRole,
     switchUser,
     logout,
     setIsBrandModalOpen,
@@ -233,43 +232,6 @@ export function Header() {
                       </button>
                     );
                   })}
-                </div>
-
-                {/* Quick Role Switcher */}
-                <div className="mt-2 pt-2 border-t border-slate-100 px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Quick Role Switch
-                </div>
-                <div className="grid grid-cols-3 gap-1 px-2 pb-1">
-                  <button
-                    type="button"
-                    onClick={() => switchRole("admin")}
-                    className={cn(
-                      "px-2 py-1 text-[11px] font-bold rounded text-center transition-all cursor-pointer",
-                      currentRole === "admin" ? "bg-indigo-600 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                    )}
-                  >
-                    Admin
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => switchRole("reviewer")}
-                    className={cn(
-                      "px-2 py-1 text-[11px] font-bold rounded text-center transition-all cursor-pointer",
-                      currentRole === "reviewer" ? "bg-amber-600 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                    )}
-                  >
-                    Reviewer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => switchRole("creator")}
-                    className={cn(
-                      "px-2 py-1 text-[11px] font-bold rounded text-center transition-all cursor-pointer",
-                      currentRole === "creator" ? "bg-sky-600 text-white" : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                    )}
-                  >
-                    Creator
-                  </button>
                 </div>
               </div>
             </div>

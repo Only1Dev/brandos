@@ -28,9 +28,9 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
       }`}
     >
       <Sidebar />
-      <div className="pl-64 flex-1 flex flex-col min-w-0">
+      <div className="lg:pl-64 pl-0 flex-1 flex flex-col min-w-0 transition-all duration-300">
         <Header />
-        <main className="p-8 flex-1 overflow-y-auto">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
       </div>
       <RegisterBrandModal />
       <TourOverlay />

@@ -139,7 +139,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* 1. Personalized Executive Welcome Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-7 sm:p-8 text-white border border-indigo-900/40 shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-5 sm:p-8 text-white border border-indigo-900/40 shadow-xl">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -148,7 +148,7 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
               Hey {currentUser?.name || "Governance Lead"}, welcome back! 👋
             </h1>
 
@@ -185,7 +185,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 2. Interactive Pre-Publication Governance Pipeline Flowchart */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs space-y-5">
+      <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 lg:p-7 shadow-xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
           <div>
             <div className="flex items-center gap-2">
@@ -208,7 +208,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Responsive Flowchart Diagram */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 relative">
           {/* Stage 1 */}
           <div className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 transition-all flex flex-col justify-between group">
             <div>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
       {/* 3. Graphical Compliance Trends & Firewall Distribution Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: 14-Day Visual Compliance Trend Graph (Interactive SVG) */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 lg:p-7 shadow-xs flex flex-col justify-between space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
@@ -487,13 +487,13 @@ export default function DashboardPage() {
               </span>
             </div>
             <span className="text-[11px] text-slate-400 font-mono">
-              Deterministic SLA Target: â‰¥ 90.0%
+              Deterministic SLA Target: &ge; 90.0%
             </span>
           </div>
         </div>
 
         {/* Right 1 Col: Multimodal Firewall Decision Breakdown (Donut + Bars) */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs flex flex-col justify-between space-y-5">
+        <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 lg:p-7 shadow-xs flex flex-col justify-between space-y-5">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="h-7 w-7 rounded-lg bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs">
@@ -591,7 +591,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 4. Autonomous AI Agent Squad Operational Status */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs space-y-4">
+      <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 lg:p-7 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <span className="h-7 w-7 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs">

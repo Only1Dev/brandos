@@ -196,6 +196,8 @@ interface BrandContextType {
   canApproveReviews: boolean;
   canSubmitReviews: boolean;
   canAutoRemediate: boolean;
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (open: boolean) => void;
 }
 
 const BrandContext = createContext<BrandContextType | undefined>(undefined);
@@ -213,6 +215,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [themeMode, setThemeModeState] = useState<ThemeMode>("light");
   const [rolePermissions, setRolePermissions] = useState<RolePermissions>(DEFAULT_ROLE_PERMISSIONS);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Initialize from localStorage
   useEffect(() => {
@@ -529,6 +532,8 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         canApproveReviews,
         canSubmitReviews,
         canAutoRemediate,
+        isMobileMenuOpen,
+        setIsMobileMenuOpen,
       }}
     >
       {children}

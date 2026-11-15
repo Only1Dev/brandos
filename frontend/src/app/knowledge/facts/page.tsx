@@ -164,7 +164,8 @@ export default function FactsPage() {
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[700px]">
           <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-200">
             <tr>
               <th className="py-3 px-4">Statement / Description</th>
@@ -238,6 +239,7 @@ export default function FactsPage() {
             )))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showAddModal && (

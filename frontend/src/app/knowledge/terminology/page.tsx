@@ -83,7 +83,8 @@ export default function TerminologyPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[700px]">
           <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-200">
             <tr>
               <th className="py-3 px-4">Subject Term</th>
@@ -128,6 +129,7 @@ export default function TerminologyPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showAddModal && (

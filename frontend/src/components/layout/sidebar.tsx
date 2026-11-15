@@ -91,9 +91,10 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col select-none transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none",
+          "fixed inset-y-0 left-0 z-50 w-64 h-screen max-h-screen overflow-hidden bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col select-none transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
+        style={{ height: "100vh", maxHeight: "100vh" }}
       >
         {/* BrandOS Header */}
         <div className="h-16 shrink-0 flex items-center justify-between px-5 border-b border-slate-800 bg-slate-950">
@@ -248,12 +249,9 @@ export function Sidebar() {
               );
             })}
           </nav>
-        </div>
 
-        {/* Fixed Footer: Interactive Tour & Authenticated Identity (Always pinned & 100% visible) */}
-        <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-3 space-y-2">
-          {/* Quick Interactive Tour Launcher */}
-          <div>
+          {/* Quick Interactive Tour Launcher (Inside scrollable nav zone so bottom identity profile is never crowded) */}
+          <div className="px-3 pt-2 pb-1">
             <button
               type="button"
               onClick={() => {
@@ -271,21 +269,16 @@ export function Sidebar() {
               </span>
             </button>
           </div>
+        </div>
 
-          {/* Authenticated Identity Footer & Profile Switcher */}
+        {/* Fixed Bottom Footer: Authenticated Identity Profile Switcher (Permanently pinned & 100% visible) */}
+        <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-2.5">
           <div className="relative group">
-            <div className="p-2.5 bg-slate-900 hover:bg-slate-850 rounded-xl border border-slate-800 hover:border-slate-700 transition-all space-y-1 cursor-pointer">
-              <div className="text-[10px] font-semibold text-slate-400 group-hover:text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                <span>Authenticated Identity</span>
-                <span className="text-[9px] text-indigo-400 font-bold group-hover:underline">
-                  Switch Profile ▾
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-0.5 rounded-lg">
-                <div className="flex items-center gap-2.5 truncate">
+            <div className="p-2 bg-slate-900 hover:bg-slate-850 rounded-xl border border-slate-800 hover:border-slate-700 transition-all cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <div className={cn(
-                    "h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0",
+                    "h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 relative",
                     isSuperAdmin
                       ? "bg-purple-600"
                       : currentRole === "admin"
@@ -295,18 +288,22 @@ export function Sidebar() {
                       : "bg-sky-600"
                   )}>
                     {isSuperAdmin ? "SA" : currentUser?.name?.slice(0, 2).toUpperCase() || "US"}
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-slate-900" title="Active Authenticated Session" />
                   </div>
-                  <div className="truncate">
-                    <div className="text-xs font-semibold text-white leading-tight truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold text-white leading-tight truncate">
                       {isSuperAdmin ? "Chief Governance Officer" : currentUser?.name}
                     </div>
-                    <div className="text-[10px] text-slate-400 capitalize leading-tight flex items-center gap-1 truncate">
+                    <div className="text-[10px] text-slate-400 capitalize leading-tight flex items-center gap-1 truncate mt-0.5">
                       <span className="truncate">{currentUser?.title || currentRole}</span>
                       {!canEditBrandBrain && !isSuperAdmin && <Lock className="h-2.5 w-2.5 text-amber-400 shrink-0" />}
                     </div>
                   </div>
                 </div>
-                <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 ml-1" title="Active Authenticated Session" />
+
+                <div className="text-[10px] text-indigo-400 font-bold shrink-0 ml-1.5 group-hover:text-indigo-300 flex items-center">
+                  <span>▾</span>
+                </div>
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   ArrowRight,
@@ -96,16 +97,23 @@ export function AutoRemediationStudio({
     );
   }
 
+  const router = useRouter();
+
   const handleApply = async () => {
     if (applying || !remediationData?.remediated_text) return; // Prevent double click
     try {
       setApplying(true);
       await api.applyRemediation(reviewId, remediationData.remediated_text);
-      onRemediationApplied();
+      setApplying(false);
       onClose();
+      try {
+        onRemediationApplied();
+      } catch (err) {
+        console.error("Failed to reload review:", err);
+      }
+      router.refresh();
     } catch (err: any) {
-      alert("Failed to apply remediation: " + err.message);
-    } finally {
+      alert("Failed to apply remediation: " + (err.message || "Unknown error"));
       setApplying(false);
     }
   };

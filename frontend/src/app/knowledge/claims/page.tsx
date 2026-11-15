@@ -328,7 +328,7 @@ export default function ClaimsPage() {
       <div className="space-y-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Status Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {[
               { id: "all", label: "All Claims", count: claims.length },
               { id: "verified", label: "Verified Active", count: verifiedCount },
@@ -370,7 +370,7 @@ export default function ClaimsPage() {
         </div>
 
         {/* Category Filter Chips */}
-        <div className="flex items-center gap-2 pt-2 border-t border-slate-100 overflow-x-auto text-xs">
+        <div className="flex items-center gap-2 pt-2 border-t border-slate-100 flex-wrap text-xs">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
             <Filter className="h-3 w-3 text-slate-400" />
             Category:

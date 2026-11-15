@@ -285,7 +285,7 @@ export default function ContentPage() {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs text-slate-400 font-medium mr-1 flex items-center gap-1 shrink-0">
               <Share2 className="h-3.5 w-3.5" /> Channel:
             </span>
@@ -307,7 +307,7 @@ export default function ContentPage() {
         </div>
 
         {/* Type tabs */}
-        <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 overflow-x-auto">
+        <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 flex-wrap">
           <span className="text-xs text-slate-400 font-medium mr-1 flex items-center gap-1 shrink-0">
             <Filter className="h-3.5 w-3.5" /> Format:
           </span>
@@ -411,8 +411,8 @@ export default function ContentPage() {
                       </td>
 
                       {/* Format */}
-                      <td className="py-3.5 px-4 capitalize">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium text-[11px]">
+                      <td className="py-3.5 px-4 capitalize whitespace-nowrap">
+                        <span className="whitespace-nowrap px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium text-[11px]">
                           {c.content_type?.replace("_", " ")}
                         </span>
                       </td>

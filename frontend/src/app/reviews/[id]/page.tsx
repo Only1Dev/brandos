@@ -524,7 +524,7 @@ export default function ReviewDetailPage() {
         </div>
       )}
 
-      {/* Main Review Split Layout (PRD Section 49) */}
+      {/* Main Review Split Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT PANE: Content Display (5 cols) */}
         <div className="lg:col-span-5 space-y-4">
@@ -872,7 +872,7 @@ export default function ReviewDetailPage() {
                       {f.description}
                     </div>
 
-                    {/* Audit Evidence Trace (PRD FR-18) */}
+                    {/* Audit Evidence Trace */}
                     {f.evidences && f.evidences.length > 0 && (
                       <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1 text-xs">
                         <div className="font-semibold text-slate-700 flex items-center gap-1.5">
@@ -887,7 +887,7 @@ export default function ReviewDetailPage() {
                       </div>
                     )}
 
-                    {/* Suggestion Card (PRD FR-19) */}
+                    {/* Suggestion Card */}
                     {f.suggestions && f.suggestions.length > 0 && !isOverridden && (
                       <div className="p-3.5 rounded-lg bg-indigo-50/60 border border-indigo-200 space-y-2">
                         <div className="flex items-center justify-between text-xs font-semibold text-indigo-900">
@@ -946,7 +946,7 @@ export default function ReviewDetailPage() {
         </div>
       </div>
 
-      {/* Human Override Dialog (PRD FR-20) */}
+      {/* Human Override Dialog */}
       {overrideFindingId && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
@@ -1032,7 +1032,7 @@ export default function ReviewDetailPage() {
         isOpen={showCertificateModal}
         onClose={() => setShowCertificateModal(false)}
         review={review}
-        brandName={content?.title || "Active Brand"}
+        brandName={brandConfig.name}
       />
     </div>
   );

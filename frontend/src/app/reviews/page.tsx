@@ -182,7 +182,7 @@ export default function ReviewsListPage() {
       {/* Filter Tabs & Search Bar */}
       <div className="space-y-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {[
               { id: "all", label: "All Reviews", count: totalReviews },
               { id: "completed", label: "Passed (Clean)", count: passedCount },
@@ -223,7 +223,7 @@ export default function ReviewsListPage() {
         </div>
 
         {/* Channel Filter Chips */}
-        <div className="flex items-center gap-2 pt-2 border-t border-slate-100 overflow-x-auto text-xs">
+        <div className="flex items-center gap-2 pt-2 border-t border-slate-100 flex-wrap text-xs">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
             <Filter className="h-3 w-3 text-slate-400" />
             Channel:
@@ -260,16 +260,16 @@ export default function ReviewsListPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[720px]">
+            <table className="w-full text-left text-xs min-w-[780px]">
               <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200">
               <tr>
-                <th className="py-3.5 px-4">Content Title &amp; Media</th>
-                <th className="py-3.5 px-4">Submitter</th>
-                <th className="py-3.5 px-4">Channel</th>
-                <th className="py-3.5 px-4">Firewall Verdict</th>
-                <th className="py-3.5 px-4">Governance Score</th>
-                <th className="py-3.5 px-4">Audit Findings</th>
-                <th className="py-3.5 px-4 text-right">Action</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Content Title &amp; Media</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Submitter</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Channel</th>
+                <th className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">Firewall Verdict</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Governance Score</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Audit Findings</th>
+                <th className="py-3.5 px-4 text-right whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

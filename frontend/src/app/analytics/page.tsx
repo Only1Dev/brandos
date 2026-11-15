@@ -53,6 +53,14 @@ export default function AnalyticsPage() {
   const [selectedDriftRule, setSelectedDriftRule] = useState<any | null>(null);
   const [renewedClaims, setRenewedClaims] = useState<Record<string, boolean>>({});
   const [guidanceSent, setGuidanceSent] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((curr) => (curr === msg ? null : curr));
+    }, 4000);
+  };
 
   useEffect(() => {
     async function load() {
@@ -75,9 +83,7 @@ export default function AnalyticsPage() {
 
   const handleRenewClaim = (id: string, statement: string) => {
     setRenewedClaims((prev) => ({ ...prev, [id]: true }));
-    setTimeout(() => {
-      alert(`Claim validity extended by +90 days for: "${statement.slice(0, 45)}..."`);
-    }, 150);
+    showToast(`Claim validity extended by +90 days for: "${statement.slice(0, 45)}..."`);
   };
 
   const handleSendGuidance = (ruleId: string, ruleName: string) => {
@@ -85,8 +91,8 @@ export default function AnalyticsPage() {
     setTimeout(() => {
       setGuidanceSent(null);
       setSelectedDriftRule(null);
-      alert(`Automated Guidance Refresher dispatched to all marketing creators for ${ruleId}: "${ruleName}"`);
-    }, 1200);
+      showToast(`Automated Guidance Refresher dispatched to all marketing creators for ${ruleId}: "${ruleName}"`);
+    }, 600);
   };
 
   const pillarDetails: Record<PillarKey, PillarDetail> = {
@@ -372,13 +378,13 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Differentiator 1: Guideline Drift & Misinterpretation Radar (PRD FR-25) */}
+      {/* Differentiator 1: Guideline Drift & Misinterpretation Radar */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <span>Guideline Drift &amp; Misinterpretation Radar (PRD FR-25)</span>
+              <span>Guideline Drift &amp; Misinterpretation Radar</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Identifies ambiguous rules repeatedly triggered or misunderstood by content creators.
@@ -446,13 +452,13 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Differentiator 2: Proactive Claim Expiration Warnings (PRD FR-26) */}
+      {/* Differentiator 2: Proactive Claim Expiration Warnings */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Clock className="h-4 w-4 text-indigo-600" />
-              <span>Proactive Claim Expiration Radar (PRD FR-26)</span>
+              <span>Proactive Claim Expiration Radar</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Tracks performance &amp; legal claims approaching validity expiration before published content becomes legally vulnerable.
@@ -692,6 +698,21 @@ export default function AnalyticsPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* In-App Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2.5 animate-in slide-in-from-bottom-5 duration-300">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="ml-2 text-slate-400 hover:text-white cursor-pointer"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
     </div>

@@ -122,16 +122,33 @@ export default function DashboardPage() {
     loadData();
   }, [activeBrand, isSolaria]);
 
-  // Synthetic trend dataset for interactive graph (tailored to active brand)
-  const trendData = [
-    { day: "Day 1", date: "Nov 01", score: 88, reviews: 3, blocked: 1 },
-    { day: "Day 3", date: "Nov 03", score: 91, reviews: 5, blocked: 0 },
-    { day: "Day 6", date: "Nov 06", score: 89, reviews: 4, blocked: 1 },
-    { day: "Day 9", date: "Nov 09", score: 94, reviews: 7, blocked: 0 },
-    { day: "Day 12", date: "Nov 12", score: 96, reviews: 6, blocked: 0 },
-    { day: "Day 13", date: "Nov 13", score: 97, reviews: 9, blocked: 0 },
-    { day: "Day 14", date: "Today", score: metrics?.brand_health || 98, reviews: reviews.length || 8, blocked: 0 },
-  ];
+  // Dynamic trend datasets mapped to time window selector
+  const trendDataMap = {
+    "7d": [
+      { day: "Day 1", date: "Nov 10", score: 91, reviews: 4, blocked: 1 },
+      { day: "Day 2", date: "Nov 11", score: 93, reviews: 6, blocked: 0 },
+      { day: "Day 3", date: "Nov 12", score: 92, reviews: 5, blocked: 1 },
+      { day: "Day 4", date: "Nov 13", score: 95, reviews: 7, blocked: 0 },
+      { day: "Day 5", date: "Nov 14", score: 96, reviews: 8, blocked: 0 },
+      { day: "Day 6", date: "Nov 15", score: 97, reviews: 10, blocked: 0 },
+      { day: "Day 7", date: "Today", score: metrics?.brand_health || 98, reviews: reviews.length || 11, blocked: 0 },
+    ],
+    "30d": [
+      { day: "Week 1", date: "Oct 18", score: 86, reviews: 14, blocked: 4 },
+      { day: "Week 2", date: "Oct 25", score: 89, reviews: 21, blocked: 3 },
+      { day: "Week 3", date: "Nov 01", score: 92, reviews: 28, blocked: 2 },
+      { day: "Week 4", date: "Nov 08", score: 96, reviews: 32, blocked: 1 },
+      { day: "Current", date: "Today", score: metrics?.brand_health || 98, reviews: reviews.length || 38, blocked: 0 },
+    ],
+    "90d": [
+      { day: "Month 1", date: "Sep 2026", score: 81, reviews: 58, blocked: 14 },
+      { day: "Month 2", date: "Oct 2026", score: 89, reviews: 94, blocked: 9 },
+      { day: "Month 3", date: "Nov 2026", score: 96, reviews: 122, blocked: 3 },
+      { day: "Current", date: "Today", score: metrics?.brand_health || 98, reviews: reviews.length || 140, blocked: 0 },
+    ],
+  };
+
+  const trendData = trendDataMap[trendRange] || trendDataMap["30d"];
 
   const maxScore = 100;
   const minScore = 80;
@@ -212,98 +229,98 @@ export default function DashboardPage() {
           {/* Stage 1 */}
           <div className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 transition-all flex flex-col justify-between group">
             <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
                 <span>Stage 1</span>
                 <span className="h-2 w-2 rounded-full bg-indigo-500" />
               </div>
               <h3 className="text-xs font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
                 Ingestion & OCR
               </h3>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+              <p className="text-[11px] text-slate-700 font-medium mt-1 leading-relaxed">
                 Raw draft copy, Docx manuals, PDFs, and social video/image assets ingested via multipart stream.
               </p>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-[10px] font-mono font-semibold text-slate-600">
+            <div className="mt-3 pt-2.5 border-t border-slate-200 flex items-center justify-between text-[10px] font-mono font-bold text-slate-700">
               <span>Formats:</span>
-              <span className="text-slate-800">TXT / PDF / DOCX / MP4</span>
+              <span className="text-slate-900">TXT / PDF / DOCX / MP4</span>
             </div>
           </div>
 
           {/* Stage 2 */}
-          <div className="p-4 rounded-2xl bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-200 transition-all flex flex-col justify-between group">
+          <div className="p-4 rounded-2xl bg-indigo-50/70 hover:bg-indigo-50 border border-indigo-200 transition-all flex flex-col justify-between group">
             <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-indigo-500 uppercase tracking-wider mb-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-indigo-700 uppercase tracking-wider mb-2">
                 <span>Stage 2</span>
                 <span className="h-2 w-2 rounded-full bg-indigo-600 animate-ping" />
               </div>
-              <h3 className="text-xs font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
+              <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-indigo-700 transition-colors">
                 Agent Swarm Audit
               </h3>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+              <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
                 4 parallel sub-agents evaluate sentence-level truth grounding, tone drift, visual marks, and DLP.
               </p>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-indigo-200/60 flex items-center justify-between text-[10px] font-mono font-semibold text-indigo-700">
+            <div className="mt-3 pt-2.5 border-t border-indigo-200 flex items-center justify-between text-[10px] font-mono font-bold text-indigo-900">
               <span>Parallelism:</span>
               <span>4 Specialist Agents</span>
             </div>
           </div>
 
           {/* Stage 3 */}
-          <div className="p-4 rounded-2xl bg-purple-50/40 hover:bg-purple-50 border border-purple-200 transition-all flex flex-col justify-between group">
+          <div className="p-4 rounded-2xl bg-purple-50/70 hover:bg-purple-50 border border-purple-200 transition-all flex flex-col justify-between group">
             <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-purple-500 uppercase tracking-wider mb-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-purple-700 uppercase tracking-wider mb-2">
                 <span>Stage 3</span>
                 <span className="h-2 w-2 rounded-full bg-purple-500" />
               </div>
-              <h3 className="text-xs font-extrabold text-slate-900 group-hover:text-purple-600 transition-colors">
+              <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-purple-700 transition-colors">
                 Deterministic Policy
               </h3>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+              <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
                 Zero-tolerance code engine checks forbidden terms, ungrounded absolutes, and DLP key leak patterns.
               </p>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-purple-200/60 flex items-center justify-between text-[10px] font-mono font-semibold text-purple-700">
+            <div className="mt-3 pt-2.5 border-t border-purple-200 flex items-center justify-between text-[10px] font-mono font-bold text-purple-900">
               <span>Latency:</span>
               <span>&lt; 12ms Policy Check</span>
             </div>
           </div>
 
           {/* Stage 4 */}
-          <div className="p-4 rounded-2xl bg-amber-50/40 hover:bg-amber-50 border border-amber-200 transition-all flex flex-col justify-between group">
+          <div className="p-4 rounded-2xl bg-amber-50/70 hover:bg-amber-50 border border-amber-200 transition-all flex flex-col justify-between group">
             <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-2">
                 <span>Stage 4</span>
                 <span className="h-2 w-2 rounded-full bg-amber-500" />
               </div>
-              <h3 className="text-xs font-extrabold text-slate-900 group-hover:text-amber-700 transition-colors">
+              <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-amber-800 transition-colors">
                 Decision Gatekeeper
               </h3>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+              <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
                 Triages score: PASS (100%), WARN with auto-remediation preview, or BLOCKED for off-brand drift.
               </p>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-amber-200/60 flex items-center justify-between text-[10px] font-mono font-semibold text-amber-800">
+            <div className="mt-3 pt-2.5 border-t border-amber-200 flex items-center justify-between text-[10px] font-mono font-bold text-amber-900">
               <span>Scores:</span>
               <span>100 / 90 / Blocked</span>
             </div>
           </div>
 
           {/* Stage 5 */}
-          <div className="p-4 rounded-2xl bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-200 transition-all flex flex-col justify-between group">
+          <div className="p-4 rounded-2xl bg-emerald-50/70 hover:bg-emerald-50 border border-emerald-200 transition-all flex flex-col justify-between group">
             <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-2">
                 <span>Stage 5</span>
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
               </div>
-              <h3 className="text-xs font-extrabold text-slate-900 group-hover:text-emerald-700 transition-colors">
+              <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-emerald-700 transition-colors">
                 Public Syndication
               </h3>
-              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+              <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
                 Approved content stamped with immutable TruthMark™ verification and logged to compliance ledger.
               </p>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-emerald-200/60 flex items-center justify-between text-[10px] font-mono font-semibold text-emerald-700">
+            <div className="mt-3 pt-2.5 border-t border-emerald-200 flex items-center justify-between text-[10px] font-mono font-bold text-emerald-900">
               <span>Provenance:</span>
               <span>Immutable Ledger</span>
             </div>

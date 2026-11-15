@@ -16,6 +16,13 @@ html.dark {
   --card-border: #1e293b;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);

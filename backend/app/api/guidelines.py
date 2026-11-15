@@ -83,7 +83,19 @@ async def list_rules(
     if category:
         query = query.where(GuidelineRule.category == category)
     result = await db.execute(query)
-    rules = result.scalars().all()
+    raw_rules = result.scalars().all()
+    
+    # Deduplicate rules by rule_code / name to guarantee 100% unique rules
+    unique_rules = []
+    seen_codes = set()
+    for r in raw_rules:
+        code = (r.rule_code or r.name or "").strip().upper()
+        if code and code not in seen_codes:
+            seen_codes.add(code)
+            unique_rules.append(r)
+        elif not code:
+            unique_rules.append(r)
+
     return [
         RuleResponse(
             id=str(r.id),
@@ -96,7 +108,7 @@ async def list_rules(
             examples_negative=r.examples_negative,
             is_active=r.is_active,
         )
-        for r in rules
+        for r in unique_rules
     ]
 
 

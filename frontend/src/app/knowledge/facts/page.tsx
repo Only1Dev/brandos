@@ -133,10 +133,10 @@ export default function FactsPage() {
             onClick={loadFacts}
             disabled={loading}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-2xs"
-            title={loading ? "Synchronizing with live ledger..." : "Re-sync facts database with live Brand Brain ledger"}
+            title={loading ? "Synchronizing with live Brand Brain ledger..." : "Re-sync approved facts database with live Brand Brain ledger"}
           >
             <RefreshCw className={`h-3.5 w-3.5 text-indigo-600 ${loading ? "animate-spin" : ""}`} />
-            <span>{loading ? "Syncing..." : "Sync Ledger"}</span>
+            <span>{loading ? "Syncing..." : "Refresh Facts from Brand Brain"}</span>
           </button>
           {canEditBrandBrain ? (
             <button

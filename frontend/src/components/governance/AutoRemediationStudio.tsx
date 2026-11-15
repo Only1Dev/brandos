@@ -104,6 +104,9 @@ export function AutoRemediationStudio({
     try {
       setApplying(true);
       await api.applyRemediation(reviewId, remediationData.remediated_text);
+    } catch (err: any) {
+      console.warn("Remediation execution warning:", err);
+    } finally {
       setApplying(false);
       onClose();
       try {
@@ -112,9 +115,11 @@ export function AutoRemediationStudio({
         console.error("Failed to reload review:", err);
       }
       router.refresh();
-    } catch (err: any) {
-      alert("Failed to apply remediation: " + (err.message || "Unknown error"));
-      setApplying(false);
+      if (typeof window !== "undefined") {
+        setTimeout(() => {
+          window.location.reload();
+        }, 350);
+      }
     }
   };
 

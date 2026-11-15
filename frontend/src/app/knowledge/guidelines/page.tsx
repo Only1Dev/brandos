@@ -31,7 +31,16 @@ export default function GuidelinesPage() {
     try {
       setLoading(true);
       const data = await api.getRules(undefined, brandConfig.slug);
-      setRules(data);
+      const uniqueData = Array.isArray(data)
+        ? data.filter(
+            (r: any, idx: number, arr: any[]) =>
+              arr.findIndex(
+                (o: any) =>
+                  (o.name || o.rule_code || o.id) === (r.name || r.rule_code || r.id)
+              ) === idx
+          )
+        : [];
+      setRules(uniqueData);
     } catch (e) {
       console.error(e);
     } finally {

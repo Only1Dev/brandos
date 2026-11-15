@@ -236,7 +236,7 @@ async def override_finding(
     if user and user.role not in ("admin", "reviewer", "superadmin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Creator accounts cannot override findings. Reviewer or Administrator authority required (PRD FR-20).",
+            detail="Creator accounts cannot override findings. Reviewer or Administrator authority required.",
         )
     try:
         finding_uuid = uuid.UUID(id)

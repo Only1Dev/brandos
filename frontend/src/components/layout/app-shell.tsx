@@ -23,14 +23,14 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`min-h-screen flex transition-colors duration-200 ${
+      className={`min-h-screen flex w-full max-w-full overflow-x-hidden transition-colors duration-200 ${
         themeMode === "dark" ? "dark bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
       }`}
     >
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden">
         <Header />
-        <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">{children}</main>
+        <main className="p-3 sm:p-6 lg:p-8 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full">{children}</main>
       </div>
       <RegisterBrandModal />
       <TourOverlay />

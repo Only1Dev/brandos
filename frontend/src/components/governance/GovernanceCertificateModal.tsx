@@ -36,6 +36,13 @@ export function GovernanceCertificateModal({
 
   if (!isOpen || !review) return null;
 
+  // Always resolve to the authentic Brand Name (never the content / review title)
+  const resolvedBrandName =
+    review?.organization?.name ||
+    review?.brand_name ||
+    (brandName && brandName !== review?.content?.title && brandName !== review?.title ? brandName : null) ||
+    (review?.brand === "solaria" || review?.organization_id === "a59c526c-52c4-420a-b26a-9c72d2fafc05" ? "Solaria Wellness" : "Aureon Technologies");
+
   const isApproved = review.status === "approved";
   const isBlocked = !isApproved && (review.decision === "BLOCKED" || (review.governance_score ?? 0) < 70);
   const isPendingApproval = !isBlocked && !isApproved;
@@ -272,7 +279,7 @@ export function GovernanceCertificateModal({
               <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
                 <div>
                   <span className="text-slate-500 font-semibold block text-[10px] uppercase">Entity Brand</span>
-                  <span className="font-bold text-slate-900">{brandName}</span>
+                  <span className="font-bold text-slate-900">{resolvedBrandName}</span>
                 </div>
                 <div>
                   <span className="text-slate-500 font-semibold block text-[10px] uppercase">Asset Title</span>

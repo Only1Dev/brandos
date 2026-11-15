@@ -282,6 +282,7 @@ export default function ReviewDetailPage() {
 
           <button
             onClick={() => setShowCertificateModal(true)}
+            title="Export TruthMark™ Certificate"
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold shadow-xs transition-colors ${
               review.status === "approved"
                 ? "bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100"
@@ -293,17 +294,17 @@ export default function ReviewDetailPage() {
             {review.status === "approved" ? (
               <>
                 <Award className="h-3.5 w-3.5 text-emerald-600" />
-                <span className="font-bold">Official Certificate (Cleared)</span>
+                <span className="font-bold">Export TruthMark™ Certificate (Cleared)</span>
               </>
             ) : review.decision === "BLOCKED" || (review.governance_score ?? 0) < 70 ? (
               <>
                 <ShieldAlert className="h-3.5 w-3.5 text-red-600" />
-                <span>Enforcement Notice</span>
+                <span>Export TruthMark™ Certificate (Denied)</span>
               </>
             ) : (
               <>
                 <Clock className="h-3.5 w-3.5 text-amber-500" />
-                <span>Certificate (Pending Sign-Off)</span>
+                <span>Export TruthMark™ Certificate (Pending Sign-Off)</span>
               </>
             )}
           </button>

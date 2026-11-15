@@ -279,7 +279,7 @@ export function GovernanceCertificateModal({
               <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
                 <div>
                   <span className="text-slate-500 font-semibold block text-[10px] uppercase">Entity Brand</span>
-                  <span className="font-bold text-slate-900">{resolvedBrandName}</span>
+                  <span className="font-bold text-slate-900">{review?.brand_name || review?.organization?.name || resolvedBrandName || "Aureon Technologies"}</span>
                 </div>
                 <div>
                   <span className="text-slate-500 font-semibold block text-[10px] uppercase">Asset Title</span>

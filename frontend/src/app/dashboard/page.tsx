@@ -202,14 +202,14 @@ export default function DashboardPage() {
       </div>
 
       {/* 2. Interactive Pre-Publication Governance Pipeline Flowchart */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 lg:p-7 shadow-xs space-y-5">
+      <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 lg:p-7 shadow-xs space-y-5 w-full max-w-full overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="h-7 w-7 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="h-7 w-7 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
                 <Layers className="h-4 w-4" />
               </span>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 break-words">
                 BrandOS™ Pre-Publication Firewall Architecture & Verification Flow
               </h2>
             </div>
@@ -218,111 +218,113 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto shrink-0">
             <Radio className="h-3.5 w-3.5 animate-pulse text-emerald-600" />
             <span>Autonomous Pipeline Active</span>
           </span>
         </div>
 
         {/* Responsive Flowchart Diagram */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 relative">
-          {/* Stage 1 */}
-          <div className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
-                <span>Stage 1</span>
-                <span className="h-2 w-2 rounded-full bg-indigo-500" />
+        <div className="w-full max-w-full overflow-x-auto pb-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 relative w-full min-w-0">
+            {/* Stage 1 */}
+            <div className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 transition-all flex flex-col justify-between group min-w-0">
+              <div>
+                <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                  <span>Stage 1</span>
+                  <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                </div>
+                <h3 className="text-xs font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                  Ingestion & OCR
+                </h3>
+                <p className="text-[11px] text-slate-700 font-medium mt-1 leading-relaxed">
+                  Raw draft copy, Docx manuals, PDFs, and social video/image assets ingested via multipart stream.
+                </p>
               </div>
-              <h3 className="text-xs font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                Ingestion & OCR
-              </h3>
-              <p className="text-[11px] text-slate-700 font-medium mt-1 leading-relaxed">
-                Raw draft copy, Docx manuals, PDFs, and social video/image assets ingested via multipart stream.
-              </p>
+              <div className="mt-3 pt-2.5 border-t border-slate-200 flex items-center justify-between text-[10px] font-mono font-bold text-slate-700">
+                <span>Formats:</span>
+                <span className="text-slate-900 truncate">TXT/PDF/DOCX/MP4</span>
+              </div>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-200 flex items-center justify-between text-[10px] font-mono font-bold text-slate-700">
-              <span>Formats:</span>
-              <span className="text-slate-900">TXT / PDF / DOCX / MP4</span>
-            </div>
-          </div>
 
-          {/* Stage 2 */}
-          <div className="p-4 rounded-2xl bg-indigo-50/70 hover:bg-indigo-50 border border-indigo-200 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-indigo-700 uppercase tracking-wider mb-2">
-                <span>Stage 2</span>
-                <span className="h-2 w-2 rounded-full bg-indigo-600 animate-ping" />
+            {/* Stage 2 */}
+            <div className="p-4 rounded-2xl bg-indigo-50/70 hover:bg-indigo-50 border border-indigo-200 transition-all flex flex-col justify-between group min-w-0">
+              <div>
+                <div className="flex items-center justify-between text-[11px] font-bold text-indigo-700 uppercase tracking-wider mb-2">
+                  <span>Stage 2</span>
+                  <span className="h-2 w-2 rounded-full bg-indigo-600 animate-ping" />
+                </div>
+                <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-indigo-700 transition-colors">
+                  Agent Swarm Audit
+                </h3>
+                <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
+                  4 parallel sub-agents evaluate sentence-level truth grounding, tone drift, visual marks, and DLP.
+                </p>
               </div>
-              <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-indigo-700 transition-colors">
-                Agent Swarm Audit
-              </h3>
-              <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
-                4 parallel sub-agents evaluate sentence-level truth grounding, tone drift, visual marks, and DLP.
-              </p>
+              <div className="mt-3 pt-2.5 border-t border-indigo-200 flex items-center justify-between text-[10px] font-mono font-bold text-indigo-900">
+                <span>Parallelism:</span>
+                <span>4 Specialist Agents</span>
+              </div>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-indigo-200 flex items-center justify-between text-[10px] font-mono font-bold text-indigo-900">
-              <span>Parallelism:</span>
-              <span>4 Specialist Agents</span>
-            </div>
-          </div>
 
-          {/* Stage 3 */}
-          <div className="p-4 rounded-2xl bg-purple-50/70 hover:bg-purple-50 border border-purple-200 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-purple-700 uppercase tracking-wider mb-2">
-                <span>Stage 3</span>
-                <span className="h-2 w-2 rounded-full bg-purple-500" />
+            {/* Stage 3 */}
+            <div className="p-4 rounded-2xl bg-purple-50/70 hover:bg-purple-50 border border-purple-200 transition-all flex flex-col justify-between group min-w-0">
+              <div>
+                <div className="flex items-center justify-between text-[11px] font-bold text-purple-700 uppercase tracking-wider mb-2">
+                  <span>Stage 3</span>
+                  <span className="h-2 w-2 rounded-full bg-purple-500" />
+                </div>
+                <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-purple-700 transition-colors">
+                  Deterministic Policy
+                </h3>
+                <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
+                  Zero-tolerance code engine checks forbidden terms, ungrounded absolutes, and DLP key leak patterns.
+                </p>
               </div>
-              <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-purple-700 transition-colors">
-                Deterministic Policy
-              </h3>
-              <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
-                Zero-tolerance code engine checks forbidden terms, ungrounded absolutes, and DLP key leak patterns.
-              </p>
+              <div className="mt-3 pt-2.5 border-t border-purple-200 flex items-center justify-between text-[10px] font-mono font-bold text-purple-900">
+                <span>Latency:</span>
+                <span>&lt; 12ms Policy Check</span>
+              </div>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-purple-200 flex items-center justify-between text-[10px] font-mono font-bold text-purple-900">
-              <span>Latency:</span>
-              <span>&lt; 12ms Policy Check</span>
-            </div>
-          </div>
 
-          {/* Stage 4 */}
-          <div className="p-4 rounded-2xl bg-amber-50/70 hover:bg-amber-50 border border-amber-200 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-2">
-                <span>Stage 4</span>
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
+            {/* Stage 4 */}
+            <div className="p-4 rounded-2xl bg-amber-50/70 hover:bg-amber-50 border border-amber-200 transition-all flex flex-col justify-between group min-w-0">
+              <div>
+                <div className="flex items-center justify-between text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-2">
+                  <span>Stage 4</span>
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                </div>
+                <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-amber-800 transition-colors">
+                  Decision Gatekeeper
+                </h3>
+                <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
+                  Triages score: PASS (100%), WARN with auto-remediation preview, or BLOCKED for off-brand drift.
+                </p>
               </div>
-              <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-amber-800 transition-colors">
-                Decision Gatekeeper
-              </h3>
-              <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
-                Triages score: PASS (100%), WARN with auto-remediation preview, or BLOCKED for off-brand drift.
-              </p>
+              <div className="mt-3 pt-2.5 border-t border-amber-200 flex items-center justify-between text-[10px] font-mono font-bold text-amber-900">
+                <span>Scores:</span>
+                <span>100 / 90 / Blocked</span>
+              </div>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-amber-200 flex items-center justify-between text-[10px] font-mono font-bold text-amber-900">
-              <span>Scores:</span>
-              <span>100 / 90 / Blocked</span>
-            </div>
-          </div>
 
-          {/* Stage 5 */}
-          <div className="p-4 rounded-2xl bg-emerald-50/70 hover:bg-emerald-50 border border-emerald-200 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-2">
-                <span>Stage 5</span>
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            {/* Stage 5 */}
+            <div className="p-4 rounded-2xl bg-emerald-50/70 hover:bg-emerald-50 border border-emerald-200 transition-all flex flex-col justify-between group min-w-0">
+              <div>
+                <div className="flex items-center justify-between text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-2">
+                  <span>Stage 5</span>
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                </div>
+                <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-emerald-700 transition-colors">
+                  Public Syndication
+                </h3>
+                <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
+                  Approved content stamped with immutable TruthMark™ verification and logged to compliance ledger.
+                </p>
               </div>
-              <h3 className="text-xs font-extrabold text-slate-950 group-hover:text-emerald-700 transition-colors">
-                Public Syndication
-              </h3>
-              <p className="text-[11px] text-slate-800 font-medium mt-1 leading-relaxed">
-                Approved content stamped with immutable TruthMark™ verification and logged to compliance ledger.
-              </p>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-emerald-200 flex items-center justify-between text-[10px] font-mono font-bold text-emerald-900">
-              <span>Provenance:</span>
-              <span>Immutable Ledger</span>
+              <div className="mt-3 pt-2.5 border-t border-emerald-200 flex items-center justify-between text-[10px] font-mono font-bold text-emerald-900">
+                <span>Provenance:</span>
+                <span>Immutable Ledger</span>
+              </div>
             </div>
           </div>
         </div>
@@ -348,16 +350,16 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-1.5 self-start sm:self-auto">
-              <span className="px-3 py-1 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs shadow-2xs">
-                Last 30 Days
+              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 shadow-2xs">
+                Trailing 30 Days
               </span>
             </div>
           </div>
 
           {/* SVG Line & Area Chart */}
-          <div className="relative pt-6 pb-2">
-            <div className="h-56 w-full relative">
-              <svg viewBox="0 0 700 220" className="w-full h-full overflow-visible">
+          <div className="relative pt-6 pb-2 w-full max-w-full overflow-x-auto">
+            <div className="h-56 min-w-[320px] sm:min-w-0 w-full relative">
+              <svg viewBox="0 0 700 220" className="w-full h-full overflow-hidden">
                 <defs>
                   <linearGradient id="scoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#6366F1" stopOpacity="0.35" />

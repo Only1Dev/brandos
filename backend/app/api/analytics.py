@@ -30,7 +30,7 @@ async def get_dashboard_metrics(
     brand: str | None = None,
     brand_slug: str | None = Header(None, alias="X-Brand-Slug"),
 ) -> Dict[str, Any]:
-    """Governance health indicators, scores, and issue summaries (FR-27)."""
+    """Governance health indicators, scores, and issue summaries."""
     # 1. Resolve Active Organization
     slug = (brand or brand_slug or "aureon").strip().lower()
     org_res = await db.execute(select(Organization).where(Organization.slug == slug))
@@ -176,7 +176,7 @@ async def get_guideline_drift(
     brand_slug: str | None = Header(None, alias="X-Brand-Slug"),
     db: AsyncSession = Depends(get_db),
 ) -> List[Dict[str, Any]]:
-    """Identifies guidelines repeatedly violated or misinterpreted by creators (FR-25)."""
+    """Identifies guidelines repeatedly violated or misinterpreted by creators."""
     slug = (brand or brand_slug or "aureon").strip().lower()
 
     if slug == "solaria":
@@ -245,7 +245,7 @@ async def get_expiring_claims(
     brand_slug: str | None = Header(None, alias="X-Brand-Slug"),
     db: AsyncSession = Depends(get_db),
 ) -> List[Dict[str, Any]]:
-    """Proactively flags claims approaching expiration (FR-26)."""
+    """Proactively flags claims approaching expiration."""
     slug = (brand or brand_slug or "aureon").strip().lower()
 
     if slug == "solaria":

@@ -392,6 +392,12 @@ async def get_review_details(
     c_res = await db.execute(select(Content).where(Content.id == review.content_id))
     content = c_res.scalar_one_or_none()
 
+    org = None
+    if content and content.organization_id:
+        org_res = await db.execute(select(Organization).where(Organization.id == content.organization_id))
+        org = org_res.scalar_one_or_none()
+    brand_name = org.name if org else "Aureon Technologies"
+
     v_res = await db.execute(select(ContentVersion).where(ContentVersion.id == review.content_version_id))
     version = v_res.scalar_one_or_none()
 
@@ -549,6 +555,12 @@ async def get_review_details(
         "warning_count": review.warning_count,
         "info_count": review.info_count,
         "reviewer_comment": review.reviewer_comment,
+        "brand_name": brand_name,
+        "organization": {
+            "id": str(org.id) if org else "",
+            "name": brand_name,
+            "slug": org.slug if org else "aureon",
+        } if org else {"id": "", "name": "Aureon Technologies", "slug": "aureon"},
         "radar_scores": {
             "domain": domain_score,
             "tone": tone_score,

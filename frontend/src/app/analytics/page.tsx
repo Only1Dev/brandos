@@ -458,7 +458,7 @@ export default function AnalyticsPage() {
           <div>
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Clock className="h-4 w-4 text-indigo-600" />
-              <span>Proactive Claim Expiration Radar</span>
+              <span>Enterprise Claim Staleness &amp; Proactive Expiration Monitor</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Tracks performance &amp; legal claims approaching validity expiration before published content becomes legally vulnerable.

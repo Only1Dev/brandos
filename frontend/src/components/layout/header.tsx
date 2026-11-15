@@ -115,14 +115,6 @@ export function Header() {
           </div>
         </div>
 
-        {/* Firewall Active Pill */}
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-          <span className="text-slate-300">/</span>
-          <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80 flex items-center gap-1.5 text-[11px] font-semibold">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            {isSuperAdmin ? "System-Wide Oversight Active" : "Firewall Active"}
-          </span>
-        </div>
       </div>
 
       {/* Right Action Bar */}

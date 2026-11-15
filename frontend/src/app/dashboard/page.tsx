@@ -3,9 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  ShieldCheck,
   AlertTriangle,
-  FileText,
   Activity,
   ArrowRight,
   TrendingUp,
@@ -145,11 +143,6 @@ export default function DashboardPage() {
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Firewall Operational</span>
-              </span>
-
               <span className="px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-white/10 text-slate-300 border border-white/10">
                 {brandConfig.name}
               </span>
@@ -191,22 +184,6 @@ export default function DashboardPage() {
                 <span>Drafting Restricted</span>
               </span>
             )}
-
-            <Link
-              href="/knowledge/guidelines"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-colors"
-            >
-              <FileText className="h-4 w-4 text-slate-300" />
-              <span>Brand Brain</span>
-            </Link>
-
-            <Link
-              href="/audit"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-colors"
-            >
-              <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              <span>Audit Trail</span>
-            </Link>
           </div>
         </div>
 

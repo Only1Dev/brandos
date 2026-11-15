@@ -40,7 +40,8 @@ interface PillarDetail {
 }
 
 export default function AnalyticsPage() {
-  const { activeBrand, brandConfig } = useBrand();
+  const { activeBrand, brandConfig, currentRole } = useBrand();
+  const canSendGuidance = currentRole === "admin" || currentRole === "reviewer" || currentRole === "superadmin";
   const [drift, setDrift] = useState<any[]>([]);
   const [expiring, setExpiring] = useState<any[]>([]);
   const [dashboard, setDashboard] = useState<any>(null);
@@ -429,13 +430,15 @@ export default function AnalyticsPage() {
                   >
                     View Rule Spec
                   </Link>
-                  <button
-                    onClick={() => setSelectedDriftRule(item)}
-                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
-                  >
-                    <Send className="h-3 w-3" />
-                    <span>Send Creator Guidance</span>
-                  </button>
+                  {canSendGuidance && (
+                    <button
+                      onClick={() => setSelectedDriftRule(item)}
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
+                    >
+                      <Send className="h-3 w-3" />
+                      <span>Send Creator Guidance</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -635,7 +638,7 @@ export default function AnalyticsPage() {
       )}
 
       {/* Creator Guidance Modal */}
-      {selectedDriftRule && (
+      {selectedDriftRule && canSendGuidance && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-xl p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">

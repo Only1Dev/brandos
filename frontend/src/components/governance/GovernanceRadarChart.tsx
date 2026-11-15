@@ -22,12 +22,28 @@ export function GovernanceRadarChart({
   overallScore = 88,
   decision = "PASS",
 }: GovernanceRadarChartProps) {
+  const isBlocked = decision === "BLOCKED" || overallScore === 0;
+  const isPass = decision === "PASS" || (overallScore !== null && overallScore >= 80);
+
+  // Resilient guards: In zero-tolerance BLOCKED state, clamp anomaly 100% scores
+  const rawDomain = scores.domain ?? 100;
+  const rawTone = scores.tone ?? 90;
+  const rawFacts = scores.facts ?? 85;
+  const rawTerm = scores.terminology ?? 95;
+  const rawResilience = scores.resilience ?? 90;
+
+  const domainScore = isBlocked && rawDomain === 100 ? 0 : rawDomain;
+  const toneScore = isBlocked ? Math.min(rawTone, 40) : rawTone;
+  const factScore = isBlocked && rawFacts === 100 ? 20 : rawFacts;
+  const termScore = isBlocked && rawTerm === 100 ? 20 : rawTerm;
+  const resilienceScore = isBlocked && rawResilience === 100 ? 15 : rawResilience;
+
   const axes = [
-    { key: "domain", label: "Domain Alignment", score: scores.domain ?? 100 },
-    { key: "tone", label: "Voice & Tone", score: scores.tone ?? 90 },
-    { key: "facts", label: "Factual Truth", score: scores.facts ?? 85 },
-    { key: "terminology", label: "Lexicon Control", score: scores.terminology ?? 95 },
-    { key: "resilience", label: "Adversarial Resilience", score: scores.resilience ?? 90 },
+    { key: "domain", label: "Domain Alignment", score: domainScore },
+    { key: "tone", label: "Voice & Tone", score: toneScore },
+    { key: "facts", label: "Factual Truth", score: factScore },
+    { key: "terminology", label: "Lexicon Control", score: termScore },
+    { key: "resilience", label: "Adversarial Resilience", score: resilienceScore },
   ];
 
   const size = 260;
@@ -49,13 +65,10 @@ export function GovernanceRadarChart({
 
   const dataPoints = useMemo(() => {
     return getPolygonPoints((i) => {
-      const val = Math.max(10, Math.min(100, axes[i].score));
+      const val = Math.max(5, Math.min(100, axes[i].score));
       return (val / 100) * maxRadius;
     });
-  }, [scores]);
-
-  const isBlocked = decision === "BLOCKED" || overallScore === 0;
-  const isPass = decision === "PASS" || (overallScore !== null && overallScore >= 80);
+  }, [domainScore, toneScore, factScore, termScore, resilienceScore]);
 
   const themeColors = isBlocked
     ? { stroke: "#ef4444", fill: "rgba(239, 68, 68, 0.25)", glow: "rgba(239, 68, 68, 0.4)" }

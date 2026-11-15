@@ -257,8 +257,8 @@ function SidebarNav({ isMobile }: { isMobile?: boolean }) {
         </div>
       </div>
 
-      {/* Fixed Bottom Footer: Profile Switcher */}
-      <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-2.5">
+      {/* Fixed Bottom Footer: Profile Switcher with taskbar safety clearance */}
+      <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-2.5 pb-6 lg:pb-8">
         <div className="relative group">
           <div className="p-2 bg-slate-900 hover:bg-slate-850 rounded-xl border border-slate-800 hover:border-slate-700 transition-all cursor-pointer">
             <div className="flex items-center justify-between">
@@ -353,7 +353,7 @@ export function Sidebar() {
   return (
     <>
       {/* 1. Desktop Static/Sticky Sidebar: Part of document flex flow, NEVER overlaps content */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 sticky top-0 h-screen max-h-screen overflow-hidden bg-slate-900 border-r border-slate-800 text-slate-300 select-none z-30">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 sticky top-0 h-[100dvh] max-h-[100dvh] overflow-hidden bg-slate-900 border-r border-slate-800 text-slate-300 select-none z-30">
         <SidebarNav />
       </aside>
 
@@ -366,7 +366,7 @@ export function Sidebar() {
             onClick={() => setIsMobileMenuOpen(false)}
           />
           {/* Drawer */}
-          <aside className="relative w-64 max-w-[85vw] h-full bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col shadow-2xl z-50 animate-in slide-in-from-left duration-200">
+          <aside className="relative w-72 max-w-[85vw] h-[100dvh] max-h-[100dvh] bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col shadow-2xl z-50 animate-in slide-in-from-left duration-200">
             <SidebarNav isMobile />
           </aside>
         </div>

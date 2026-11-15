@@ -435,27 +435,74 @@ async def get_review_details(
     term_score = 100
     resilience_score = 100
 
+    raw_text = (version.raw_text or "").strip() if version else ""
+    raw_lower = raw_text.lower()
+    raw_words = raw_lower.split()
+    word_count = len(raw_words)
+
+    # Keywords indicative of legitimate enterprise domain relevance
+    enterprise_domain_keywords = {
+        "aureon", "shield", "sentinel", "banking", "cybersecurity", "fraud",
+        "threat", "intelligence", "security", "zero-day", "financial",
+        "transaction", "compliance", "governance", "solaria", "purehydrate",
+        "cellular", "hydration", "electrolyte", "wellness", "bioimmune", "health"
+    }
+    has_domain_keywords = any(kw in raw_lower for kw in enterprise_domain_keywords)
+
+    # Detect safety, vulgarity, profanity, harassment, or offensive attacks
+    has_safety_violation = any(
+        f.status not in ("accepted", "overridden") and (
+            "safety" in (f.title or "").lower()
+            or "vulgar" in (f.title or "").lower()
+            or "profan" in (f.title or "").lower()
+            or "harass" in (f.title or "").lower()
+            or "abusive" in (f.title or "").lower()
+            or "hate" in (f.title or "").lower()
+            or "obscene" in (f.title or "").lower()
+            or "toxic" in (f.title or "").lower()
+            or any((e.source_id or "") in ("BRAND-SAFETY-001", "SAFETY-001") for e in (f.evidences or []))
+        )
+        for f in review.findings
+    ) or any(
+        bad in raw_lower
+        for bad in (
+            "fuck", "shit", "bitch", "asshole", "bastard", "cunt", "dick",
+            "pussy", "slut", "whore", "fag", "nigger", "retard"
+        )
+    )
+
+    # Detect direct domain misalignment, cross-tenant leaks, or placeholder text
     has_direct_block = any(
         f.status not in ("accepted", "overridden") and (
             f.rule_id in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001")
-            or "domain misalignment" in f.title.lower()
-            or "cross-tenant" in f.title.lower()
-            or "out of domain" in f.title.lower()
-            or "out-of-domain" in f.title.lower()
-            or "missing brand identity" in f.title.lower()
-            or "placeholder copy" in f.title.lower()
-            or "meaningless placeholder" in f.title.lower()
-            or any((e.source_id or "") in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001") for e in f.evidences)
+            or "domain misalignment" in (f.title or "").lower()
+            or "cross-tenant" in (f.title or "").lower()
+            or "out of domain" in (f.title or "").lower()
+            or "out-of-domain" in (f.title or "").lower()
+            or "missing brand identity" in (f.title or "").lower()
+            or "placeholder copy" in (f.title or "").lower()
+            or "meaningless placeholder" in (f.title or "").lower()
+            or any((e.source_id or "") in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001") for e in (f.evidences or []))
         )
         for f in review.findings
     )
 
-    if has_direct_block:
+    is_out_of_domain = has_direct_block or (word_count < 25 and not has_domain_keywords)
+
+    if has_safety_violation:
+        # Abusive / profane copy has zero brand domain alignment, fails voice & tone, fails safety checks
         domain_score = 0
-        tone_score = 25
+        tone_score = 10
         fact_score = 20
-        term_score = 30
-        resilience_score = 10
+        term_score = 20
+        resilience_score = 15
+    elif is_out_of_domain:
+        # Off-domain / cross-tenant / irrelevant filler text
+        domain_score = 0
+        tone_score = 30
+        fact_score = 25
+        term_score = 35
+        resilience_score = 20
     else:
         for f in review.findings:
             if f.status in ("accepted", "overridden"):
@@ -463,28 +510,40 @@ async def get_review_details(
             cat = (f.category or "").lower()
             agent = (f.agent or "").lower()
             sev = (f.severity or "medium").lower()
-            penalty = 30 if sev in ("error", "critical") else 15
+            title = (f.title or "").lower()
+            penalty = 35 if sev in ("error", "critical") else 15
 
-            if "domain" in cat or "domain misalignment" in f.title.lower() or "cross-tenant" in f.title.lower():
+            if "domain" in cat or "domain misalignment" in title or "cross-tenant" in title or "brand-identity" in title:
                 domain_score = max(0, domain_score - 50)
             elif agent == "fact" or "fact" in cat or "claim" in cat:
                 fact_score = max(10, fact_score - penalty)
             elif agent == "terminology" or "term" in cat or "lexicon" in cat:
                 term_score = max(10, term_score - penalty)
-            elif agent == "brand" or "tone" in cat:
+            elif agent == "brand" or "tone" in cat or "voice" in cat:
                 tone_score = max(10, tone_score - penalty)
             else:
                 resilience_score = max(15, resilience_score - penalty)
 
-        if review.decision == "BLOCKED" and domain_score > 0:
-            # Blocked due to rules/facts/tone, but domain is 100% compliant!
-            pass
+        if not has_domain_keywords and word_count < 40:
+            domain_score = min(domain_score, 15)
+
+        if review.decision == "BLOCKED":
+            if not has_domain_keywords:
+                domain_score = 0
+            else:
+                domain_score = min(domain_score, 35)
+            tone_score = min(tone_score, 35)
+            resilience_score = min(resilience_score, 25)
+            fact_score = min(fact_score, 30)
+
+    effective_governance_score = 0 if (has_safety_violation or (review.decision == "BLOCKED" and is_out_of_domain)) else review.governance_score
+    effective_decision = "BLOCKED" if (has_safety_violation or is_out_of_domain or review.decision == "BLOCKED") else review.decision
 
     return {
         "id": str(review.id),
         "status": review.status,
-        "decision": review.decision,
-        "governance_score": review.governance_score,
+        "decision": effective_decision,
+        "governance_score": effective_governance_score,
         "total_findings": review.total_findings,
         "error_count": review.error_count,
         "warning_count": review.warning_count,

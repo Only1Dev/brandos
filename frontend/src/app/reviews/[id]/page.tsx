@@ -647,8 +647,8 @@ export default function ReviewDetailPage() {
         {/* RIGHT PANE: Governance Result & Findings (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Summary Score Bar */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Governance Firewall Result</span>
                 <div className="text-2xl font-extrabold text-slate-900 mt-1 flex items-center gap-3">
@@ -657,7 +657,7 @@ export default function ReviewDetailPage() {
               </div>
 
               {/* Severity Counts Badge Group */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-700 font-bold text-xs flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-red-600"></span>
                   <span>{review.error_count} High/Critical</span>

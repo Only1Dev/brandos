@@ -398,19 +398,14 @@ export default function LoginPage() {
               {organizations.map((org) => {
                 const isAureon = org.slug === "aureon";
                 const isSolaria = org.slug === "solaria";
-                const stats = brandStats[org.slug] || {
-                  rules_count: org.rules_count ?? (isAureon ? 114 : isSolaria ? 98 : 3),
-                  facts_count: org.facts_count ?? (isAureon ? 3 : isSolaria ? 2 : 0),
-                };
-                const personasCount = getDynamicBrandUsers(org.slug).length;
 
                 return (
                   <div
                     key={org.slug}
                     onClick={() => handleSelectBrand(org.slug)}
-                    className="group cursor-pointer rounded-2xl p-4.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-indigo-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/10 flex items-start justify-between"
+                    className="group cursor-pointer rounded-2xl p-4 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-indigo-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/10 flex items-center justify-between"
                   >
-                    <div className="flex items-start gap-3.5">
+                    <div className="flex items-center gap-3.5 min-w-0">
                       <div
                         className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
                           isAureon
@@ -428,34 +423,22 @@ export default function LoginPage() {
                           <Building2 className="h-5 w-5" />
                         )}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-bold text-white text-sm group-hover:text-indigo-300 transition-colors">
-                            {org.name}
-                          </h3>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold">
-                            {org.industry || (isAureon ? "FinTech & Security" : isSolaria ? "Nutraceuticals" : "Enterprise Workspace")}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                          {org.description || "Enterprise autonomous brand governance workspace."}
-                        </p>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-2.5">
-                          <span className="text-slate-300 font-semibold">
-                            {stats.rules_count} Guideline Rules
-                          </span>
-                          <span>•</span>
-                          <span className="text-slate-300 font-semibold">
-                            {stats.facts_count} Verified Facts
-                          </span>
-                          <span>•</span>
-                          <span className="text-indigo-400 font-medium">
-                            {personasCount} Personas
-                          </span>
-                        </div>
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <h3 className="font-bold text-white text-sm group-hover:text-indigo-300 transition-colors">
+                          {org.name}
+                        </h3>
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
+                          isAureon
+                            ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                            : isSolaria
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            : "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                        }`}>
+                          {org.industry || (isAureon ? "FinTech & Security" : isSolaria ? "Nutraceuticals" : "Enterprise Workspace")}
+                        </span>
                       </div>
                     </div>
-                    <div className="h-8 w-8 rounded-lg bg-white/5 group-hover:bg-indigo-600 text-slate-400 group-hover:text-white flex items-center justify-center shrink-0 transition-all mt-1">
+                    <div className="h-8 w-8 rounded-lg bg-white/5 group-hover:bg-indigo-600 text-slate-400 group-hover:text-white flex items-center justify-center shrink-0 transition-all">
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   </div>

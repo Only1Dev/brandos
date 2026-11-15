@@ -643,6 +643,67 @@ def check_domain_alignment(
     return findings
 
 
+PROFANITY_PATTERN = re.compile(
+    r'\b('
+    r'fuck(?:ing|er|ed|s|off)?|motherfuck(?:er|ing)?|'
+    r'shit(?:ty|ting|head|s)?|bullshit|horseshit|dipshit|'
+    r'bitch(?:es|ing|y)?|'
+    r'bastard(?:s)?|'
+    r'asshole(?:s)?|dumbass|jackass|'
+    r'cunt(?:s)?|'
+    r'dick(?:head|s)?|'
+    r'pussy|pussies|'
+    r'cock(?:sucker|s)?|'
+    r'slut(?:s|ty)?|whore(?:s)?|'
+    r'twat(?:s)?|wanker(?:s)?|prick(?:s)?|'
+    r'nigger(?:s)?|nigga(?:s)?|fag(?:got)?|retard(?:ed)?'
+    r')\b|'
+    r'(?:\b[fF][\*#@$!]+[kK]\b|\b[sS][hH][\*#@$!]+[tT]\b|\b[bB][\*#@$!]+[tT][cC][hH]\b|\b[aA][\*#@$!]+[hH][oO][lL][eE]\b)',
+    re.IGNORECASE
+)
+
+
+def check_brand_safety_profanity(text: str) -> List[dict]:
+    """
+    Zero-tolerance Brand Safety & Anti-Profanity Firewall.
+    Detects vulgar, profane, obscene, or abusive terms and automatically
+    generates critical findings to block public syndication immediately.
+    """
+    violations = []
+    if not text or not text.strip():
+        return violations
+
+    matches = list(PROFANITY_PATTERN.finditer(text))
+    if matches:
+        found_terms = list(dict.fromkeys(m.group(0) for m in matches))
+        terms_display = ", ".join(f"'{t}'" for t in found_terms)
+        first_match = matches[0].group(0)
+
+        violations.append({
+            "finding_type": "brand",
+            "severity": "critical",
+            "title": "Brand Safety Violation: Vulgar & Profane Language Detected",
+            "description": f"Content contains prohibited vulgar/profane language ({terms_display}). BrandOS pre-publication firewall strictly prohibits profanity and offensive language in enterprise communications.",
+            "detected_text": first_match,
+            "explanation": "Zero-tolerance Brand Safety threshold: Enterprise brand governance prohibits obscene, profane, abusive, or vulgar terminology. All content containing vulgarity is automatically disqualified and blocked at the firewall (Score: 0/100).",
+            "rule_ref": "BRAND-SAFETY-001",
+            "confidence": 1.0,
+            "evidence": [{
+                "evidence_type": "policy",
+                "source_ref": "BRAND-SAFETY-001",
+                "description": "Zero-tolerance Brand Safety: Content containing vulgar or profane language is disqualified from public syndication.",
+                "data": {"detected_terms": found_terms}
+            }],
+            "suggestion": {
+                "original_text": first_match,
+                "suggested_text": "[REMOVED]",
+                "reasoning": "Remove vulgar/profane language and replace with professional enterprise copy."
+            }
+        })
+
+    return violations
+
+
 class PolicyEngine:
     """Wrapper class providing policy precedence and evaluation methods."""
 
@@ -670,3 +731,6 @@ class PolicyEngine:
 
     def check_confidentiality_dlp(self, text: str) -> List[dict]:
         return check_confidentiality_dlp(text)
+
+    def check_brand_safety_profanity(self, text: str) -> List[dict]:
+        return check_brand_safety_profanity(text)

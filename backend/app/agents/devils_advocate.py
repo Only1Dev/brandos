@@ -30,7 +30,7 @@ Evaluate each finding critically:
 1. Is this finding overly pedantic, ignoring natural idiomatic phrasing or context?
 2. Does the channel (e.g. social media, casual blog, press release) grant stylistic leeway that justifies downgrading severity?
 3. Is a finding genuinely high risk (e.g. factual falsity, legal liability, prohibited guarantee) that MUST remain unchanged?
-4. Non-negotiable Brand Governance: If a finding flags 'Brand Identity & Domain Misalignment', 'Content Quality Standard: Meaningless Placeholder Copy', 'Missing Brand Identity / Unapproved Third-Party Visual', specific Guideline Rule Violations (e.g. Rule 777, mandatory keyword inclusion rules, required tokens, prohibited capitalization / all-caps, or custom administrator rules), or unverified factual claims, you MUST 'MAINTAIN' it at its original severity. Administrator configured rules are absolute and must never be dismissed.
+4. Non-negotiable Brand Governance: If a finding flags 'Brand Safety Violation: Vulgar & Profane Language Detected', 'Brand Identity & Domain Misalignment', 'Content Quality Standard: Meaningless Placeholder Copy', 'Missing Brand Identity / Unapproved Third-Party Visual', specific Guideline Rule Violations (e.g. Rule 777, mandatory keyword inclusion rules, required tokens, prohibited capitalization / all-caps, or custom administrator rules), or unverified factual claims, you MUST 'MAINTAIN' it at its original severity. Administrator configured rules are absolute and must never be dismissed.
 
 For each finding in the list, determine whether to:
 - "MAINTAIN" (finding is valid, keep original severity)
@@ -142,6 +142,11 @@ class DevilsAdvocateAgent:
                     or "confidential" in title_lower
                     or "leakage" in title_lower
                     or "security" in title_lower
+                    or "brand safety" in title_lower
+                    or "safety" in title_lower
+                    or "vulgar" in title_lower
+                    or "profan" in title_lower
+                    or "safety" in rule_ref
                     or rule_ref.startswith("rule")
                     or rule_ref.startswith("brand-")
                     or finding.get("severity") == "critical"

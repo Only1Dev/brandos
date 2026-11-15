@@ -55,11 +55,24 @@ export default function NewReviewPage() {
   const preFlightFindings = useMemo(() => {
     if (!rawText || !rawText.trim()) return [];
     const findings: {
-      type: "dlp" | "guarantee" | "superlative" | "crosstenant";
+      type: "safety" | "dlp" | "guarantee" | "superlative" | "crosstenant";
       severity: "critical" | "warning";
       label: string;
       matchedText: string;
     }[] = [];
+
+    // 0. Zero-Tolerance Brand Safety / Vulgarity Filter
+    const vulgarMatch = rawText.match(
+      /\b(fuck(?:ing|er|ed|s|off)?|motherfuck(?:er|ing)?|shit(?:ty|ting|head|s)?|bullshit|horseshit|dipshit|bitch(?:es|ing|y)?|bastard(?:s)?|asshole(?:s)?|dumbass|jackass|cunt(?:s)?|dick(?:head|s)?|pussy|pussies|cock(?:sucker|s)?|slut(?:s|ty)?|whore(?:s)?|twat(?:s)?|wanker(?:s)?|prick(?:s)?|nigger(?:s)?|nigga(?:s)?|fag(?:got)?|retard(?:ed)?)\b|(?:\b[fF][\*#@$!]+[kK]\b|\b[sS][hH][\*#@$!]+[tT]\b|\b[bB][\*#@$!]+[tT][cC][hH]\b|\b[aA][\*#@$!]+[hH][oO][lL][eE]\b)/i
+    );
+    if (vulgarMatch) {
+      findings.push({
+        type: "safety",
+        severity: "critical",
+        label: "Zero-Tolerance Brand Safety: Vulgar / Profane Word Detected (Firewall Block)",
+        matchedText: vulgarMatch[0],
+      });
+    }
 
     // 1. DLP Checks
     const dlpMatch = rawText.match(/\b(CONFIDENTIAL|STRICTLY CONFIDENTIAL|INTERNAL USE ONLY|DO NOT DISTRIBUTE|NDA PROTECTED)\b/i);
@@ -132,6 +145,11 @@ export default function NewReviewPage() {
 
   const handleSanitizeDraft = () => {
     let sanitized = rawText;
+    // Strip profanity and vulgar language
+    sanitized = sanitized.replace(
+      /\b(fuck(?:ing|er|ed|s|off)?|motherfuck(?:er|ing)?|shit(?:ty|ting|head|s)?|bullshit|horseshit|dipshit|bitch(?:es|ing|y)?|bastard(?:s)?|asshole(?:s)?|dumbass|jackass|cunt(?:s)?|dick(?:head|s)?|pussy|pussies|cock(?:sucker|s)?|slut(?:s|ty)?|whore(?:s)?|twat(?:s)?|wanker(?:s)?|prick(?:s)?|nigger(?:s)?|nigga(?:s)?|fag(?:got)?|retard(?:ed)?)\b/gi,
+      "[compliant]"
+    );
     sanitized = sanitized.replace(/\b(CONFIDENTIAL & PROPRIETARY\s*-\s*INTERNAL USE ONLY\.\s*DO NOT DISTRIBUTE\.|CONFIDENTIAL|STRICTLY CONFIDENTIAL|INTERNAL USE ONLY|DO NOT DISTRIBUTE|NDA PROTECTED)\b[\s\n]*/gi, "");
     sanitized = sanitized.replace(/sk_live_[a-zA-Z0-9_-]+/g, "sk_live_••••••••••••");
     sanitized = sanitized.replace(/secret_key\s*=\s*[^\s]+/g, "secret_key=[REDACTED]");

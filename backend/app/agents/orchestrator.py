@@ -140,6 +140,11 @@ class AnalysisOrchestrator:
                 text=text,
             )
 
+            # Enforce Zero-Tolerance Brand Safety & Anti-Profanity Firewall
+            safety_findings = self.policy_engine.check_brand_safety_profanity(
+                text=text,
+            )
+
             # Await async agents concurrently
             if visual_task:
                 brand_findings, fact_findings, visual_findings = await asyncio.gather(
@@ -181,6 +186,7 @@ class AnalysisOrchestrator:
             ]
 
         raw_combined = [
+            *safety_findings,
             *domain_findings,
             *confidentiality_findings,
             *substance_findings,

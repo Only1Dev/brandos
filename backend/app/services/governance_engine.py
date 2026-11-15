@@ -52,10 +52,10 @@ class GovernanceEngine:
 
         # Zero-Tolerance Direct Disqualification:
         # If any finding flags genuine cross-tenant misalignment, out-of-domain breach,
-        # or meaningless placeholder / gibberish text:
+        # vulgar/profane language, or meaningless placeholder / gibberish text:
         # immediately set governance_score = 0 and decision = "BLOCKED"!
         is_direct_block = any(
-            f.get("rule_ref") in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001")
+            f.get("rule_ref") in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001", "BRAND-SAFETY-001", "SAFETY-001")
             or "domain misalignment" in (f.get("title") or "").lower()
             or "cross-tenant" in (f.get("title") or "").lower()
             or "out of domain" in (f.get("title") or "").lower()
@@ -64,14 +64,29 @@ class GovernanceEngine:
             or "missing brand identity" in (f.get("title") or "").lower()
             or "placeholder copy" in (f.get("title") or "").lower()
             or "meaningless placeholder" in (f.get("title") or "").lower()
+            or "vulgar" in (f.get("title") or "").lower()
+            or "profan" in (f.get("title") or "").lower()
+            or "brand safety" in (f.get("title") or "").lower()
             for f in findings
         )
 
         if is_direct_block:
+            has_safety = any(
+                f.get("rule_ref") in ("BRAND-SAFETY-001", "SAFETY-001")
+                or "vulgar" in (f.get("title") or "").lower()
+                or "profan" in (f.get("title") or "").lower()
+                or "brand safety" in (f.get("title") or "").lower()
+                for f in findings
+            )
+            block_summary = (
+                "DISQUALIFIED: Content violates zero-tolerance Brand Safety standards. Vulgar or profane language is strictly prohibited. Score: 0/100."
+                if has_safety
+                else "DISQUALIFIED: Content violates zero-tolerance pre-publication standards (Domain misalignment or meaningless placeholder copy). Score: 0/100."
+            )
             return {
                 "decision": "BLOCKED",
                 "governance_score": 0,
-                "summary": "DISQUALIFIED: Content violates zero-tolerance pre-publication standards (Domain misalignment or meaningless placeholder copy). Score: 0/100.",
+                "summary": block_summary,
                 "risk_summary": {
                     "critical": max(1, crit_count),
                     "high": high_count,

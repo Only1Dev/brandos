@@ -751,6 +751,18 @@ async def auto_remediate_review(
                 except Exception:
                     pass
 
+    # Strip and neutralize any vulgar or profane words deterministically
+    from app.services.policy_engine import PROFANITY_PATTERN
+    for match in list(PROFANITY_PATTERN.finditer(deterministic_remediated)):
+        vulgar_word = match.group(0)
+        deterministic_remediated = re.sub(
+            rf"\b{re.escape(vulgar_word)}\b",
+            "[compliant term]",
+            deterministic_remediated,
+            flags=re.IGNORECASE
+        )
+        deterministic_changes.append(f"Sanitized prohibited vulgar language '{vulgar_word}' to compliant enterprise vocabulary")
+
     # If the document is large (e.g. PDF > 2,500 chars), we send the core leading section to the LLM
     # to avoid Groq 413 token-limit errors (Limit 8000 TPM)
     is_large_document = len(raw_text) > 2500

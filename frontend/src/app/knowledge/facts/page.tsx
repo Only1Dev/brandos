@@ -196,7 +196,7 @@ export default function FactsPage() {
                       {f.numerical_value} {f.numerical_unit}
                     </span>
                   ) : (
-                    <span className="text-slate-400">—</span>
+                    <span className="text-slate-400">-</span>
                   )}
                 </td>
                 <td className="py-3.5 px-4 capitalize text-slate-600">{f.category}</td>

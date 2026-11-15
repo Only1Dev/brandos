@@ -647,7 +647,7 @@ export default function ClaimsPage() {
                         ? "Zero-Discrepancy Attestation Granted"
                         : diffClaim.status === "disputed"
                         ? "Policy Contradiction Flagged: Absolute Guarantee"
-                        : "Verification Underway — Human Sign-Off Requested"}
+                        : "Verification Underway - Human Sign-Off Requested"}
                     </div>
                     <div className="text-[11px] opacity-80 mt-0.5 font-normal">
                       {diffClaim.status === "verified"

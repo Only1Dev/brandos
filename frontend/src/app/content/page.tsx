@@ -228,7 +228,7 @@ export default function ContentPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3 text-xs text-amber-900">
           <Lock className="h-4 w-4 text-amber-600 shrink-0" />
           <div>
-            <span className="font-bold">Role: {currentRole.toUpperCase()}</span> — You have read-only access to organizational content records. Administrators can purge records and manage global permissions.
+            <span className="font-bold">Role: {currentRole.toUpperCase()}</span> - You have read-only access to organizational content records. Administrators can purge records and manage global permissions.
           </div>
         </div>
       )}

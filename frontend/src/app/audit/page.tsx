@@ -123,7 +123,7 @@ export default function AuditTrailPage() {
                     </span>
                   </td>
                   <td className="py-3.5 px-4 capitalize text-slate-600">{log.entity_type}</td>
-                  <td className="py-3.5 px-4 font-mono text-[10px] text-slate-400">{log.entity_id ? log.entity_id.slice(0, 8) + "..." : "—"}</td>
+                  <td className="py-3.5 px-4 font-mono text-[10px] text-slate-400">{log.entity_id ? log.entity_id.slice(0, 8) + "..." : "-"}</td>
                   <td className="py-3.5 px-4 text-slate-700 text-[11px]">
                     {log.details ? (
                       typeof log.details === "object" ? (

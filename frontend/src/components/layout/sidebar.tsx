@@ -91,10 +91,10 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 h-screen max-h-screen overflow-hidden bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col select-none transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none",
+          "fixed top-0 bottom-0 left-0 z-50 w-64 h-dvh max-h-dvh overflow-hidden bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col select-none transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
-        style={{ height: "100vh", maxHeight: "100vh" }}
+        style={{ height: "100dvh", maxHeight: "100dvh" }}
       >
         {/* BrandOS Header */}
         <div className="h-16 shrink-0 flex items-center justify-between px-5 border-b border-slate-800 bg-slate-950">

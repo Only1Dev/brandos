@@ -420,7 +420,7 @@ export default function ReviewDetailPage() {
           </div>
           <div className="space-y-1">
             <div className="text-sm font-extrabold text-red-950 flex items-center gap-2">
-              <span>Zero-Tolerance Firewall Active — Content Publication Blocked</span>
+              <span>Zero-Tolerance Firewall Active - Content Publication Blocked</span>
               <span className="text-[10px] bg-red-200 text-red-900 px-2 py-0.5 rounded font-mono font-bold">
                 SCORE {review.governance_score ?? 0}/100
               </span>

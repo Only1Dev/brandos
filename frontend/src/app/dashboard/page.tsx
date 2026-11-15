@@ -598,7 +598,7 @@ export default function DashboardPage() {
               <Cpu className="h-4 w-4 text-indigo-400" />
             </span>
             <h3 className="text-base font-bold text-slate-900">
-              Autonomous AI Agent Squad — Active Governance Engines
+              Autonomous AI Agent Squad - Active Governance Engines
             </h3>
           </div>
           <span className="text-xs text-slate-500 font-mono">4 Engines Connected</span>

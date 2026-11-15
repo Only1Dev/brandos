@@ -887,7 +887,7 @@ export default function SettingsPage() {
                     type="text"
                     value={newMemberTitle}
                     onChange={(e) => setNewMemberTitle(e.target.value)}
-                    placeholder="e.g. Senior Copywriter — Social Channels"
+                    placeholder="e.g. Senior Copywriter - Social Channels"
                     className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>

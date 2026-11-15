@@ -361,7 +361,7 @@ export function AdversarialStressLab({
                         }`}
                       >
                         {isPassed
-                          ? "Payload Verified Compliant — Zero Brand Drift"
+                          ? "Payload Verified Compliant - Zero Brand Drift"
                           : "Adversarial Drift Intercepted by Firewall"}
                       </span>
                       <div className="text-[11px] text-slate-300 mt-0.5">

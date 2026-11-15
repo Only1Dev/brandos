@@ -132,7 +132,7 @@ export default function NewReviewPage() {
 
   const handleSanitizeDraft = () => {
     let sanitized = rawText;
-    sanitized = sanitized.replace(/\b(CONFIDENTIAL & PROPRIETARY\s*—\s*INTERNAL USE ONLY\.\s*DO NOT DISTRIBUTE\.|CONFIDENTIAL|STRICTLY CONFIDENTIAL|INTERNAL USE ONLY|DO NOT DISTRIBUTE|NDA PROTECTED)\b[\s\n]*/gi, "");
+    sanitized = sanitized.replace(/\b(CONFIDENTIAL & PROPRIETARY\s*-\s*INTERNAL USE ONLY\.\s*DO NOT DISTRIBUTE\.|CONFIDENTIAL|STRICTLY CONFIDENTIAL|INTERNAL USE ONLY|DO NOT DISTRIBUTE|NDA PROTECTED)\b[\s\n]*/gi, "");
     sanitized = sanitized.replace(/sk_live_[a-zA-Z0-9_-]+/g, "sk_live_••••••••••••");
     sanitized = sanitized.replace(/secret_key\s*=\s*[^\s]+/g, "secret_key=[REDACTED]");
     sanitized = sanitized.replace(/world's only 100% unbreakable banking firewall, guaranteeing 0 fraud ever!/gi, "autonomous banking firewall, achieving up to 42.0% enterprise fraud reduction.");
@@ -164,7 +164,7 @@ export default function NewReviewPage() {
   // Video Test Fixtures
   const loadVideoDemo = () => {
     setInputMode("text");
-    setTitle("Aureon Shield — Core Banking Video Commercial");
+    setTitle("Aureon Shield - Core Banking Video Commercial");
     setChannel("youtube");
     setContentType("video");
     setRawText(
@@ -174,7 +174,7 @@ export default function NewReviewPage() {
 
   const loadVideoViolationDemo = () => {
     setInputMode("text");
-    setTitle("Social Video Reel — High-Yield Promo");
+    setTitle("Social Video Reel - High-Yield Promo");
     setChannel("instagram");
     setContentType("video");
     setRawText(
@@ -195,7 +195,7 @@ export default function NewReviewPage() {
 
   const loadAureonDiscrepancy = () => {
     setInputMode("text");
-    setTitle("Summer Campaign — Fraud Prevention Launch");
+    setTitle("Summer Campaign - Fraud Prevention Launch");
     setChannel("instagram");
     setContentType("social_post");
     setRawText(
@@ -215,11 +215,11 @@ export default function NewReviewPage() {
 
   const loadConfidentialLeakage = () => {
     setInputMode("text");
-    setTitle("Aureon Q4 Release Preview — Internal Memo");
+    setTitle("Aureon Q4 Release Preview - Internal Memo");
     setChannel("instagram");
     setContentType("social_post");
     setRawText(
-      "CONFIDENTIAL & PROPRIETARY — INTERNAL USE ONLY. DO NOT DISTRIBUTE.\n\nUpcoming Aureon Shield v2.4 rollout testing on https://staging.aureon.internal with secret_key=sk_live_9948210941829. Contact lead dev at dev-ops@internal.aureon.net for testing credentials."
+      "CONFIDENTIAL & PROPRIETARY - INTERNAL USE ONLY. DO NOT DISTRIBUTE.\n\nUpcoming Aureon Shield v2.4 rollout testing on https://staging.aureon.internal with secret_key=sk_live_9948210941829. Contact lead dev at dev-ops@internal.aureon.net for testing credentials."
     );
   };
 
@@ -432,7 +432,7 @@ export default function NewReviewPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-bold text-slate-900">
-                New Content Review — {brandConfig.name}
+                New Content Review - {brandConfig.name}
               </h1>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase bg-slate-100 text-slate-700">
                 slug: {brandConfig.slug}

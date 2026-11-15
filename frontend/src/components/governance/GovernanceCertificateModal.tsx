@@ -123,7 +123,7 @@ export function GovernanceCertificateModal({
             {isBlocked ? (
               <>
                 <ShieldAlert className="h-4 w-4 text-red-400" />
-                <span className="text-red-300 font-bold">BrandOS Governance Enforcement — Publication Clearance Denied</span>
+                <span className="text-red-300 font-bold">BrandOS Governance Enforcement - Publication Clearance Denied</span>
               </>
             ) : isApproved ? (
               <>
@@ -133,7 +133,7 @@ export function GovernanceCertificateModal({
             ) : (
               <>
                 <Clock className="h-4 w-4 text-amber-400" />
-                <span className="text-amber-300 font-bold">AI Pre-Screen Verified — Awaiting Reviewer Sign-Off</span>
+                <span className="text-amber-300 font-bold">AI Pre-Screen Verified - Awaiting Reviewer Sign-Off</span>
               </>
             )}
           </div>
@@ -219,7 +219,7 @@ export function GovernanceCertificateModal({
                   ? "FIREWALL INTERCEPTION & ENFORCEMENT NOTICE"
                   : isApproved
                   ? "OFFICIAL PUBLICATION CLEARANCE GRANTED"
-                  : "AI AUDIT PRE-SCREEN RECORD — PENDING HUMAN SIGN-OFF"}
+                  : "AI AUDIT PRE-SCREEN RECORD - PENDING HUMAN SIGN-OFF"}
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-serif font-black text-slate-900 tracking-tight mt-1">

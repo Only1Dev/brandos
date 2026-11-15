@@ -204,7 +204,7 @@ export default function SuperAdminPage() {
             <span className="h-8 w-8 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 font-bold">
               <Globe className="h-4 w-4" />
             </span>
-            <h1 className="text-xl font-bold tracking-tight">Master Admin Portal — Multi-Brand Governance</h1>
+            <h1 className="text-xl font-bold tracking-tight">Master Admin Portal - Multi-Brand Governance</h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-200 border border-purple-500/30 uppercase tracking-wider">
               Cross-Tenant SuperAdmin
             </span>

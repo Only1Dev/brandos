@@ -29,10 +29,10 @@ class AssetResponse(BaseModel):
     id: str
     name: str
     asset_type: str
-    file_url: str
+    file_url: Optional[str] = ""
     mime_type: Optional[str] = None
-    version: int
-    is_active: bool
+    version: int = 1
+    is_active: bool = True
 
 
 @router.get("", response_model=List[AssetResponse])
@@ -68,12 +68,12 @@ async def list_assets(
     return [
         AssetResponse(
             id=str(a.id),
-            name=a.name,
-            asset_type=a.asset_type,
-            file_url=a.file_url,
+            name=a.name or "Untitled Asset",
+            asset_type=a.asset_type or "logo",
+            file_url=a.file_url or "",
             mime_type=a.mime_type,
-            version=a.version,
-            is_active=a.is_active,
+            version=a.version or 1,
+            is_active=a.is_active if a.is_active is not None else True,
         )
         for a in assets
     ]
@@ -84,6 +84,8 @@ async def upload_asset(
     name: str = Form(...),
     asset_type: str = Form("logo"),
     file: UploadFile = File(...),
+    brand: Optional[str] = Form(None),
+    brand_slug: Optional[str] = Header(None, alias="X-Brand-Slug"),
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
@@ -96,15 +98,25 @@ async def upload_asset(
     with open(file_path, "wb") as f:
         f.write(content_bytes)
 
-    org_res = await db.execute(select(Organization).limit(1))
-    org = org_res.scalar_one_or_none()
+    target_slug = (brand or brand_slug).strip().lower() if (brand or brand_slug) else None
+    org = None
+    if target_slug:
+        res = await db.execute(select(Organization).where(Organization.slug == target_slug))
+        org = res.scalar_one_or_none()
+    elif user and user.organization_id:
+        res = await db.execute(select(Organization).where(Organization.id == user.organization_id))
+        org = res.scalar_one_or_none()
+
+    if not org:
+        org_res = await db.execute(select(Organization).limit(1))
+        org = org_res.scalar_one_or_none()
     if not org:
         org = Organization(name="Default Workspace", slug="default-workspace")
         db.add(org)
         await db.flush()
 
     asset = Asset(
-        organization_id=user.organization_id if user and user.organization_id else org.id,
+        organization_id=org.id,
         name=name,
         asset_type=asset_type,
         file_url=f"/uploads/{filename}",
@@ -119,8 +131,8 @@ async def upload_asset(
         id=str(asset.id),
         name=asset.name,
         asset_type=asset.asset_type,
-        file_url=asset.file_url,
+        file_url=asset.file_url or "",
         mime_type=asset.mime_type,
-        version=asset.version,
-        is_active=asset.is_active,
+        version=asset.version or 1,
+        is_active=asset.is_active if asset.is_active is not None else True,
     )

@@ -31,6 +31,12 @@ build/
 *.swp
 *.swo
 
+# Database
+*.db
+*.sqlite
+*.sqlite3
+backend/*.db
+
 # OS
 .DS_Store
 Thumbs.db

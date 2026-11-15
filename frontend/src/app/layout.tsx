@@ -5,6 +5,11 @@ import { AppShell } from "@/components/layout/app-shell";
 export const metadata: Metadata = {
   title: "BrandOS - The Pre-Publication Content Governance Platform",
   description: "Evaluate text, documents, and visual content against organizational brand guidelines, facts, claims, and policies.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

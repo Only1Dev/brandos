@@ -214,14 +214,23 @@ export function TourOverlay() {
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={handleDismiss}
-              className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-              title="Skip onboarding tour (Esc)"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDismiss}
+                className="text-xs font-semibold text-slate-400 hover:text-slate-700 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Don't show again
+              </button>
+              <button
+                type="button"
+                onClick={handleDismiss}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                title="Skip onboarding tour (Esc)"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Hero Title & Subtitle */}
@@ -275,23 +284,32 @@ export function TourOverlay() {
 
         {/* Footer & Navigation */}
         <div className="p-6 sm:p-8 pt-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          {/* Step Dots */}
-          <div className="flex items-center gap-1.5">
-            {TOUR_STEPS.map((s, idx) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setCurrentStep(idx)}
-                className={`h-2 rounded-full transition-all cursor-pointer ${
-                  currentStep === idx
-                    ? isSolaria
-                      ? "w-8 bg-emerald-600"
-                      : "w-8 bg-indigo-600"
-                    : "w-2 bg-slate-300 hover:bg-slate-400"
-                }`}
-                title={`Go to step ${idx + 1}: ${s.title}`}
-              />
-            ))}
+          {/* Step Dots & Skip Tour */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              {TOUR_STEPS.map((s, idx) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setCurrentStep(idx)}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    currentStep === idx
+                      ? isSolaria
+                        ? "w-8 bg-emerald-600"
+                        : "w-8 bg-indigo-600"
+                      : "w-2 bg-slate-300 hover:bg-slate-400"
+                  }`}
+                  title={`Go to step ${idx + 1}: ${s.title}`}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleDismiss}
+              className="text-xs font-semibold text-slate-400 hover:text-slate-700 px-2 py-0.5 rounded transition-colors cursor-pointer"
+            >
+              Skip Tour
+            </button>
           </div>
 
           {/* Buttons */}

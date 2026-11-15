@@ -1,0 +1,6 @@
+# BrandOS Enterprise Pre-Publication Firewall
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://brandos-jet.vercel.app/sitemap.xml

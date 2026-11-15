@@ -577,21 +577,6 @@ export default function LoginPage() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                        selectedUser.role === "admin"
-                          ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
-                          : selectedUser.role === "reviewer"
-                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                          : "bg-sky-500/20 text-sky-300 border border-sky-500/30"
-                      }`}
-                    >
-                      {selectedUser.role === "admin"
-                        ? "Admin"
-                        : selectedUser.role === "reviewer"
-                        ? "Manager"
-                        : "Creator"}
-                    </span>
                     <ChevronDown
                       className={`h-4 w-4 text-slate-400 transition-transform ${
                         isDropdownOpen ? "rotate-180" : ""
@@ -636,22 +621,6 @@ export default function LoginPage() {
                               </div>
                             </div>
                           </div>
-
-                          <span
-                            className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase shrink-0 ${
-                              u.role === "admin"
-                                ? "bg-indigo-500/20 text-indigo-300"
-                                : u.role === "reviewer"
-                                ? "bg-amber-500/20 text-amber-300"
-                                : "bg-sky-500/20 text-sky-300"
-                            }`}
-                          >
-                            {u.role === "admin"
-                              ? "Admin"
-                              : u.role === "reviewer"
-                              ? "Manager"
-                              : "Creator"}
-                          </span>
                         </div>
                       );
                     })}

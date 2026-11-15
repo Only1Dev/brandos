@@ -88,24 +88,20 @@ export const BRAND_USERS: Record<string, UserProfile[]> = {
   aureon: [
     { name: "Priya Sharma", email: "admin@aureon.internal", role: "admin", title: "Enterprise Brand Admin" },
     { name: "David Chen", email: "reviewer@aureon.internal", role: "reviewer", title: "Lead Content Reviewer" },
-    { name: "Aarav Patel", email: "aarav.patel@aureon.internal", role: "creator", title: "Senior FinTech Copywriter (Creator 1)" },
-    { name: "Riya Sen", email: "riya.sen@aureon.internal", role: "creator", title: "Growth Content Lead (Creator 2)" },
+    { name: "Aarav Patel", email: "aarav.patel@aureon.internal", role: "creator", title: "Senior FinTech Copywriter" },
+    { name: "Riya Sen", email: "riya.sen@aureon.internal", role: "creator", title: "Growth Content Lead" },
   ],
   solaria: [
     { name: "Maya Lin", email: "admin@solaria.internal", role: "admin", title: "Chief Brand Director" },
     { name: "Marcus Vance", email: "reviewer@solaria.internal", role: "reviewer", title: "Compliance Lead" },
-    { name: "Marcus Brody", email: "marcus.brody@solaria.internal", role: "creator", title: "Clinical Brand Specialist (Creator 1)" },
-    { name: "Sophia Lin", email: "sophia.lin@solaria.internal", role: "creator", title: "Lifecycle Campaigner (Creator 2)" },
+    { name: "Marcus Brody", email: "marcus.brody@solaria.internal", role: "creator", title: "Clinical Brand Specialist" },
+    { name: "Sophia Lin", email: "sophia.lin@solaria.internal", role: "creator", title: "Lifecycle Campaigner" },
   ],
 };
 
-export function formatDynamicTitle(title: string, role: UserRole): string {
+export function formatDynamicTitle(title: string, role?: UserRole): string {
   if (!title) return title;
-  const roleDisplay = role === "admin" ? "Admin" : role === "reviewer" ? "Reviewer" : "Creator";
-  if (/\((Creator \d+|Creator|Reviewer|Admin)\)/i.test(title)) {
-    return title.replace(/\((Creator \d+|Creator|Reviewer|Admin)\)/i, `(${roleDisplay})`);
-  }
-  return title;
+  return title.replace(/\s*\((Creator \d+|Creator|Reviewer|Admin)\)/gi, "").trim();
 }
 
 export const getBrandUsers = (

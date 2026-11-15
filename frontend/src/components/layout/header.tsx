@@ -15,7 +15,6 @@ export function Header() {
     currentRole,
     currentUser,
     brandUsers,
-    switchBrand,
     switchUser,
     logout,
     setIsBrandModalOpen,
@@ -29,91 +28,17 @@ export function Header() {
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-      {/* Brand & Firewall Status Indicator */}
+      {/* Brand & Workspace Status Indicator (Static) */}
       <div className="flex items-center gap-4">
-        {/* Workspace Brand Dropdown Switcher */}
-        <div className="relative group">
-          <button
-            type="button"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-800 transition-all cursor-pointer shadow-2xs"
-            title="Click or hover to switch brand workspace"
-          >
-            <div className={cn(
-              "h-4 w-4 rounded-md flex items-center justify-center text-white shrink-0",
-              isSuperAdmin ? "bg-purple-700" : isSolaria ? "bg-emerald-600" : "bg-indigo-600"
-            )}>
-              {isSuperAdmin ? <Globe className="h-3 w-3" /> : isSolaria ? <Leaf className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
-            </div>
-            <span>{isSuperAdmin ? "Master SuperAdmin Console" : brandConfig.name}</span>
-            <ChevronDown className="h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-transform" />
-          </button>
-
-          <div className="absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 hidden group-hover:block z-50 animate-in fade-in">
-            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-              Switch Brand Workspace
-            </div>
-            <button
-              type="button"
-              onClick={() => { switchBrand("solaria"); router.push("/dashboard"); }}
-              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-emerald-50/60 cursor-pointer ${
-                activeBrand === "solaria" && !isSuperAdmin ? "bg-emerald-50 text-emerald-800 font-bold" : "text-slate-700"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="h-6 w-6 rounded-md bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                  <Leaf className="h-3.5 w-3.5" />
-                </span>
-                <div>
-                  <div className="font-semibold leading-tight">Solaria Wellness</div>
-                  <div className="text-[10px] text-slate-400 leading-tight">Clinical Adaptogenic Hydration</div>
-                </div>
-              </div>
-              {activeBrand === "solaria" && !isSuperAdmin && (
-                <span className="text-[10px] text-emerald-600 font-bold">✓ Active</span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => { switchBrand("aureon"); router.push("/dashboard"); }}
-              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-indigo-50/60 cursor-pointer ${
-                activeBrand === "aureon" && !isSuperAdmin ? "bg-indigo-50 text-indigo-800 font-bold" : "text-slate-700"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="h-6 w-6 rounded-md bg-indigo-600 text-white flex items-center justify-center shrink-0">
-                  <Shield className="h-3.5 w-3.5" />
-                </span>
-                <div>
-                  <div className="font-semibold leading-tight">Aureon Technologies</div>
-                  <div className="text-[10px] text-slate-400 leading-tight">Enterprise Security & Defense</div>
-                </div>
-              </div>
-              {activeBrand === "aureon" && !isSuperAdmin && (
-                <span className="text-[10px] text-indigo-600 font-bold">✓ Active</span>
-              )}
-            </button>
-            <div className="my-1 border-t border-slate-100" />
-            <button
-              type="button"
-              onClick={() => router.push("/superadmin")}
-              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-purple-50/60 cursor-pointer ${
-                isSuperAdmin ? "bg-purple-50 text-purple-800 font-bold" : "text-slate-700"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="h-6 w-6 rounded-md bg-purple-700 text-white flex items-center justify-center shrink-0">
-                  <Globe className="h-3.5 w-3.5" />
-                </span>
-                <div>
-                  <div className="font-semibold leading-tight">Global Oversight</div>
-                  <div className="text-[10px] text-slate-400 leading-tight">SuperAdmin Multi-Tenant Console</div>
-                </div>
-              </div>
-              {isSuperAdmin && <span className="text-[10px] text-purple-600 font-bold">✓ Active</span>}
-            </button>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800 shadow-2xs">
+          <div className={cn(
+            "h-4 w-4 rounded-md flex items-center justify-center text-white shrink-0",
+            isSuperAdmin ? "bg-purple-700" : isSolaria ? "bg-emerald-600" : "bg-indigo-600"
+          )}>
+            {isSuperAdmin ? <Globe className="h-3 w-3" /> : isSolaria ? <Leaf className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
           </div>
+          <span>{isSuperAdmin ? "Master SuperAdmin Console" : brandConfig.name}</span>
         </div>
-
       </div>
 
       {/* Right Action Bar */}

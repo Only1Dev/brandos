@@ -113,9 +113,11 @@ export function BrandSelectorModal() {
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <Users className="h-3.5 w-3.5 text-indigo-600" />
-                Select Role Persona in {brandCfg.name}:
+                Select Team Member in {brandCfg.name}:
               </label>
-              <span className="text-[11px] text-slate-500">RBAC Enforced</span>
+              <span className="text-[11px] text-slate-500 font-normal">
+                Role: <strong className="text-slate-800 capitalize">{selectedUser.role}</strong>
+              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -136,17 +138,6 @@ export function BrandSelectorModal() {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-xs truncate pr-1">{u.name}</span>
-                      <span
-                        className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                          u.role === "admin"
-                            ? "bg-indigo-100 text-indigo-800"
-                            : u.role === "reviewer"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-sky-100 text-sky-800"
-                        }`}
-                      >
-                        {u.role === "admin" ? "Admin" : u.role === "reviewer" ? "Manager" : "Creator"}
-                      </span>
                     </div>
                     <div className="text-[10px] text-slate-500 mt-0.5 truncate">{u.title}</div>
                   </button>

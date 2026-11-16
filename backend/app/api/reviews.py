@@ -33,6 +33,7 @@ from app.middleware.auth import get_optional_user
 from app.agents.orchestrator import AnalysisOrchestrator
 from app.services.audit_service import AuditService
 from app.services.model_router import ModelRouter, GROQ_MODEL_SMALL
+from app.services.policy_engine import PROFANITY_PATTERN
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -469,7 +470,7 @@ async def get_review_details(
             or any((e.source_id or "") in ("BRAND-SAFETY-001", "SAFETY-001") for e in (f.evidences or []))
         )
         for f in review.findings
-    ) or any(
+    ) or bool(PROFANITY_PATTERN.search(raw_text)) or any(
         bad in raw_lower
         for bad in (
             "fuck", "shit", "bitch", "asshole", "bastard", "cunt", "dick",

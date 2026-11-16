@@ -357,9 +357,18 @@ def check_substance_quality(
     is_placeholder = False
     reason = ""
 
+    placeholder_matches = [
+        w for w in words
+        if w.lower() in PLACEHOLDER_WORDS
+        or any(w.lower().startswith(p) for p in ("asdf", "qwerty", "zxcv", "test123", "blah", "lorem", "ipsum", "foobar", "abcd", "asf"))
+    ]
+
     if cleaned_lower in PLACEHOLDER_WORDS:
         is_placeholder = True
         reason = f"Submitted copy '{cleaned}' is a recognized placeholder or test draft."
+    elif len(placeholder_matches) >= 2 or (len(words) > 0 and len(placeholder_matches) / len(words) >= 0.4):
+        is_placeholder = True
+        reason = f"Submitted copy contains unrecognized test tokens / placeholder text ({', '.join(placeholder_matches[:4])})."
     elif len(words) == 1 and len(cleaned) <= 10 and cleaned_lower not in {"aureon", "solaria", "shield", "purehydrate"}:
         token = words[0].lower()
         if not any(v in token for v in "aeiou") or token in {"abcd", "bcde", "cdef", "wxyz", "qwer", "asdf", "zxcv"}:
@@ -649,7 +658,8 @@ PROFANITY_PATTERN = re.compile(
     r'shit(?:ty|ting|head|s)?|bullshit|horseshit|dipshit|'
     r'bitch(?:es|ing|y)?|'
     r'bastard(?:s)?|'
-    r'asshole(?:s)?|dumbass|jackass|'
+    r'ass(?:es|hole|holes)?|dumbass|jackass|badass|'
+    r'stfu|wtf|'
     r'cunt(?:s)?|'
     r'dick(?:head|s)?|'
     r'pussy|pussies|'

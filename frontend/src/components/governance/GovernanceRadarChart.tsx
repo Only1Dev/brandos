@@ -25,18 +25,18 @@ export function GovernanceRadarChart({
   const isBlocked = decision === "BLOCKED" || overallScore === 0;
   const isPass = decision === "PASS" || (overallScore !== null && overallScore >= 80);
 
-  // Resilient guards: In zero-tolerance BLOCKED state, clamp anomaly 100% scores
-  const rawDomain = scores.domain ?? 100;
-  const rawTone = scores.tone ?? 90;
-  const rawFacts = scores.facts ?? 85;
-  const rawTerm = scores.terminology ?? 95;
-  const rawResilience = scores.resilience ?? 90;
+  // Resilient guards: In zero-tolerance BLOCKED state, clamp anomaly scores
+  const rawDomain = scores.domain ?? (isBlocked ? 0 : 100);
+  const rawTone = scores.tone ?? (isBlocked ? 10 : 90);
+  const rawFacts = scores.facts ?? (isBlocked ? 20 : 85);
+  const rawTerm = scores.terminology ?? (isBlocked ? 20 : 95);
+  const rawResilience = scores.resilience ?? (isBlocked ? 15 : 90);
 
-  const domainScore = isBlocked && rawDomain === 100 ? 0 : rawDomain;
-  const toneScore = isBlocked ? Math.min(rawTone, 40) : rawTone;
-  const factScore = isBlocked && rawFacts === 100 ? 20 : rawFacts;
-  const termScore = isBlocked && rawTerm === 100 ? 20 : rawTerm;
-  const resilienceScore = isBlocked && rawResilience === 100 ? 15 : rawResilience;
+  const domainScore = isBlocked ? Math.min(rawDomain === 100 ? 0 : rawDomain, 25) : rawDomain;
+  const toneScore = isBlocked ? Math.min(rawTone, 25) : rawTone;
+  const factScore = isBlocked ? Math.min(rawFacts === 100 ? 20 : rawFacts, 25) : rawFacts;
+  const termScore = isBlocked ? Math.min(rawTerm === 100 ? 20 : rawTerm, 25) : rawTerm;
+  const resilienceScore = isBlocked ? Math.min(rawResilience === 100 ? 15 : rawResilience, 20) : rawResilience;
 
   const axes = [
     { key: "domain", label: "Domain Alignment", score: domainScore },

@@ -432,8 +432,8 @@ export function AdversarialStressLab({
                         <Wand2 className="h-3.5 w-3.5" />
                         <span>Instant Auto-Remediation Preview</span>
                       </div>
-                      <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                        Predicted: 100/100 PASS
+                      <span className="text-[10px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                        Remediated Variant
                       </span>
                     </div>
                     <div className="p-3 rounded-lg bg-slate-900/90 border border-indigo-500/20 font-mono text-xs text-slate-200">

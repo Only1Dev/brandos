@@ -52,10 +52,15 @@ class GovernanceEngine:
 
         # Zero-Tolerance Direct Disqualification:
         # If any finding flags genuine cross-tenant misalignment, out-of-domain breach,
-        # vulgar/profane language, or meaningless placeholder / gibberish text:
+        # vulgar/profane language, prompt injection / system override, curative medical claims,
+        # competitor defamation, or meaningless placeholder / gibberish text:
         # immediately set governance_score = 0 and decision = "BLOCKED"!
         is_direct_block = any(
-            f.get("rule_ref") in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001", "BRAND-SAFETY-001", "SAFETY-001")
+            f.get("rule_ref") in (
+                "BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001",
+                "BRAND-SAFETY-001", "SAFETY-001", "SECURITY-INJECTION-001",
+                "REG-FDA-001", "COMPETITOR-DEFAMATION-001"
+            )
             or "domain misalignment" in (f.get("title") or "").lower()
             or "cross-tenant" in (f.get("title") or "").lower()
             or "out of domain" in (f.get("title") or "").lower()
@@ -67,10 +72,35 @@ class GovernanceEngine:
             or "vulgar" in (f.get("title") or "").lower()
             or "profan" in (f.get("title") or "").lower()
             or "brand safety" in (f.get("title") or "").lower()
+            or "prompt injection" in (f.get("title") or "").lower()
+            or "system override" in (f.get("title") or "").lower()
+            or "jailbreak" in (f.get("title") or "").lower()
+            or "curative medical" in (f.get("title") or "").lower()
+            or "unauthorized fda" in (f.get("title") or "").lower()
+            or "competitor defamation" in (f.get("title") or "").lower()
+            or "libel liability" in (f.get("title") or "").lower()
             for f in findings
         )
 
         if is_direct_block:
+            has_injection = any(
+                f.get("rule_ref") == "SECURITY-INJECTION-001"
+                or "prompt injection" in (f.get("title") or "").lower()
+                or "system override" in (f.get("title") or "").lower()
+                for f in findings
+            )
+            has_regulatory = any(
+                f.get("rule_ref") == "REG-FDA-001"
+                or "curative medical" in (f.get("title") or "").lower()
+                or "unauthorized fda" in (f.get("title") or "").lower()
+                for f in findings
+            )
+            has_defamation = any(
+                f.get("rule_ref") == "COMPETITOR-DEFAMATION-001"
+                or "competitor defamation" in (f.get("title") or "").lower()
+                or "libel liability" in (f.get("title") or "").lower()
+                for f in findings
+            )
             has_safety = any(
                 f.get("rule_ref") in ("BRAND-SAFETY-001", "SAFETY-001")
                 or "vulgar" in (f.get("title") or "").lower()
@@ -78,11 +108,18 @@ class GovernanceEngine:
                 or "brand safety" in (f.get("title") or "").lower()
                 for f in findings
             )
-            block_summary = (
-                "DISQUALIFIED: Content violates zero-tolerance Brand Safety standards. Vulgar or profane language is strictly prohibited. Score: 0/100."
-                if has_safety
-                else "DISQUALIFIED: Content violates zero-tolerance pre-publication standards (Domain misalignment or meaningless placeholder copy). Score: 0/100."
-            )
+
+            if has_injection:
+                block_summary = "DISQUALIFIED: Adversarial Prompt Injection & System Override Attack detected. Security firewall active. Score: 0/100."
+            elif has_regulatory:
+                block_summary = "DISQUALIFIED: Unsubstantiated Curative Medical Claim & Unauthorized FDA Clearance. Publication is strictly prohibited under 21 CFR § 101.93. Score: 0/100."
+            elif has_defamation:
+                block_summary = "DISQUALIFIED: Unlawful Competitor Defamation & Libel Liability detected. Unsubstantiated competitor attacks violate FTC comparative advertising rules. Score: 0/100."
+            elif has_safety:
+                block_summary = "DISQUALIFIED: Content violates zero-tolerance Brand Safety standards. Vulgar or profane language is strictly prohibited. Score: 0/100."
+            else:
+                block_summary = "DISQUALIFIED: Content violates zero-tolerance pre-publication standards (Domain misalignment or meaningless placeholder copy). Score: 0/100."
+
             return {
                 "decision": "BLOCKED",
                 "governance_score": 0,
@@ -103,7 +140,12 @@ class GovernanceEngine:
         )
         score = max(0, min(100, round(100.0 - total_deduction)))
 
-        if crit_count > 0 or score < 40:
+        if crit_count > 0:
+            decision = "BLOCKED"
+            # When content has critical violations (BLOCKED), governance score CAN NEVER be 80-100!
+            # Clamp to max 35 to eliminate score/banner contradictions
+            score = min(score, 35)
+        elif score < 40:
             decision = "BLOCKED"
         elif high_count > 0 or score < 75:
             decision = "REVIEW_REQUIRED"

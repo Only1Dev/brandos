@@ -145,6 +145,24 @@ class AnalysisOrchestrator:
                 text=text,
             )
 
+            # Enforce Zero-Tolerance Anti-Jailbreak & Prompt Injection Defense
+            injection_findings = self.policy_engine.check_prompt_injection(
+                text=text,
+            )
+
+            # Enforce Regulated Medical & Unauthorized FDA Clearance Defense
+            medical_findings = self.policy_engine.check_medical_regulatory_claims(
+                text=text,
+                brand_name=brand_name,
+                brand_domain=brand_domain,
+            )
+
+            # Enforce Competitor Defamation & Libel Shield
+            defamation_findings = self.policy_engine.check_competitor_defamation(
+                text=text,
+                brand_name=brand_name,
+            )
+
             # Await async agents concurrently
             if visual_task:
                 brand_findings, fact_findings, visual_findings = await asyncio.gather(
@@ -186,6 +204,9 @@ class AnalysisOrchestrator:
             ]
 
         raw_combined = [
+            *injection_findings,
+            *medical_findings,
+            *defamation_findings,
             *safety_findings,
             *domain_findings,
             *confidentiality_findings,

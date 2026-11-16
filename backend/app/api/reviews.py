@@ -543,8 +543,48 @@ async def get_review_details(
             resilience_score = min(resilience_score, 25)
             fact_score = min(fact_score, 30)
 
-    effective_governance_score = 0 if (has_safety_violation or (review.decision == "BLOCKED" and is_out_of_domain)) else review.governance_score
-    effective_decision = "BLOCKED" if (has_safety_violation or is_out_of_domain or review.decision == "BLOCKED") else review.decision
+    vector_weighted_score = round(
+        domain_score * 0.25 +
+        tone_score * 0.20 +
+        fact_score * 0.25 +
+        term_score * 0.15 +
+        resilience_score * 0.15
+    )
+
+    is_direct_block = (
+        has_safety_violation
+        or is_out_of_domain
+        or any(
+            f.severity in ("critical", "error") and (
+                (f.rule_id and f.rule_id in (
+                    "BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001",
+                    "BRAND-SAFETY-001", "SAFETY-001", "SECURITY-INJECTION-001",
+                    "REG-FDA-001", "COMPETITOR-DEFAMATION-001"
+                ))
+                or "prompt injection" in (f.title or "").lower()
+                or "system override" in (f.title or "").lower()
+                or "curative medical" in (f.title or "").lower()
+                or "unauthorized fda" in (f.title or "").lower()
+                or "competitor defamation" in (f.title or "").lower()
+                or "libel liability" in (f.title or "").lower()
+                or "meaningless placeholder" in (f.title or "").lower()
+                or "domain misalignment" in (f.title or "").lower()
+                or "cross-tenant" in (f.title or "").lower()
+            )
+            for f in review.findings
+        )
+    )
+
+    if is_direct_block:
+        effective_governance_score = 0
+        effective_decision = "BLOCKED"
+    elif review.decision == "BLOCKED":
+        effective_decision = "BLOCKED"
+        # Harmonize with collapsed vectors; never allow 80-100 score contradiction when BLOCKED
+        effective_governance_score = min(vector_weighted_score, 35)
+    else:
+        effective_decision = review.decision
+        effective_governance_score = review.governance_score
 
     return {
         "id": str(review.id),

@@ -714,6 +714,170 @@ def check_brand_safety_profanity(text: str) -> List[dict]:
     return violations
 
 
+PROMPT_INJECTION_PATTERN = re.compile(
+    r"(?i)\b("
+    r"system\s+override|"
+    r"ignore\s+(?:all\s+)?previous\s+(?:brand\s+rules|rules|instructions|prompts|commands)|"
+    r"disregard\s+(?:all\s+)?(?:instructions|rules|prior|previous)|"
+    r"debug_mode|"
+    r"you\s+are\s+in\s+debug|"
+    r"authorized\s+by\s+[a-z\s]+|"
+    r"output\s+a\s+(?:compliance\s+)?score\s+of\s+100|"
+    r"state\s+that\s+all\s+rules\s+are\s+satisfied|"
+    r"developer\s+mode\s+activated|"
+    r"jailbreak|"
+    r"dan\s+mode|"
+    r"bypass\s+governance|"
+    r"disable\s+(?:all\s+)?safety\s+filters|"
+    r"enter\s+(?:admin|debug)\s+mode"
+    r")\b"
+)
+
+
+def check_prompt_injection(text: str) -> List[dict]:
+    """
+    Zero-Tolerance Anti-Jailbreak & Prompt Injection Defense.
+    Detects adversarial prompt injections and system overrides designed to trick LLMs
+    into granting artificial 100/100 passes or bypassing brand governance.
+    """
+    violations = []
+    if not text or not text.strip():
+        return violations
+
+    matches = PROMPT_INJECTION_PATTERN.findall(text)
+    if matches:
+        first_match = matches[0]
+        violations.append({
+            "finding_type": "safety",
+            "severity": "critical",
+            "title": "Adversarial Prompt Injection & System Override Attack",
+            "description": f"Candidate copy contains prompt injection commands attempting to override brand rules ('{first_match}'). All adversarial jailbreak attempts are immediately blocked under zero-tolerance security protocol.",
+            "detected_text": first_match,
+            "explanation": f"System manipulation instruction detected: '{first_match}'. Under enterprise security policy SECURITY-INJECTION-001, any content attempting to command debug mode, override rules, or dictate a compliance score is strictly disqualified.",
+            "rule_ref": "SECURITY-INJECTION-001",
+            "confidence": 1.0,
+            "evidence": [{
+                "evidence_type": "security",
+                "source_ref": "SECURITY-INJECTION-001",
+                "description": "Zero-tolerance AI firewall: Detected prompt injection attempt.",
+                "data": {"detected_patterns": list(set(matches))}
+            }],
+            "suggestion": {
+                "original_text": first_match,
+                "suggested_text": "[REMOVED - ADVERSARIAL INJECTION]",
+                "reasoning": "Remove system override and prompt injection instructions from candidate marketing copy."
+            }
+        })
+
+    return violations
+
+
+MEDICAL_CURATIVE_PATTERN = re.compile(
+    r"(?i)\b("
+    r"(?:cure[s]?|eliminate[s]?|treat[s]?|prevent[s]?|reverse[s]?)\s+(?:(?:stage\s+[1-4]\s+|type\s+[12]\s+)?(?:cancer|diabetes|alzheimer|tumor|tumour|aids|hiv|cardiovascular|leukemia|stroke)|all\s+diseases?)|"
+    r"miracle\s+(?:medical\s+)?(?:cure|drug|pill|remedy|treatment)|"
+    r"100%\s+clinically\s+proven\s+(?:and\s+fda[\s-]approved)?|"
+    r"fda[\s-]approved\s+(?:as\s+a\s+)?(?:miracle|medical|cure|drug|treatment)|"
+    r"fda[\s-]approved\s+as\s+a\s+miracle\s+medical\s+cure"
+    r")\b"
+)
+
+
+def check_medical_regulatory_claims(
+    text: str,
+    brand_name: str = "Aureon Technologies",
+    brand_domain: str = "Enterprise security and fraud detection intelligence",
+) -> List[dict]:
+    """
+    Zero-Tolerance Regulated Claims & Medical Guardrail.
+    Detects unverified curative disease claims (cures cancer, eliminates diabetes) and
+    fraudulent FDA drug approvals under FTC/FDA 21 CFR § 101.93 and DSHEA regulations.
+    """
+    violations = []
+    if not text or not text.strip():
+        return violations
+
+    matches = MEDICAL_CURATIVE_PATTERN.findall(text)
+    if matches:
+        first_match = matches[0]
+        violations.append({
+            "finding_type": "regulatory",
+            "severity": "critical",
+            "title": "Unsubstantiated Curative Medical Claim & Unauthorized FDA Clearance",
+            "description": f"Content claims curative disease efficacy or unauthorized FDA drug approval ('{first_match}'). Commercial wellness products and dietary supplements cannot claim to cure, eliminate, or treat severe clinical diseases.",
+            "detected_text": first_match,
+            "explanation": f"Under FTC/FDA 21 CFR § 101.93 and DSHEA, commercial wellness and consumer copy cannot claim to cure or eliminate clinical diseases (cancer, diabetes) or claim unauthorized FDA miracle medical clearance. Doing so creates immediate regulatory enforcement and product seizure risk.",
+            "rule_ref": "REG-FDA-001",
+            "confidence": 1.0,
+            "evidence": [{
+                "evidence_type": "regulatory",
+                "source_ref": "REG-FDA-001",
+                "description": "Zero-tolerance regulatory guardrail: Unsubstantiated curative/FDA claim.",
+                "data": {"detected_claims": list(set(matches))}
+            }],
+            "suggestion": {
+                "original_text": first_match,
+                "suggested_text": "supports healthy cellular hydration and physiological wellness",
+                "reasoning": "Replace unverified disease eradication claims with substantiated structure/function wellness statements."
+            }
+        })
+
+    return violations
+
+
+COMPETITOR_DEFAMATION_PATTERN = re.compile(
+    r"(?i)\b("
+    r"(?:unlike\s+our\s+)?(?:garbage|trash|scamming|fraudulent|corrupt|shitty|crap)\s+(?:competitor[s]?|rival[s]?|software|platform)|"
+    r"(?:competitor[s]?|rival[s]?|stripe|adyen|paypal|plaid|checkout\.com)\s+.*?\b(?:garbage|trash|scam|scams|scamming|leak|leaks|leaking|fraudulent|shitty|crap|useless|worthless)|"
+    r"(?:routinely|constantly)\s+(?:leak\s+user\s+data|scam\s+clients|steal)|"
+    r"stop\s+using\s+(?:trash|garbage|shitty)\s+software|"
+    r"scam\s+clients|"
+    r"routinely\s+leak"
+    r")\b"
+)
+
+
+def check_competitor_defamation(
+    text: str,
+    brand_name: str = "Aureon Technologies",
+) -> List[dict]:
+    """
+    Zero-Tolerance Competitor Defamation & Libel Shield.
+    Detects direct competitor disparagement, unsubstantiated allegations of data theft/scams,
+    and unprofessional slurs ('garbage competitors', 'trash software') under FTC advertising rules.
+    """
+    violations = []
+    if not text or not text.strip():
+        return violations
+
+    matches = COMPETITOR_DEFAMATION_PATTERN.findall(text)
+    if matches:
+        first_match = matches[0]
+        violations.append({
+            "finding_type": "brand",
+            "severity": "critical",
+            "title": "Unlawful Competitor Defamation & Libel Liability",
+            "description": f"Content engages in direct competitor defamation and libelous allegations ('{first_match}'). Disparaging named competitors as 'garbage' or alleging they 'leak user data' and 'scam clients' violates FTC comparative advertising rules and Lanham Act § 43(a).",
+            "detected_text": first_match,
+            "explanation": f"Naming competitors (Stripe, Adyen) and alleging criminal misconduct ('leak user data', 'scam clients') or using derogatory slurs ('garbage', 'trash software') creates severe civil defamation liability and violates enterprise Brand Voice guidelines.",
+            "rule_ref": "COMPETITOR-DEFAMATION-001",
+            "confidence": 1.0,
+            "evidence": [{
+                "evidence_type": "legal",
+                "source_ref": "COMPETITOR-DEFAMATION-001",
+                "description": "Zero-tolerance legal shield: Competitor defamation and libelous disparagement.",
+                "data": {"detected_terms": list(set(matches))}
+            }],
+            "suggestion": {
+                "original_text": first_match,
+                "suggested_text": f"Unlike legacy alternatives, {brand_name} delivers verified zero-trust architecture and audited enterprise security.",
+                "reasoning": "Focus on positive enterprise capabilities rather than disparaging named competitors."
+            }
+        })
+
+    return violations
+
+
 class PolicyEngine:
     """Wrapper class providing policy precedence and evaluation methods."""
 
@@ -744,3 +908,21 @@ class PolicyEngine:
 
     def check_brand_safety_profanity(self, text: str) -> List[dict]:
         return check_brand_safety_profanity(text)
+
+    def check_prompt_injection(self, text: str) -> List[dict]:
+        return check_prompt_injection(text)
+
+    def check_medical_regulatory_claims(
+        self,
+        text: str,
+        brand_name: str = "Aureon Technologies",
+        brand_domain: str = "Enterprise security and fraud detection intelligence",
+    ) -> List[dict]:
+        return check_medical_regulatory_claims(text, brand_name, brand_domain)
+
+    def check_competitor_defamation(
+        self,
+        text: str,
+        brand_name: str = "Aureon Technologies",
+    ) -> List[dict]:
+        return check_competitor_defamation(text, brand_name)

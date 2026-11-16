@@ -435,7 +435,7 @@ export default function ReviewDetailPage() {
             <div className="text-sm font-extrabold text-red-950 flex items-center gap-2">
               <span>Zero-Tolerance Firewall Active - Content Publication Blocked</span>
               <span className="text-[10px] bg-red-200 text-red-900 px-2 py-0.5 rounded font-mono font-bold">
-                SCORE {review.governance_score ?? 0}/100
+                SCORE {review.decision === "BLOCKED" ? Math.min(review.governance_score ?? 0, 35) : (review.governance_score ?? 0)}/100
               </span>
             </div>
             <div className="text-xs text-red-800 font-medium leading-relaxed">
@@ -664,7 +664,7 @@ export default function ReviewDetailPage() {
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Governance Firewall Result</span>
                 <div className="text-2xl font-extrabold text-slate-900 mt-1 flex items-center gap-3">
-                  <span>Score: {review.governance_score !== null ? `${review.governance_score}/100` : "Pending"}</span>
+                  <span>Score: {review.governance_score !== null ? `${review.decision === "BLOCKED" ? Math.min(review.governance_score, 35) : review.governance_score}/100` : "Pending"}</span>
                 </div>
               </div>
 
@@ -689,7 +689,7 @@ export default function ReviewDetailPage() {
           {/* 5-Axis Governance Compliance Vector (Radar Chart) */}
           <GovernanceRadarChart
             scores={review.radar_scores}
-            overallScore={review.governance_score}
+            overallScore={review.decision === "BLOCKED" ? Math.min(review.governance_score ?? 0, 35) : review.governance_score}
             decision={review.decision || review.status}
           />
 
@@ -705,8 +705,8 @@ export default function ReviewDetailPage() {
                     <div>
                       <div className="text-sm font-bold flex items-center gap-2">
                         <span>Instant AI Auto-Remediation Studio</span>
-                        <span className="text-[10px] font-mono bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded font-bold">
-                          PREDICTED: 100/100 PASS
+                        <span className="text-[10px] font-mono bg-indigo-400/20 text-indigo-200 px-2 py-0.5 rounded font-bold">
+                          AI REMEDIATION READY
                         </span>
                       </div>
                       <div className="text-xs text-indigo-200 mt-0.5">

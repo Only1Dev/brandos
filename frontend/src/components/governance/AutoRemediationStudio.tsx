@@ -257,7 +257,7 @@ export function AutoRemediationStudio({
                   {/* Remediated Right Pane */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs font-bold text-emerald-800 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
-                      <span>BrandOS Remediated Copy (100% On-Brand)</span>
+                      <span>BrandOS Remediated Copy (Brand-Aligned)</span>
                       <span className="text-[10px] font-mono uppercase bg-emerald-200/60 px-1.5 py-0.5 rounded">
                         Full Compliance
                       </span>

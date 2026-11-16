@@ -63,12 +63,14 @@ class AccessibilityAgent:
         words_per_sentence = num_words / num_sentences
         syllables_per_word = total_syllables / num_words
 
-        flesch_reading_ease = 206.835 - (1.015 * words_per_sentence) - (84.6 * syllables_per_word)
-        grade_level = (0.39 * words_per_sentence) + (11.8 * syllables_per_word) - 15.59
+        raw_flesch = 206.835 - (1.015 * words_per_sentence) - (84.6 * syllables_per_word)
+        flesch_reading_ease = max(0.0, min(100.0, round(raw_flesch, 2)))
+        raw_grade = (0.39 * words_per_sentence) + (11.8 * syllables_per_word) - 15.59
+        grade_level = max(1.0, min(20.0, round(raw_grade, 1)))
 
         return {
-            "flesch_reading_ease": round(flesch_reading_ease, 2),
-            "grade_level": round(max(0, grade_level), 1),
+            "flesch_reading_ease": flesch_reading_ease,
+            "grade_level": grade_level,
             "num_words": num_words,
             "num_sentences": num_sentences,
             "avg_words_per_sentence": round(words_per_sentence, 1),

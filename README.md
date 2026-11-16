@@ -29,7 +29,7 @@ At Round 2, Team We Code Coders committed to delivering three major enterprise c
 
 | Committed Improvement | What Was Delivered | Verification Link |
 |---|---|---|
-| **1. Video Upload & Multimodal Analysis** | Full video upload pipeline supporting MP4/WebM. Gemini Vision & multimodal analysis transcribe speech, sample keyframes, check on-screen text, verify visual brand consistency, and detect factual misrepresentations in video content. | Test with `samples/video/brand_campaign_sample.mp4` on `/reviews/new` |
+| **1. Video Upload & Multimodal Analysis** | Full video upload pipeline supporting MP4/WebM. Gemini Vision & multimodal analysis transcribe speech, sample keyframes, check on-screen text, verify visual brand consistency, and detect factual misrepresentations in video content. | Test with short MP4/WebM video creative on `/reviews/new` |
 | **2. Content Inventory Management** | Dedicated Content Hub (`/content`) that centralizes, indexes, searches, filters, and manages all enterprise brand copy, campaigns, images, and videos in one searchable repository with metadata, channels, governance scores, and review history. | Navigate to `/content` in sidebar |
 | **3. AI Improvements & Adaptive Auto-Remediation** | Elevated 1-click Auto-Remediation engine powered by reviewer feedback and historical audit reports. Suggests precise drop-in replacements for tone, prohibited superlatives, and metric misalignments based on human decisions in the audit trail. | Open any blocked/warning review and click **✨ Auto-Remediate** |
 
@@ -77,7 +77,7 @@ We have placed pre-made test files in the [`samples/`](./samples/) directory to 
 
 ### Step 3: Round 2 Commitment #1 — Multimodal Video Governance
 1. Click **+ New Review** and select the **Video** tab.
-2. Drag and drop `samples/video/brand_campaign_sample.mp4` (or any short MP4/WebM video).
+2. Drag and drop any short MP4/WebM video creative.
 3. Click **Run Governance Analysis**.
 4. Watch the live multimodal ingestion and analysis stream: keyframes are extracted, speech is transcribed, and Gemini analyzes on-screen brand elements and messaging consistency.
 

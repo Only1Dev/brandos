@@ -63,7 +63,7 @@ At the conclusion of Round 2, Team We Code Coders committed to delivering three 
   - Visual logo and branding compliance
   - Audio/speech factual accuracy against the Brand Brain
   - Disallowed terms in both audio and on-screen overlays
-- **Verification Asset:** Provided sample `samples/video/brand_campaign_sample.mp4` ready for instant judge evaluation.
+- **Verification Asset:** Upload any short MP4/WebM video creative on `/reviews/new` for instant evaluation.
 
 ### Commitment 2: Content Inventory Management
 > *"Organise all brand content in one place, making it easier to store, search, manage and track content."*
@@ -117,7 +117,7 @@ At the conclusion of Round 2, Team We Code Coders committed to delivering three 
 | **Off-Brand Infiltration** | Submit kitchen mixer grinder under Aureon FinTech workspace | Immediate `BLOCKED` verdict (Score: 0/100) | ✅ Passed (Finding: `BRAND-IDENTITY-001`) |
 | **Metric Hallucination** | Claim 95% fraud reduction (Aureon ground truth is 42%) | Flagged as factual conflict with `FACT-FRAUD42` | ✅ Passed (TruthMark isolated topic) |
 | **Meaningless Gibberish** | Submit `abcd` as post copy | Blocked with critical placeholder finding | ✅ Passed (Substance check) |
-| **Multimodal Video** | Upload `brand_campaign_sample.mp4` | Live analysis stream $\rightarrow$ keyframe & speech transcription $\rightarrow$ report | ✅ Passed |
+| **Multimodal Video** | Upload short video creative | Live analysis stream $\rightarrow$ keyframe & speech transcription $\rightarrow$ report | ✅ Passed |
 | **RBAC Security** | Attempt approval as Reviewer on blocked content | Blocked with alert: *"Firewall Active: Cannot approve"* | ✅ Passed (Only Admin can override) |
 | **Tenant Isolation** | Create new firm from homepage | Starts in `pending` $\rightarrow$ hidden until SuperAdmin approves | ✅ Passed (Zero data leakage) |
 | **Accidental Deletion** | Click Delete in SuperAdmin | Unstop-style modal requires typing `CONFIRM` | ✅ Passed |

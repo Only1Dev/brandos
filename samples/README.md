@@ -26,10 +26,10 @@ This directory contains ready-to-test assets designed specifically for hackathon
 | `sample_violation_creative.png` | PNG | Contains non-compliant neon colors and stretched logo $\rightarrow$ triggers Gemini Vision visual violation findings. |
 | `official_brand_banner.png` | PNG | Compliant typography and verified high-contrast WCAG color palette. |
 
-### 4. `samples/video/` — Multimodal Video Analysis
-| File | Format | Purpose |
-|---|---|---|
-| `brand_campaign_sample.mp4` | MP4 | Video upload test at `/reviews/new` $\rightarrow$ verifies multimodal audio/keyframe transcription, speech consistency, and pre-publication video firewall. |
+### 4. Video Creative — Multimodal Video Analysis
+| Format | Purpose |
+|---|---|
+| Short MP4 / WebM video | Video upload test at `/reviews/new` $\rightarrow$ verifies multimodal audio/keyframe transcription, speech consistency, and pre-publication video firewall. |
 
 ---
 

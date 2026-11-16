@@ -140,7 +140,7 @@ deliv_data = [
     [Paragraph("<b>Committed Improvement</b>", body_style), Paragraph("<b>Implementation & Verification Details</b>", body_style), Paragraph("<b>Status</b>", body_style)],
     [
         Paragraph("<b>1. Video Upload & Multimodal Analysis</b><br/><font size=\"7\" color=\"#64748B\">Check videos for consistency, errors, & visual violations</font>", body_style),
-        Paragraph("Integrated multimodal pipeline supporting MP4/WebM uploads. Leverages Google Gemini 1.5 Pro to sample keyframes, transcribe spoken dialogue, inspect on-screen graphic overlays, and cross-reference spoken facts against Brand Brain.<br/><i>Verification: Test with samples/video/brand_campaign_sample.mp4 on /reviews/new</i>", body_style),
+        Paragraph("Integrated multimodal pipeline supporting MP4/WebM uploads. Leverages Google Gemini 1.5 Pro to sample keyframes, transcribe spoken dialogue, inspect on-screen graphic overlays, and cross-reference spoken facts against Brand Brain.<br/><i>Verification: Test with any short MP4/WebM video creative on /reviews/new</i>", body_style),
         Paragraph('<font color="#059669"><b>100% Delivered</b></font>', body_style)
     ],
     [

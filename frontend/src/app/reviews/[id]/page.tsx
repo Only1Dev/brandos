@@ -25,6 +25,8 @@ import {
   Save,
   Database,
   ArrowRight,
+  Flame,
+  FileText,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDate, getSeverityBadge, getStatusBadge } from "@/lib/utils";

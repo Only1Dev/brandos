@@ -386,6 +386,58 @@ export function AgentPipelineVisualizer({
         </div>
       </div>
 
+      {/* Animated Sequential Agent Verification Badge Stream */}
+      <div className="my-3 py-2 px-3 rounded-xl bg-slate-900/60 border border-slate-800/90 flex flex-wrap items-center gap-2 relative z-10 text-xs">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 shrink-0">
+          <Activity className="h-3.5 w-3.5 text-indigo-400" />
+          <span>Consensus Stream:</span>
+        </span>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {stages.map((stage, idx) => {
+            const isDone = currentStep > idx;
+            const isCurrent = currentStep === idx;
+            const isStress = stage.id === "devils_advocate";
+
+            return (
+              <div key={stage.id} className="flex items-center gap-1.5">
+                <div
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all duration-300 border ${
+                    isDone
+                      ? isStress
+                        ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
+                        : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-xs"
+                      : isCurrent
+                      ? "bg-indigo-600/30 border-indigo-400 text-white ring-1 ring-indigo-400/50 shadow-md animate-pulse"
+                      : "bg-slate-800/40 border-slate-700/50 text-slate-500 opacity-60"
+                  }`}
+                >
+                  {isDone ? (
+                    isStress ? (
+                      <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
+                    ) : (
+                      <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
+                    )
+                  ) : isCurrent ? (
+                    <span className="h-2 w-2 rounded-full bg-indigo-400 animate-ping shrink-0" />
+                  ) : (
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-600 shrink-0" />
+                  )}
+                  <span>
+                    {isDone ? `[✓] ${stage.name}` : isCurrent ? `[⟳] ${stage.name}` : `[ ] ${stage.name}`}
+                  </span>
+                </div>
+                {idx < stages.length - 1 && (
+                  <span className={`text-[10px] ${currentStep > idx ? "text-emerald-400 font-bold" : "text-slate-600"}`}>
+                    ➔
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Active Stage Highlight Banner with Equalizer/Waveform */}
       <div className="my-4 p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-indigo-500/40 flex items-center justify-between gap-4 relative z-10 shadow-lg">
         <div className="flex items-center gap-3.5 truncate">

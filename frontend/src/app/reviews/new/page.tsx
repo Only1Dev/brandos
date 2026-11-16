@@ -21,6 +21,7 @@ import {
   Flame,
   Check,
   Lock,
+  Terminal,
 } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -198,6 +199,41 @@ export default function NewReviewPage() {
     setRawText(
       "[00:01 - Host Spoken Line] Tired of fraud? Aureon is the world's only 100% unbreakable banking firewall, guaranteeing 0 fraud ever!\n\n[00:04 - Screen Banner] 100% Guaranteed Protection · #1 In Cyber Defense\n\n[00:08 - Audio Callout] Sign up today and eliminate 99.9% of all banking loss overnight."
     );
+  };
+
+  // 1-Click Demo Scenarios for Finals / Investors / Judges
+  const loadCatastrophicPRViolation = () => {
+    setInputMode("text");
+    setChannel("press_release");
+    setContentType("article");
+    if (!isSolaria) {
+      setTitle("EMERGENCY PR RELEASE: Catastrophic Market Disclosure");
+      setRawText(
+        "EMERGENCY PRESS STATEMENT: Unlike our garbage competitors Stripe and Adyen who routinely leak user data and scam clients, Aureon is the world's only 100% unbreakable banking firewall, guaranteeing 0 fraud ever! We eliminate all cyber risk overnight with our revolutionary miracle AI. Staging admin backdoor active at https://staging.aureon.internal/api/keys with master_token=sk_live_superadmin_bypass_9901."
+      );
+    } else {
+      setTitle("OFFICIAL CLINICAL ANNOUNCEMENT: Miracle Cancer & Diabetes Cure");
+      setRawText(
+        "OFFICIAL CLINICAL ANNOUNCEMENT: Solaria PureHydrate is clinically proven and FDA-approved as a miracle medical cure that permanently eradicates Stage 4 cancer and cures Type 2 diabetes within 24 hours with a 100% guaranteed detox promise. Unlike our trash competitors who sell toxic sugar water, switch to PureHydrate today."
+      );
+    }
+  };
+
+  const loadFullyCompliantPressRelease = () => {
+    setInputMode("text");
+    setChannel("press_release");
+    setContentType("article");
+    if (!isSolaria) {
+      setTitle("Aureon Shield™ 4.0 Institutional Enterprise Release");
+      setRawText(
+        "Aureon Technologies today announced the general release of Aureon Shield™ 4.0, delivering autonomous transaction risk defense and zero-day threat prevention for enterprise banking networks. In audited customer production environments, Aureon Shield™ achieved a verified 42% reduction in transaction fraud losses, maintained 99.99% system availability with sub-15 ms latency, and intercepted $12.4 M in unauthorized payment attempts during Q3. Built on zero-trust architecture, the platform strictly complies with global institutional security standards."
+      );
+    } else {
+      setTitle("Solaria PureHydrate™ Clinical Hydration Study Publication");
+      setRawText(
+        "Solaria Wellness today published audited findings for Solaria PureHydrate™, delivering cellular-level hydration through a certified electrolyte matrix. Clinical laboratory trials verified 3.0x faster electrolyte absorption compared to standard oral hydration solutions, formulated with 0% added sugar and zero synthetic additives. PureHydrate™ is manufactured in ISO-9001 certified facilities and is designed to support natural metabolic endurance."
+      );
+    }
   };
 
   // Test fixtures for Aureon
@@ -643,6 +679,63 @@ export default function NewReviewPage() {
         {/* Text Input Mode */}
         {inputMode === "text" ? (
           <div>
+            {/* 1-Click Demo Scenarios Pill Bar for Stage / Finals / Investors */}
+            <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 text-white shadow-lg">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400 shrink-0">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold tracking-tight text-white flex items-center gap-2">
+                      <span>1-Click Live Demo Scenarios</span>
+                      <span className="text-[9px] font-mono bg-indigo-500/30 text-indigo-200 px-2 py-0.5 rounded uppercase font-bold border border-indigo-400/30">
+                        Zero Typing Required
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-300 mt-0.5">
+                      Instantly demonstrate real-time multi-agent cause-and-effect for judges and investors:
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={loadCatastrophicPRViolation}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white text-xs font-bold shadow-md hover:shadow-rose-500/25 transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-rose-400/30"
+                    title="Loads competitor slander, unbacked 100% promises, and leaked tokens to trigger all 5 agents → Score: 0/100"
+                  >
+                    <span>⚡ Load Catastrophic PR Violation</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-rose-200 font-bold border border-rose-400/30">
+                      Score: 0/100
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={loadFullyCompliantPressRelease}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-bold shadow-md hover:shadow-emerald-500/25 transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-emerald-400/30"
+                    title="Loads fully verified, on-brand statistics and approved terminology → Score: 98-100/100 PASS + TruthMark Certificate"
+                  >
+                    <span>✅ Load Fully Compliant Press Release</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-emerald-200 font-bold border border-emerald-400/30">
+                      Score: 98-100
+                    </span>
+                  </button>
+
+                  <Link
+                    href="/settings#developer-api"
+                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-indigo-200 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/10"
+                    title="View cURL, GitHub Actions CI/CD workflows, and pre-commit webhook snippets"
+                  >
+                    <Terminal className="h-3.5 w-3.5" />
+                    <span>CI/CD Webhooks &amp; API Snippets</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
                 <span>Marketing Copy or Article Body</span>

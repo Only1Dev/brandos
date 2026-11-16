@@ -15,6 +15,10 @@ import {
   FileText,
   AlertCircle,
   Lock,
+  GitCompare,
+  MinusCircle,
+  PlusCircle,
+  ArrowRightLeft,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useBrand } from "@/context/BrandContext";
@@ -41,7 +45,7 @@ export function AutoRemediationStudio({
     changes_made: string[];
     predicted_score: number;
   } | null>(null);
-  const [activeTab, setActiveTab] = useState<"side_by_side" | "inline">("side_by_side");
+  const [activeTab, setActiveTab] = useState<"side_by_side" | "git_diff" | "inline">("side_by_side");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -203,35 +207,49 @@ export function AutoRemediationStudio({
               </div>
 
               {/* View Selector Tabs */}
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between border-b border-slate-200 pb-2 gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => setActiveTab("side_by_side")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                       activeTab === "side_by_side"
-                        ? "bg-slate-900 text-white"
+                        ? "bg-slate-900 text-white shadow-xs"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
                     <Split className="h-3.5 w-3.5" />
-                    Side-by-Side Comparison
+                    <span>Side-by-Side</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("git_diff")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      activeTab === "git_diff"
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    <GitCompare className="h-3.5 w-3.5 text-indigo-400" />
+                    <span>Git-Style Diff Visualizer</span>
+                    <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-bold">
+                      Diff
+                    </span>
                   </button>
                   <button
                     onClick={() => setActiveTab("inline")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                       activeTab === "inline"
-                        ? "bg-slate-900 text-white"
+                        ? "bg-slate-900 text-white shadow-xs"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
                     <FileText className="h-3.5 w-3.5" />
-                    Clean Remediated View
+                    <span>Clean Remediated View</span>
                   </button>
                 </div>
 
                 <button
                   onClick={handleCopy}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                   <span>{copied ? "Copied to Clipboard!" : "Copy Remediated Text"}</span>
@@ -264,6 +282,71 @@ export function AutoRemediationStudio({
                     </div>
                     <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50/20 text-slate-900 font-mono text-xs leading-relaxed whitespace-pre-wrap min-h-[260px] max-h-[360px] overflow-y-auto ring-1 ring-emerald-500/20">
                       {remediationData.remediated_text}
+                    </div>
+                  </div>
+                </div>
+              ) : activeTab === "git_diff" ? (
+                <div className="space-y-4">
+                  {/* Unified Git Diff Terminal */}
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950 font-mono text-xs overflow-hidden shadow-xl">
+                    <div className="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-slate-400 text-[11px]">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+                        <span className="font-bold text-slate-200 pl-2">diff --git a/candidate_draft.txt b/brand_sanitized_copy.txt</span>
+                      </div>
+                      <span className="text-[10px] text-indigo-400 font-mono">index 45b89a3..ad5230a 100644</span>
+                    </div>
+
+                    <div className="p-4 space-y-2.5 text-xs overflow-x-auto max-h-[360px] overflow-y-auto">
+                      <div className="text-sky-400 font-bold text-[11px]">
+                        @@ -1,4 +1,4 @@ BrandOS Policy Engine Auto-Remediation Unified Chunk
+                      </div>
+
+                      {/* Deletions (Red) */}
+                      <div className="bg-red-950/40 border-l-2 border-red-500 text-red-300 p-2.5 rounded-r font-mono text-[11px] space-y-1">
+                        <div className="text-[10px] uppercase font-bold text-red-400 tracking-wider flex items-center gap-1">
+                          <MinusCircle className="h-3 w-3" />
+                          <span>Removed / Neutralized Off-Brand Phrasing:</span>
+                        </div>
+                        <div className="line-through opacity-85 leading-relaxed whitespace-pre-wrap">
+                          {remediationData.original_text}
+                        </div>
+                      </div>
+
+                      {/* Additions (Green) */}
+                      <div className="bg-emerald-950/40 border-l-2 border-emerald-500 text-emerald-300 p-2.5 rounded-r font-mono text-[11px] space-y-1">
+                        <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider flex items-center gap-1">
+                          <PlusCircle className="h-3 w-3" />
+                          <span>Injected Brand-Compliant Enterprise Phrasing:</span>
+                        </div>
+                        <div className="leading-relaxed whitespace-pre-wrap font-semibold">
+                          {remediationData.remediated_text}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Phrase Substitution & Governance Policy Mapping Table */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                      <div className="flex items-center gap-1.5">
+                        <ArrowRightLeft className="h-3.5 w-3.5 text-indigo-600" />
+                        <span>Exact Substitution &amp; Policy Alignment Mapping:</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {remediationData.changes_made?.length || 1} Transformation(s) Applied
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 text-[11px]">
+                      {remediationData.changes_made?.map((change, idx) => (
+                        <div key={idx} className="flex items-start gap-2 p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs">
+                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 mt-1.5 shrink-0" />
+                          <span className="text-slate-700 leading-relaxed font-sans">{change}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>

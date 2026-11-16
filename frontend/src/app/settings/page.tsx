@@ -24,6 +24,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import { useBrand, UserProfile, UserRole, RolePermissions } from "@/context/BrandContext";
+import { DeveloperApiHub } from "@/components/governance/DeveloperApiHub";
 
 function arePermsEqual(a: RolePermissions, b: RolePermissions): boolean {
   if (!a || !b || !a.creator || !b.creator || !a.reviewer || !b.reviewer) return true;
@@ -807,6 +808,9 @@ export default function SettingsPage() {
           )}
         </form>
       </div>
+
+      {/* Headless API, CI/CD Pre-Commit Webhooks & Developer Hub */}
+      <DeveloperApiHub />
 
       {/* Invite Member Modal Dialog */}
       {isInviteOpen && (

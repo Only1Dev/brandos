@@ -684,6 +684,76 @@ export default function ReviewDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Stream Agent Verification Badges */}
+            <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 shrink-0">
+                Agent Consensus Stream:
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                {/* 1. Domain Perimeter */}
+                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                  (review.radar_scores?.domain ?? 0) >= 50
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    : "bg-rose-50 text-rose-800 border-rose-200"
+                }`}>
+                  {(review.radar_scores?.domain ?? 0) >= 50 ? (
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-3 w-3 text-rose-600 shrink-0" />
+                  )}
+                  <span>{(review.radar_scores?.domain ?? 0) >= 50 ? "[✓] Domain Perimeter" : "[!] Domain Misaligned"}</span>
+                </div>
+
+                <span className="text-slate-400 font-bold text-[10px]">➔</span>
+
+                {/* 2. Controlled Lexicon */}
+                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                  (review.radar_scores?.terminology ?? 0) >= 50
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    : "bg-amber-50 text-amber-800 border-amber-200"
+                }`}>
+                  {(review.radar_scores?.terminology ?? 0) >= 50 ? (
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
+                  )}
+                  <span>{(review.radar_scores?.terminology ?? 0) >= 50 ? "[✓] Controlled Lexicon" : "[!] Prohibited Terms"}</span>
+                </div>
+
+                <span className="text-slate-400 font-bold text-[10px]">➔</span>
+
+                {/* 3. Grounded Truth */}
+                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                  (review.radar_scores?.facts ?? 0) >= 50
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    : "bg-rose-50 text-rose-800 border-rose-200"
+                }`}>
+                  {(review.radar_scores?.facts ?? 0) >= 50 ? (
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-3 w-3 text-rose-600 shrink-0" />
+                  )}
+                  <span>{(review.radar_scores?.facts ?? 0) >= 50 ? "[✓] Grounded Truth" : "[!] Unverified Claims"}</span>
+                </div>
+
+                <span className="text-slate-400 font-bold text-[10px]">➔</span>
+
+                {/* 4. Devil's Advocate */}
+                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                  (review.radar_scores?.resilience ?? 0) >= 50
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    : "bg-amber-50 text-amber-800 border-amber-200"
+                }`}>
+                  {(review.radar_scores?.resilience ?? 0) >= 50 ? (
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                  ) : (
+                    <Flame className="h-3 w-3 text-amber-600 shrink-0" />
+                  )}
+                  <span>{(review.radar_scores?.resilience ?? 0) >= 50 ? "[✓] Adversarial Resilience" : "[!] Devil's Advocate Flagged"}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 5-Axis Governance Compliance Vector (Radar Chart) */}

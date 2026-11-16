@@ -352,8 +352,8 @@ export function Sidebar() {
 
   return (
     <>
-      {/* 1. Desktop Static/Sticky Sidebar: Part of document flex flow, NEVER overlaps content */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 sticky top-0 h-[100dvh] max-h-[100dvh] overflow-hidden bg-slate-900 border-r border-slate-800 text-slate-300 select-none z-30">
+      {/* 1. Desktop Static Sidebar: Anchored to viewport height, NEVER slips or scrolls with content */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 h-full max-h-screen overflow-hidden bg-slate-900 border-r border-slate-800 text-slate-300 select-none z-30">
         <SidebarNav />
       </aside>
 

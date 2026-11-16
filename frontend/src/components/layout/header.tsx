@@ -26,7 +26,7 @@ export function Header() {
   const isSolaria = !isSuperAdmin && activeBrand === "solaria";
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-3 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+    <header className="h-16 shrink-0 bg-white border-b border-slate-200 px-3 sm:px-6 lg:px-8 flex items-center justify-between z-30 shadow-xs">
       {/* Brand & Workspace Status Indicator (Static) + Mobile Menu Toggle */}
       <div className="flex items-center gap-2 sm:gap-3">
         <button

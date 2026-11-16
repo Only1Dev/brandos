@@ -26,10 +26,12 @@ This directory contains ready-to-test assets designed specifically for hackathon
 | `sample_violation_creative.png` | PNG | Contains non-compliant neon colors and stretched logo $\rightarrow$ triggers Gemini Vision visual violation findings. |
 | `official_brand_banner.png` | PNG | Compliant typography and verified high-contrast WCAG color palette. |
 
-### 4. Video Creative — Multimodal Video Analysis
-| Format | Purpose |
-|---|---|
-| Short MP4 / WebM video | Video upload test at `/reviews/new` $\rightarrow$ verifies multimodal audio/keyframe transcription, speech consistency, and pre-publication video firewall. |
+### 4. 🎬 Multimodal Video Governance (Upload Testing)
+> **Note on Video Files:** Due to Git repository binary file size limits, static video files are not tracked in this repository. 
+> 
+> You can test the **Round 2 Multimodal Video Governance** feature directly in two seamless ways:
+> - **Upload Any Short Video:** Drag & drop any sample `.mp4` or `.webm` video (commercial, ad reel, or interview clip) onto the **Video** tab at [`/reviews/new`](https://brandos-jet.vercel.app/reviews/new) to verify audio/keyframe transcription, speech consistency, and on-screen logo/typography inspection.
+> - **1-Click Pre-Loaded Video Scenarios:** On [`/reviews/new`](https://brandos-jet.vercel.app/reviews/new), click either **🎬 Video Commercial Demo (Spoken Dialogue & Lower-Thirds)** or **⚠️ Video Spoken Superlatives Test** to run instant video governance evaluations without uploading local files.
 
 ---
 

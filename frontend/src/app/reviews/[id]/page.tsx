@@ -214,6 +214,18 @@ export default function ReviewDetailPage() {
   }
 
   const { content, findings } = review;
+  const contentType = (content?.content_type || "").toLowerCase();
+  const rawTextContent = (content?.raw_text || "").trim();
+  const isMediaFormat = (
+    contentType === "image" ||
+    contentType === "video" ||
+    contentType === "pdf" ||
+    rawTextContent.startsWith("[Image creative") ||
+    rawTextContent.startsWith("[Video creative") ||
+    rawTextContent.startsWith("[File uploaded") ||
+    Boolean(content?.original_file_url?.match(/\.(png|jpg|jpeg|gif|webp|svg|mp4|mov|webm|pdf)$/i))
+  );
+  const isTextFormat = !isMediaFormat;
 
   return (
     <div className="space-y-6">
@@ -681,58 +693,86 @@ export default function ReviewDetailPage() {
             decision={review.decision || review.status}
           />
 
-          {/* Auto-Remediation Callout Banner */}
+          {/* Auto-Remediation Callout Banner (Text formats only; media requires source revision) */}
           {findings.length > 0 && (
-            canAutoRemediate ? (
-              <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 shrink-0">
-                    <Sparkles className="h-5 w-5" />
+            isTextFormat ? (
+              canAutoRemediate ? (
+                <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 shrink-0">
+                      <Sparkles className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold flex items-center gap-2">
+                        <span>Instant AI Auto-Remediation Studio</span>
+                        <span className="text-[10px] font-mono bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded font-bold">
+                          PREDICTED: 100/100 PASS
+                        </span>
+                      </div>
+                      <div className="text-xs text-indigo-200 mt-0.5">
+                        Automatically rewrite this copy to fix all {findings.length} findings and re-audit in one click.
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-bold flex items-center gap-2">
-                      <span>Instant AI Auto-Remediation Studio</span>
-                      <span className="text-[10px] font-mono bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded font-bold">
-                        PREDICTED: 100/100 PASS
-                      </span>
+
+                  <button
+                    onClick={() => setShowRemediationStudio(true)}
+                    className="px-4 py-2 rounded-lg bg-white text-indigo-900 hover:bg-indigo-50 font-bold text-xs shadow-sm transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                    <span>Launch Auto-Remediation</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500 shrink-0">
+                      <Lock className="h-5 w-5 text-slate-600" />
                     </div>
-                    <div className="text-xs text-indigo-200 mt-0.5">
-                      Automatically rewrite this copy to fix all {findings.length} findings and re-audit in one click.
+                    <div>
+                      <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <span>Instant AI Auto-Remediation Restricted</span>
+                        <span className="text-[10px] font-mono bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold border border-amber-200">
+                          POLICY RESTRICTED ({currentRole.toUpperCase()})
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        Autonomous copy auto-remediation has been disabled for Content Creators by Brand Administration in Settings.
+                      </div>
                     </div>
+                  </div>
+
+                  <div className="px-3.5 py-2 rounded-lg bg-slate-200 text-slate-500 font-bold text-xs shrink-0 flex items-center gap-1.5 cursor-not-allowed border border-slate-300/50">
+                    <Lock className="h-3.5 w-3.5" />
+                    <span>Remediation Locked</span>
                   </div>
                 </div>
-
-                <button
-                  onClick={() => setShowRemediationStudio(true)}
-                  className="px-4 py-2 rounded-lg bg-white text-indigo-900 hover:bg-indigo-50 font-bold text-xs shadow-sm transition-all shrink-0 flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>Launch Auto-Remediation</span>
-                </button>
-              </div>
+              )
             ) : (
-              <div className="p-4 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500 shrink-0">
-                    <Lock className="h-5 w-5 text-slate-600" />
+                  <div className="h-10 w-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+                    <FileText className="h-5 w-5" />
                   </div>
                   <div>
                     <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <span>Instant AI Auto-Remediation Restricted</span>
-                      <span className="text-[10px] font-mono bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold border border-amber-200">
-                        POLICY RESTRICTED ({currentRole.toUpperCase()})
+                      <span>Media Asset Governance ({contentType.toUpperCase() || "CREATIVE"})</span>
+                      <span className="text-[10px] font-mono bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-bold">
+                        SOURCE RE-UPLOAD REQUIRED
                       </span>
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      Autonomous copy auto-remediation has been disabled for Content Creators by Brand Administration in Settings.
+                      AI Auto-Remediation Studio is specialized for copy and text collateral. For media assets ({contentType || "images/videos/PDFs"}), resolve visual or layout findings directly in your source design tool and submit a revision.
                     </div>
                   </div>
                 </div>
 
-                <div className="px-3.5 py-2 rounded-lg bg-slate-200 text-slate-500 font-bold text-xs shrink-0 flex items-center gap-1.5 cursor-not-allowed border border-slate-300/50">
-                  <Lock className="h-3.5 w-3.5" />
-                  <span>Remediation Locked</span>
-                </div>
+                <Link
+                  href="/reviews/new"
+                  className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all shrink-0 flex items-center justify-center gap-1.5"
+                >
+                  <span>Re-Upload Revision</span>
+                </Link>
               </div>
             )
           )}

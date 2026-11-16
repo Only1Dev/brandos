@@ -926,3 +926,11 @@ class PolicyEngine:
         brand_name: str = "Aureon Technologies",
     ) -> List[dict]:
         return check_competitor_defamation(text, brand_name)
+
+    def check_competitor_slander(
+        self,
+        text: str,
+        brand_name: str = "Aureon Technologies",
+        brand_domain: str = "Enterprise security and fraud detection intelligence",
+    ) -> List[dict]:
+        return check_competitor_defamation(text, brand_name)

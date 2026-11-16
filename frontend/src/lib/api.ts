@@ -109,18 +109,40 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ note }),
     }),
-  autoRemediateReview: (id: string) =>
-    request<{
-      original_text: string;
-      remediated_text: string;
-      changes_made: string[];
-      predicted_score: number;
-    }>(`/api/reviews/${id}/auto-remediate`, { method: "POST" }),
-  applyRemediation: (id: string, remediated_text: string) =>
-    request<any>(`/api/reviews/${id}/apply-remediation`, {
-      method: "POST",
-      body: JSON.stringify({ remediated_text }),
-    }),
+  autoRemediateReview: async (id: string) => {
+    try {
+      return await request<{
+        original_text: string;
+        remediated_text: string;
+        changes_made: string[];
+        predicted_score: number;
+      }>(`/api/reviews/${id}/auto-remediate`, { method: "POST" });
+    } catch (err: any) {
+      // Transparent retry after 1.5s in case backend was cold-starting
+      await new Promise((r) => setTimeout(r, 1500));
+      return await request<{
+        original_text: string;
+        remediated_text: string;
+        changes_made: string[];
+        predicted_score: number;
+      }>(`/api/reviews/${id}/auto-remediate`, { method: "POST" });
+    }
+  },
+  applyRemediation: async (id: string, remediated_text: string) => {
+    try {
+      return await request<any>(`/api/reviews/${id}/apply-remediation`, {
+        method: "POST",
+        body: JSON.stringify({ remediated_text }),
+      });
+    } catch (err: any) {
+      // Transparent retry after 1.5s
+      await new Promise((r) => setTimeout(r, 1500));
+      return await request<any>(`/api/reviews/${id}/apply-remediation`, {
+        method: "POST",
+        body: JSON.stringify({ remediated_text }),
+      });
+    }
+  },
   deleteReview: (reviewId: string) =>
     request<any>(`/api/reviews/${reviewId}`, { method: "DELETE" }),
 

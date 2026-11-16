@@ -5,6 +5,7 @@ PRD Section 45, 46, 49: The core review centrepiece.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -813,7 +814,7 @@ async def auto_remediate_review(
     c_res = await db.execute(select(Content).where(Content.id == review.content_id))
     content = c_res.scalar_one_or_none()
 
-    raw_text = version.raw_text or ""
+    raw_text = getattr(version, "body_text", None) or getattr(version, "raw_text", None) or ""
     if not raw_text.strip():
         raise HTTPException(status_code=400, detail="No text content available to remediate")
 
@@ -1149,7 +1150,7 @@ async def apply_remediation(
         det_findings = orchestrator.policy_engine.check_domain_alignment(body.remediated_text, brand_name, brand_domain)
         det_findings += orchestrator.policy_engine.check_substance_quality(body.remediated_text, brand_name, brand_domain)
         det_findings += orchestrator.policy_engine.check_medical_regulatory_claims(body.remediated_text, brand_name, brand_domain)
-        det_findings += orchestrator.policy_engine.check_competitor_slander(body.remediated_text, brand_name, brand_domain)
+        det_findings += orchestrator.policy_engine.check_competitor_defamation(body.remediated_text, brand_name)
         det_findings += orchestrator.policy_engine.check_prompt_injection(body.remediated_text, brand_name, brand_domain)
         gov = orchestrator.governance_engine.calculate_decision(det_findings)
         review.status = "completed"

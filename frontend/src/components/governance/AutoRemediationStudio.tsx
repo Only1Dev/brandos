@@ -107,23 +107,16 @@ export function AutoRemediationStudio({
     if (applying || !remediationData?.remediated_text) return; // Prevent double click
     try {
       setApplying(true);
+      setError(null);
       await api.applyRemediation(reviewId, remediationData.remediated_text);
+      onClose();
+      await onRemediationApplied();
+      router.refresh();
     } catch (err: any) {
-      console.warn("Remediation execution warning:", err);
+      console.error("Remediation execution error:", err);
+      setError(err?.message || "Failed to apply remediation. Please try again.");
     } finally {
       setApplying(false);
-      onClose();
-      try {
-        onRemediationApplied();
-      } catch (err) {
-        console.error("Failed to reload review:", err);
-      }
-      router.refresh();
-      if (typeof window !== "undefined") {
-        setTimeout(() => {
-          window.location.reload();
-        }, 350);
-      }
     }
   };
 

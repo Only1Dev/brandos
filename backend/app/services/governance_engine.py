@@ -183,12 +183,29 @@ def compute_governance(findings: List[Finding]) -> GovernanceResult:
     info_count = sum(1 for f in findings if f.severity in ("info", "low"))
 
     is_direct_block = any(
-        "misalignment" in (f.title or "").lower()
-        or "domain" in (f.title or "").lower()
-        or "unapproved third-party" in (f.title or "").lower()
-        or "missing brand identity" in (f.title or "").lower()
-        or "placeholder copy" in (f.title or "").lower()
-        or "meaningless placeholder" in (f.title or "").lower()
+        f.severity in ("critical", "error") and (
+            f.rule_id in (
+                "BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001",
+                "BRAND-SAFETY-001", "SAFETY-001", "SECURITY-INJECTION-001",
+                "REG-FDA-001", "COMPETITOR-DEFAMATION-001"
+            )
+            or "domain misalignment" in (f.title or "").lower()
+            or "cross-tenant" in (f.title or "").lower()
+            or "out of domain" in (f.title or "").lower()
+            or "out-of-domain" in (f.title or "").lower()
+            or "unapproved third-party" in (f.title or "").lower()
+            or "missing brand identity" in (f.title or "").lower()
+            or "placeholder copy" in (f.title or "").lower()
+            or "meaningless placeholder" in (f.title or "").lower()
+            or "prompt injection" in (f.title or "").lower()
+            or "system override" in (f.title or "").lower()
+            or "jailbreak" in (f.title or "").lower()
+            or "curative medical" in (f.title or "").lower()
+            or "unauthorized fda" in (f.title or "").lower()
+            or "competitor defamation" in (f.title or "").lower()
+            or "vulgar" in (f.title or "").lower()
+            or "profan" in (f.title or "").lower()
+        )
         for f in findings
     )
     if is_direct_block:

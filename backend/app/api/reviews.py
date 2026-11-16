@@ -442,32 +442,70 @@ async def get_review_details(
     term_score = 100
     resilience_score = 100
 
-    raw_text = (version.raw_text or "").strip() if version else ""
+    raw_text = (getattr(version, "body_text", None) or getattr(version, "raw_text", None) or "").strip() if version else ""
     raw_lower = raw_text.lower()
     raw_words = raw_lower.split()
     word_count = len(raw_words)
 
-    # Keywords indicative of legitimate enterprise domain relevance
-    enterprise_domain_keywords = {
-        "aureon", "shield", "sentinel", "banking", "cybersecurity", "fraud",
-        "threat", "intelligence", "security", "zero-day", "financial",
-        "transaction", "compliance", "governance", "solaria", "purehydrate",
-        "cellular", "hydration", "electrolyte", "wellness", "bioimmune", "health"
-    }
-    has_domain_keywords = any(kw in raw_lower for kw in enterprise_domain_keywords)
+    if review.status == "analyzing":
+        return {
+            "id": str(review.id),
+            "status": "analyzing",
+            "decision": "ANALYZING",
+            "governance_score": None,
+            "total_findings": 0,
+            "error_count": 0,
+            "warning_count": 0,
+            "info_count": 0,
+            "reviewer_comment": review.reviewer_comment,
+            "brand_name": brand_name,
+            "organization": {
+                "id": str(org.id) if org else "",
+                "name": brand_name,
+                "slug": org.slug if org else "aureon",
+            } if org else {"id": "", "name": "Aureon Technologies", "slug": "aureon"},
+            "radar_scores": {
+                "domain": 50,
+                "tone": 50,
+                "facts": 50,
+                "terminology": 50,
+                "resilience": 50,
+            },
+            "content": {
+                "id": str(content.id) if content else "",
+                "title": content.title if content else "",
+                "channel": content.channel if content else "general",
+                "content_type": content.content_type if content else "social_post",
+                "raw_text": raw_text,
+                "version_number": version.version_number if version else 1,
+            },
+            "findings": [],
+            "risk_summary": {"critical": 0, "high": 0, "medium": 0, "low": 0},
+            "metrics": {
+                "word_count": word_count,
+                "flesch_reading_ease": 70,
+                "grade_level": 8,
+                "reading_level": "Standard",
+                "reading_time_sec": 10,
+            },
+            "created_at": review.created_at.isoformat() if review.created_at else None,
+            "updated_at": review.updated_at.isoformat() if review.updated_at else None,
+        }
 
     # Detect safety, vulgarity, profanity, harassment, or offensive attacks
     has_safety_violation = any(
         f.status not in ("accepted", "overridden") and (
-            "safety" in (f.title or "").lower()
-            or "vulgar" in (f.title or "").lower()
-            or "profan" in (f.title or "").lower()
-            or "harass" in (f.title or "").lower()
-            or "abusive" in (f.title or "").lower()
-            or "hate" in (f.title or "").lower()
-            or "obscene" in (f.title or "").lower()
-            or "toxic" in (f.title or "").lower()
-            or any((e.source_id or "") in ("BRAND-SAFETY-001", "SAFETY-001") for e in (f.evidences or []))
+            f.severity in ("critical", "error") and (
+                "safety" in (f.title or "").lower()
+                or "vulgar" in (f.title or "").lower()
+                or "profan" in (f.title or "").lower()
+                or "harass" in (f.title or "").lower()
+                or "abusive" in (f.title or "").lower()
+                or "hate" in (f.title or "").lower()
+                or "obscene" in (f.title or "").lower()
+                or "toxic" in (f.title or "").lower()
+                or any((e.source_id or "") in ("BRAND-SAFETY-001", "SAFETY-001") for e in (f.evidences or []))
+            )
         )
         for f in review.findings
     ) or bool(PROFANITY_PATTERN.search(raw_text)) or any(
@@ -480,7 +518,7 @@ async def get_review_details(
 
     # Detect direct domain misalignment, cross-tenant leaks, or placeholder text
     has_direct_block = any(
-        f.status not in ("accepted", "overridden") and (
+        f.status not in ("accepted", "overridden") and f.severity in ("critical", "error") and (
             f.rule_id in ("BRAND-IDENTITY-001", "CROSS-TENANT-001", "BRAND-SUBSTANCE-001")
             or "domain misalignment" in (f.title or "").lower()
             or "cross-tenant" in (f.title or "").lower()
@@ -494,7 +532,7 @@ async def get_review_details(
         for f in review.findings
     )
 
-    is_out_of_domain = has_direct_block or (word_count < 25 and not has_domain_keywords)
+    is_out_of_domain = has_direct_block
 
     if has_safety_violation:
         # Abusive / profane copy has zero brand domain alignment, fails voice & tone, fails safety checks
@@ -518,7 +556,7 @@ async def get_review_details(
             agent = (f.agent or "").lower()
             sev = (f.severity or "medium").lower()
             title = (f.title or "").lower()
-            penalty = 35 if sev in ("error", "critical") else 15
+            penalty = 35 if sev in ("error", "critical") else 15 if sev in ("high", "warning") else 5
 
             if "domain" in cat or "domain misalignment" in title or "cross-tenant" in title or "brand-identity" in title:
                 domain_score = max(0, domain_score - 50)
@@ -528,17 +566,14 @@ async def get_review_details(
                 term_score = max(10, term_score - penalty)
             elif agent == "brand" or "tone" in cat or "voice" in cat:
                 tone_score = max(10, tone_score - penalty)
+            elif agent == "accessibility" or "readability" in title:
+                # Readability notice is informational, only slight resilience penalty
+                resilience_score = max(80, resilience_score - 5)
             else:
                 resilience_score = max(15, resilience_score - penalty)
 
-        if not has_domain_keywords and word_count < 40:
-            domain_score = min(domain_score, 15)
-
         if review.decision == "BLOCKED":
-            if not has_domain_keywords:
-                domain_score = 0
-            else:
-                domain_score = min(domain_score, 35)
+            domain_score = min(domain_score, 35)
             tone_score = min(tone_score, 35)
             resilience_score = min(resilience_score, 25)
             fact_score = min(fact_score, 30)
@@ -1085,14 +1120,42 @@ async def apply_remediation(
 
     review.content_version_id = new_version.id
     review.status = "analyzing"
+    # Atomically purge previous findings so no ghost findings linger during re-audit
+    old_findings = await db.execute(select(Finding).where(Finding.review_id == review.id))
+    for f in old_findings.scalars().all():
+        await db.delete(f)
+    review.total_findings = 0
+    review.error_count = 0
+    review.warning_count = 0
+    review.info_count = 0
     await db.commit()
+
+    target_org_id = content.organization_id if content and content.organization_id else None
+    org = None
+    if target_org_id:
+        org_res = await db.execute(select(Organization).where(Organization.id == target_org_id))
+        org = org_res.scalar_one_or_none()
+    brand_name = org.name if org else "Brand"
+    brand_domain = org.description if org and org.description else "Enterprise brand collateral"
 
     # Trigger multi-agent re-analysis on the new version (guarded with timeout)
     try:
         analysis_result = await asyncio.wait_for(run_analysis(id=str(review.id), db=db, user=user), timeout=45.0)
     except Exception as e:
         logger.warning(f"Auto-remediation re-analysis fallback: {e}")
-        analysis_result = {}
+        orchestrator = AnalysisOrchestrator()
+        det_findings = orchestrator.policy_engine.check_domain_alignment(body.remediated_text, brand_name, brand_domain)
+        det_findings += orchestrator.policy_engine.check_substance_quality(body.remediated_text, brand_name, brand_domain)
+        det_findings += orchestrator.policy_engine.check_medical_regulatory_claims(body.remediated_text, brand_name, brand_domain)
+        det_findings += orchestrator.policy_engine.check_competitor_slander(body.remediated_text, brand_name, brand_domain)
+        det_findings += orchestrator.policy_engine.check_prompt_injection(body.remediated_text, brand_name, brand_domain)
+        gov = orchestrator.governance_engine.calculate_decision(det_findings)
+        review.status = "completed"
+        review.decision = gov["decision"]
+        review.governance_score = gov["governance_score"]
+        review.total_findings = len(det_findings)
+        await db.commit()
+        analysis_result = gov
 
     # Re-fetch review to ensure clean state
     r_after = await db.execute(select(Review).where(Review.id == review.id))
@@ -1102,13 +1165,6 @@ async def apply_remediation(
     # A review earns 100/100 PASS ONLY if the text is legitimately related to the active brand
     # and satisfies brand guidelines without critical safety, substance, or domain errors!
     if review:
-        target_org_id = content.organization_id if content and content.organization_id else None
-        org = None
-        if target_org_id:
-            org_res = await db.execute(select(Organization).where(Organization.id == target_org_id))
-            org = org_res.scalar_one_or_none()
-        brand_name = org.name if org else "Brand"
-
         enterprise_keywords = {
             "aureon", "shield", "sentinel", "banking", "cybersecurity", "fraud",
             "threat", "intelligence", "security", "zero-day", "financial",
@@ -1121,6 +1177,7 @@ async def apply_remediation(
         is_brand_related = (
             first_btoken in remediated_lower
             or any(kw in remediated_lower for kw in enterprise_keywords)
+            or (org and org.slug and org.slug.lower() in remediated_lower)
         ) and not any(tag in remediated_lower for tag in ("[compliant term]", "[removed]", "[redacted]"))
 
         has_critical_block = any(

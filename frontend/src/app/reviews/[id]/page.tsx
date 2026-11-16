@@ -116,6 +116,15 @@ export default function ReviewDetailPage() {
     loadReview();
   }, [id]);
 
+  useEffect(() => {
+    if (review?.status === "analyzing") {
+      const interval = setInterval(() => {
+        loadReview();
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [review?.status, id]);
+
   const handleRunAnalysis = async () => {
     if (analyzing) return;
     try {
@@ -419,16 +428,16 @@ export default function ReviewDetailPage() {
       </div>
 
       {/* Live Multi-Agent Execution Visualizer */}
-      {analyzing && (
+      {(analyzing || review?.status === "analyzing") && (
         <AgentPipelineVisualizer
-          isAnalyzing={analyzing}
+          isAnalyzing={true}
           brandName={content?.title || "Active Brand"}
           contentType={content?.content_type}
         />
       )}
 
       {/* Zero-Tolerance Firewall Active Banner */}
-      {(review.decision === "BLOCKED" || review.governance_score === 0) && (
+      {review?.status !== "analyzing" && (review.decision === "BLOCKED" || review.governance_score === 0) && (
         <div className="p-4 rounded-xl bg-gradient-to-r from-red-50 via-rose-50 to-red-50 border-2 border-red-300 flex items-start gap-3 shadow-xs">
           <div className="h-9 w-9 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
             <ShieldAlert className="h-5 w-5" />

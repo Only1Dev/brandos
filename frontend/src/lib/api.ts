@@ -45,11 +45,23 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       headers,
     });
   } catch (err: any) {
-    const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-    if (isLocal) {
-      throw new Error("Backend server unreachable. Please verify BrandOS backend is running locally on port 8000.");
+    // If direct cross-origin fetch to Render failed, automatically retry via Next.js same-origin rewrite proxy
+    if (typeof window !== "undefined" && !url.startsWith("/api") && endpoint.startsWith("/api")) {
+      try {
+        response = await fetch(endpoint, {
+          ...options,
+          headers,
+        });
+      } catch (proxyErr: any) {
+        throw new Error(`Unable to connect to BrandOS API service (${baseUrl}). Please check backend status.`);
+      }
     } else {
-      throw new Error(`Unable to connect to BrandOS API service (${baseUrl}). Please check backend status.`);
+      const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+      if (isLocal) {
+        throw new Error("Backend server unreachable. Please verify BrandOS backend is running locally on port 8000.");
+      } else {
+        throw new Error(`Unable to connect to BrandOS API service (${baseUrl}). Please check backend status.`);
+      }
     }
   }
 

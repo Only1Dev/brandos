@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -210,7 +210,7 @@ async def run_analysis(
             rules_res = await db.execute(select(GuidelineRule).where(GuidelineRule.is_active == True, GuidelineRule.guideline_id.in_(g_ids)))
         else:
             rules_res = await db.execute(select(GuidelineRule).where(GuidelineRule.is_active == True))
-        facts_res = await db.execute(select(Fact).where(Fact.is_active == True, Fact.organization_id == org.id))
+        facts_res = await db.execute(select(Fact).where(Fact.is_active == True, or_(Fact.organization_id == org.id, Fact.organization_id.is_(None))))
         terms_res = await db.execute(select(TerminologyRule).where(TerminologyRule.is_active == True, TerminologyRule.organization_id == org.id))
         assets_res = await db.execute(select(Asset).where(Asset.is_active == True, Asset.organization_id == org.id))
     else:
@@ -239,7 +239,9 @@ async def run_analysis(
             "name": f.category,
             "category": f.category,
             "statement": f.statement,
+            "claim": f.statement,
             "value": f"{f.numerical_value} {f.numerical_unit or ''}".strip() if f.numerical_value is not None else f.statement,
+            "metric_value": f"{f.numerical_value} {f.numerical_unit or ''}".strip() if f.numerical_value is not None else f.statement,
             "numerical_value": f.numerical_value,
             "numerical_unit": f.numerical_unit,
             "status": "expired" if f.is_expired else "active",
@@ -853,7 +855,7 @@ async def auto_remediate_review(
     facts_str = ""
     terms_str = ""
     if org:
-        f_res = await db.execute(select(Fact).where(Fact.is_active == True, Fact.organization_id == org.id))
+        f_res = await db.execute(select(Fact).where(Fact.is_active == True, or_(Fact.organization_id == org.id, Fact.organization_id.is_(None))))
         facts_list = f_res.scalars().all()
         facts_str = "\n".join([f"- {f.category}: {f.statement} (Value: {f.numerical_value or ''} {f.numerical_unit or ''})" for f in facts_list])
 

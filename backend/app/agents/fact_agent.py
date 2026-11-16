@@ -151,109 +151,118 @@ class FactAgent:
                 "id": str(f.get("id")),
             })
 
-        # Clause-by-clause evaluation to avoid cross-topic false conflicts
-        # Split on sentence boundaries as well as compound connectors (', and', ';', ', while', ', but')
-        clauses = [c.strip() for c in re.split(r"(?<=[.!?;])\s+|\s*,\s*(?:and|while|but|whereas|plus)\s*", text, flags=re.IGNORECASE) if c.strip()]
-        for clause in clauses:
-            c_lower = clause.lower()
-            num_matches = re.findall(r"(\d+(?:\.\d+)?)\s*(%|[a-zA-Z]+)?", clause)
-            if not num_matches:
+        # Context-aware evaluation per numeric claim
+        # Uses local context windows (±60 characters around each number) to isolate specific metrics
+        # and prevent compound sentence metrics (e.g. 99.8%, 42%, 99.99%) from clashing against each other.
+        for m in re.finditer(r"(\d+(?:\.\d+)?)\s*(%|[a-zA-Z]+)?", text):
+            found_num_str = m.group(1)
+            found_unit = (m.group(2) or "").strip().lower()
+            if not found_num_str:
+                continue
+            try:
+                found_num = float(found_num_str)
+            except ValueError:
                 continue
 
-            clause_words = re.findall(r"\b[a-zA-Z]{3,}\b", c_lower)
+            claimed_str = f"{found_num_str}{found_unit}" if found_unit else found_num_str
 
-            for found_num_str, found_unit in num_matches:
-                if not found_num_str:
+            # Extract local context window around this specific number
+            start_pos = max(0, m.start() - 60)
+            end_pos = min(len(text), m.end() + 60)
+            local_window = text[start_pos:end_pos].lower()
+            local_words = re.findall(r"\b[a-zA-Z]{3,}\b", local_window)
+
+            # 1. First: Check if this number directly matches ANY approved fact in value and local topic
+            is_num_verified = False
+            for ft in fact_topics:
+                num_val = ft["num_val"]
+                if num_val is None:
                     continue
-                try:
-                    found_num = float(found_num_str)
-                except ValueError:
-                    continue
-
-                claimed_str = f"{found_num_str}{found_unit}" if found_unit else found_num_str
-
-                # Score facts based on topic keyword overlap in this specific clause using stemmed/fuzzy matching
-                scored_facts = []
-                for ft in fact_topics:
-                    num_val = ft["num_val"]
-                    if num_val is None:
-                        continue
-                    unit = ft["unit"]
-
-                    # Check unit compatibility
-                    unit_matches = not unit or (found_unit and found_unit.lower() == unit) or (unit == "%" and (found_unit == "%" or not found_unit))
-                    if not unit_matches:
-                        continue
-
-                    # Check topic relevance in this exact clause
-                    matched_topic_words = []
-                    for tw in ft["topic_words"]:
-                        for cw in clause_words:
-                            if word_matches_topic(cw, tw):
-                                matched_topic_words.append((cw, tw))
-                                break
-                    score = len(matched_topic_words)
-                    # If at least 1 distinctive topic keyword matches (e.g. 'sweetner', 'sugar', 'absorption', 'fraud'), clause is topic-relevant
-                    if score >= 1:
-                        scored_facts.append((score, ft))
-
-                if not scored_facts:
+                unit = ft["unit"]
+                unit_matches = not unit or (found_unit and found_unit == unit) or (unit == "%" and (found_unit == "%" or not found_unit))
+                if not unit_matches:
                     continue
 
-                # Strictly isolate to facts sharing the HIGHEST topic overlap
-                scored_facts.sort(key=lambda x: x[0], reverse=True)
-                top_score = scored_facts[0][0]
-                matching_facts = [ft for score, ft in scored_facts if score == top_score]
-
-                # Check if this number matches ANY of the topic-relevant approved facts
-                is_num_verified = False
-                for ft in matching_facts:
-                    diff = abs(found_num - float(ft["num_val"]))
-                    if diff <= 0.01:
+                diff = abs(found_num - float(num_val))
+                if diff <= 0.01:
+                    has_topic_match = any(
+                        word_matches_topic(lw, tw)
+                        for tw in ft["topic_words"]
+                        for lw in local_words
+                    )
+                    if has_topic_match or len(fact_topics) == 1:
                         is_num_verified = True
                         verified_claims.add(claimed_str)
                         verified_claims.add(found_num_str)
                         verified_claims.add(str(int(found_num)) if found_num.is_integer() else str(found_num))
                         break
 
-                evaluated_claim_numbers.add(found_num_str)
+            evaluated_claim_numbers.add(found_num_str)
 
-                if is_num_verified:
+            if is_num_verified:
+                continue
+
+            # 2. If not verified, check if this number conflicts with an approved fact in this topic
+            scored_facts = []
+            for ft in fact_topics:
+                num_val = ft["num_val"]
+                if num_val is None:
+                    continue
+                unit = ft["unit"]
+                unit_matches = not unit or (found_unit and found_unit == unit) or (unit == "%" and (found_unit == "%" or not found_unit))
+                if not unit_matches:
                     continue
 
-                # If not verified by any matching fact for this topic, report conflict against the closest matching fact in this topic
-                best_match = min(matching_facts, key=lambda ft: abs(found_num - float(ft["num_val"])))
-                diff = abs(found_num - float(best_match["num_val"]))
-                approved_str = f"{best_match['num_val']}{best_match['unit']}" if best_match['unit'] else str(best_match['num_val'])
-                fact_ref = best_match["fact_ref"]
-                f_orig = best_match["fact"]
+                matched_topic_words = []
+                for tw in ft["topic_words"]:
+                    for lw in local_words:
+                        if word_matches_topic(lw, tw):
+                            matched_topic_words.append((lw, tw))
+                            break
+                score = len(matched_topic_words)
+                if score >= 1:
+                    scored_facts.append((score, ft))
 
-                findings.append({
-                    "finding_type": "fact",
-                    "severity": "critical" if diff > 10 else "high",
-                    "title": f"Factual Metric Conflict ({fact_ref})",
-                    "description": f"Content claims {claimed_str}, but approved Brand Brain fact states: '{best_match['statement']}' (Approved value: {approved_str}).",
-                    "detected_text": claimed_str,
-                    "explanation": f"Approved organizational fact [{fact_ref}] establishes '{best_match['statement']}'. The claimed figure of {claimed_str} contradicts active ground truth.",
-                    "confidence": 1.0,
-                    "fact_id": f_orig.get("id"),
-                    "evidence": [{
-                        "evidence_type": "fact",
+            if not scored_facts:
+                continue
+
+            scored_facts.sort(key=lambda x: x[0], reverse=True)
+            best_match = scored_facts[0][1]
+            diff = abs(found_num - float(best_match["num_val"]))
+            if diff <= 0.01:
+                verified_claims.add(claimed_str)
+                continue
+
+            approved_str = f"{best_match['num_val']}{best_match['unit']}" if best_match['unit'] else str(best_match['num_val'])
+            fact_ref = best_match["fact_ref"]
+            f_orig = best_match["fact"]
+
+            findings.append({
+                "finding_type": "fact",
+                "severity": "critical" if diff > 10 else "high",
+                "title": f"Factual Metric Conflict ({fact_ref})",
+                "description": f"Content claims {claimed_str}, but approved Brand Brain fact states: '{best_match['statement']}' (Approved value: {approved_str}).",
+                "detected_text": claimed_str,
+                "explanation": f"Approved organizational fact [{fact_ref}] establishes '{best_match['statement']}'. The claimed figure of {claimed_str} contradicts active ground truth.",
+                "confidence": 1.0,
+                "fact_id": f_orig.get("id"),
+                "evidence": [{
+                    "evidence_type": "fact",
+                    "source_ref": fact_ref,
+                    "description": f"Approved value is '{approved_str}', whereas content claims '{claimed_str}'.",
+                    "data": {
+                        "approved_value": approved_str,
+                        "claimed_value": claimed_str,
                         "source_ref": fact_ref,
-                        "description": f"Approved value is '{approved_str}', whereas content claims '{claimed_str}'.",
-                        "data": {
-                            "approved_value": approved_str,
-                            "claimed_value": claimed_str,
-                            "source_ref": fact_ref,
-                            "statement": best_match["statement"],
-                        }
-                    }],
-                    "suggestion": {
-                        "original_text": claimed_str,
-                        "suggested_text": approved_str,
-                        "reasoning": f"Aligns with active verified fact: '{best_match['statement']}'"
+                        "statement": best_match["statement"],
                     }
-                })
+                }],
+                "suggestion": {
+                    "original_text": claimed_str,
+                    "suggested_text": approved_str,
+                    "reasoning": f"Aligns with active verified fact: '{best_match['statement']}'"
+                }
+            })
 
         facts_context = "\n".join(facts_text_list) if facts_text_list else "No approved facts currently registered."
 

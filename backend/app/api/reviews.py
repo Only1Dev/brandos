@@ -1049,7 +1049,7 @@ async def apply_remediation(
 
     # Trigger multi-agent re-analysis on the new version (guarded with timeout)
     try:
-        analysis_result = await asyncio.wait_for(run_analysis(id=str(review.id), db=db, user=user), timeout=12.0)
+        analysis_result = await asyncio.wait_for(run_analysis(id=str(review.id), db=db, user=user), timeout=45.0)
     except Exception as e:
         logger.warning(f"Auto-remediation re-analysis fallback: {e}")
         analysis_result = {}
